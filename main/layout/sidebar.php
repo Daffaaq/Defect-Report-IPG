@@ -60,6 +60,16 @@
                     </a>
                 </li>
 
+                <!-- Data Defect Report -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="../data-defect-report/index.php" aria-expanded="false">
+                        <span>
+                            <i class="ti ti-database"></i>
+                        </span>
+                        <span class="hide-menu">Data Defect Report</span>
+                    </a>
+                </li>
+
                 <!-- Logout -->
                 <li class="sidebar-item">
                     <a class="sidebar-link" href="../../logout.php" aria-expanded="false">

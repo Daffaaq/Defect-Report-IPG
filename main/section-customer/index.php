@@ -30,6 +30,10 @@ isLogin();
     <!-- Action Buttons -->
     <div class="row mb-4">
         <div class="col-12 text-end">
+            <!-- Tombol Import -->
+            <button class="btn btn-success me-2" onclick="showImportModal()">
+                <i class="ti ti-upload"></i> Import Customer
+            </button>
             <button class="btn btn-info" onclick="showAddCustomerModal()">
                 <i class="ti ti-plus"></i> Tambah Customer Baru
             </button>
@@ -124,6 +128,79 @@ isLogin();
     </div>
 </div>
 
+<!-- MODAL Import Customer -->
+<div class="modal fade" id="importModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Import Customer dari Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Download Template -->
+                <div class="alert alert-info mb-3">
+                    <i class="ti ti-info-circle"></i>
+                    Download template Excel untuk format yang benar
+                </div>
+
+                <div class="text-center mb-4">
+                    <button class="btn btn-outline-info" onclick="downloadTemplate()">
+                        <i class="ti ti-download"></i> Download Template
+                    </button>
+                </div>
+
+                <!-- Upload Form -->
+                <form id="importForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih File Excel</label>
+                        <input type="file"
+                            class="form-control"
+                            id="importFile"
+                            accept=".xls,.xlsx,.csv"
+                            required>
+                        <small class="text-muted">
+                            Format yang didukung: XLS, XLSX, CSV (Maks. 5MB)
+                        </small>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" id="importProgress" style="display: none; height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                            role="progressbar"
+                            style="width: 0%"></div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="alert alert-warning">
+                        <i class="ti ti-alert-triangle"></i>
+                        <strong>Perhatian:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>Data akan dicek duplikat (case insensitive)</li>
+                            <li>Jika ada data duplikat atau error, semua data tidak akan diimport</li>
+                            <li>Pastikan format sesuai dengan template</li>
+                        </ul>
+                    </div>
+                </form>
+
+                <!-- Preview Error (akan tampil jika ada error) -->
+                <div id="errorPreview" style="display: none;" class="mt-3">
+                    <hr>
+                    <h6 class="text-danger">Detail Error:</h6>
+                    <div class="alert alert-danger" style="max-height: 200px; overflow-y: auto;">
+                        <ul id="errorList" class="mb-0"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="importBtn" onclick="importCustomer()">
+                    <i class="ti ti-upload"></i> Import Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Konfirmasi Hapus -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
@@ -159,6 +236,7 @@ isLogin();
     let allCustomers = [];
     let currentDeleteId = null;
     let baseUrl = 'SectionCustomerController.php';
+    let importBaseUrl = 'ImportCustomerController.php';
 
     $(document).ready(function() {
         initializeTable();
@@ -261,6 +339,130 @@ isLogin();
                     errorMsg = response.message || errorMsg;
                 } catch (e) {}
                 Swal.fire('Error', errorMsg, 'error');
+            }
+        });
+    }
+
+    // ==========================
+    // IMPORT FUNCTIONS
+    // ==========================
+
+    function showImportModal() {
+        $('#importModal').modal('show');
+        $('#importFile').val('');
+        $('#errorPreview').hide();
+        $('#errorList').empty();
+    }
+
+    function downloadTemplate() {
+        window.location.href = importBaseUrl + '?action=downloadTemplate';
+    }
+
+    function importCustomer() {
+        let file = $('#importFile')[0].files[0];
+
+        if (!file) {
+            Swal.fire('Error', 'Pilih file Excel terlebih dahulu', 'error');
+            return;
+        }
+
+        // Validasi ekstensi file
+        let allowedExtensions = ['xls', 'xlsx', 'csv'];
+        let fileExtension = file.name.split('.').pop().toLowerCase();
+
+        if (!allowedExtensions.includes(fileExtension)) {
+            Swal.fire('Error', 'Format file harus XLS, XLSX, atau CSV', 'error');
+            return;
+        }
+
+        // Validasi ukuran file (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire('Error', 'Ukuran file maksimal 5MB', 'error');
+            return;
+        }
+
+        // Tampilkan progress bar
+        $('#importProgress').show();
+        $('.progress-bar').css('width', '0%');
+
+        let formData = new FormData();
+        formData.append('action', 'import');
+        formData.append('file', file);
+
+        $('#importBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Mengimport...');
+
+        $.ajax({
+            url: importBaseUrl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            xhr: function() {
+                let xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        let percent = Math.round((e.loaded / e.total) * 100);
+                        $('.progress-bar').css('width', percent + '%');
+                    }
+                });
+                return xhr;
+            },
+            success: function(response) {
+                $('#importProgress').hide();
+                $('.progress-bar').css('width', '0%');
+
+                if (response.status === 'success') {
+                    $('#importModal').modal('hide');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: response.message,
+                        showConfirmButton: true
+                    }).then(() => {
+                        loadCustomers();
+                    });
+                } else {
+                    // Tampilkan error detail
+                    let errorHtml = '';
+
+                    if (response.errors && response.errors.length > 0) {
+                        errorHtml += '<li><strong>Error:</strong><ul>';
+                        response.errors.forEach(function(err) {
+                            errorHtml += '<li>' + escapeHtml(err) + '</li>';
+                        });
+                        errorHtml += '</ul></li>';
+                    }
+
+                    if (response.duplicates && response.duplicates.length > 0) {
+                        errorHtml += '<li><strong>Duplikat:</strong><ul>';
+                        response.duplicates.forEach(function(dup) {
+                            errorHtml += '<li>' + escapeHtml(dup) + '</li>';
+                        });
+                        errorHtml += '</ul></li>';
+                    }
+
+                    if (errorHtml) {
+                        $('#errorList').html(errorHtml);
+                        $('#errorPreview').show();
+                    }
+
+                    Swal.fire('Error', response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                $('#importProgress').hide();
+                $('.progress-bar').css('width', '0%');
+
+                let errorMsg = 'Gagal mengimport data';
+                try {
+                    let response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch (e) {}
+                Swal.fire('Error', errorMsg, 'error');
+            },
+            complete: function() {
+                $('#importBtn').prop('disabled', false).html('<i class="ti ti-upload"></i> Import Data');
             }
         });
     }
@@ -476,6 +678,12 @@ isLogin();
         resetModal();
     });
 
+    $('#importModal').on('hidden.bs.modal', function() {
+        $('#importFile').val('');
+        $('#errorPreview').hide();
+        $('#errorList').empty();
+    });
+
     $('#deleteModal').on('hidden.bs.modal', function() {
         currentDeleteId = null;
     });
@@ -520,6 +728,25 @@ isLogin();
         font-weight: 600;
     }
 
+    /* Progress bar */
+    .progress {
+        border-radius: 5px;
+    }
+
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+
+    /* Error preview */
+    #errorPreview ul {
+        padding-left: 20px;
+    }
+
+    #errorPreview li {
+        margin-bottom: 3px;
+        font-size: 0.9rem;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         #customerTable {
@@ -533,6 +760,11 @@ isLogin();
 
         .card h3 {
             font-size: 1.5rem;
+        }
+
+        .text-end .btn {
+            margin-bottom: 5px;
+            width: 100%;
         }
     }
 </style>

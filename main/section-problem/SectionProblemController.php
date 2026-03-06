@@ -211,7 +211,7 @@ function insertDefect($connection)
     }
 
     // CEK APAKAH SECTION SUDAH ADA (CASE INSENSITIVE)
-    $checkSql = "SELECT nama_section FROM defect_table WHERE LOWER(nama_section) = LOWER(?)";
+    $checkSql = "SELECT nama_section FROM defect_table WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS";
     $checkParams = [$nama_section];
     $checkStmt = sqlsrv_prepare($connection, $checkSql, $checkParams);
 
@@ -364,7 +364,9 @@ function updateDefect($connection)
     }
 
     // CEK APAKAH SECTION SUDAH ADA (CASE INSENSITIVE) - KECUALI DIRINYA SENDIRI
-    $checkSql = "SELECT nama_section FROM defect_table WHERE LOWER(nama_section) = LOWER(?) AND id != ?";
+    $checkSql = "SELECT nama_section FROM defect_table 
+                 WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS 
+                 AND id != ?";
     $checkParams = [$nama_section, $id];
     $checkStmt = sqlsrv_prepare($connection, $checkSql, $checkParams);
 
