@@ -123,7 +123,7 @@ isLogin();
 
 <!-- MODAL Konfirmasi Submit -->
 <div class="modal fade" id="confirmSubmitModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">Konfirmasi Submit Claim</h5>
@@ -499,16 +499,6 @@ isLogin();
         formData.append('nama_section', $('#section').val());
         formData.append('nama_defect', $('#nama_defect').val());
         formData.append('deskripsi_masalah', $('#deskripsi_masalah').val().trim());
-
-        // Tampilkan loading
-        Swal.fire({
-            title: 'Menyimpan...',
-            text: 'Mohon tunggu',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
 
         // Kirim data
         $.ajax({

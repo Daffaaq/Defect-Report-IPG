@@ -448,9 +448,8 @@ isLogin();
                     }
                 }
             ],
-            order: [
-                [1, 'asc']
-            ],
+            ordering: false,
+            order: [],
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json'
             },
@@ -609,30 +608,62 @@ isLogin();
         let tanggalAwal = $('#tanggalAwal').val();
         let tanggalAkhir = $('#tanggalAkhir').val();
 
-        // Validasi tanggal
-        if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
+        if (!tanggalAwal && !tanggalAkhir) {
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Tanggal awal tidak boleh lebih besar dari tanggal akhir',
-                timer: 2000,
-                showConfirmButton: false
+                icon: 'warning',
+                title: 'Filter diperlukan',
+                text: 'Silakan pilih minimal 1 tanggal untuk export data'
             });
             return;
         }
 
-        // Tampilkan loading
+        // Cek apakah ada data di tabel
+        let dataCount = reportTable.rows().count();
+
+        if (dataCount === 0) {
+            let pesanTanggal = '';
+
+            if (tanggalAwal && tanggalAkhir) {
+                // Format tanggal ke format dd/mm/yyyy
+                let tglAwal = formatDate(tanggalAwal);
+                let tglAkhir = formatDate(tanggalAkhir);
+                pesanTanggal = `Tidak ada laporan untuk rentang ${tglAwal} hingga ${tglAkhir}`;
+            } else if (tanggalAwal && !tanggalAkhir) {
+                let tglAwal = formatDate(tanggalAwal);
+                pesanTanggal = `Tidak ada laporan untuk tanggal ${tglAwal}`;
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Tidak Dapat Export',
+                html: `
+            <div class="mb-3">
+                <i class="ti ti-database-off" style="font-size: 3rem; color: #dc3545;"></i>
+            </div>
+            <p class="fw-semibold">Tidak ada laporan untuk diexport!</p>
+            <p class="text-muted small">${pesanTanggal}</p>
+        `,
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Mengerti'
+            });
+            return;
+        }
+
         Swal.fire({
             title: 'Menyiapkan Export',
-            text: 'Sedang memproses data...',
+            html: `
+            <div class="mb-3">
+                <i class="ti ti-file-spreadsheet" style="font-size: 3rem; color: #198754;"></i>
+            </div>
+            <p class="mb-1">Mohon tunggu sebentar...</p>
+            <p class="text-muted small">Mengexport ${dataCount} data laporan</p>
+        `,
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => Swal.showLoading(),
+            showConfirmButton: false
         });
 
-        // Buat URL untuk export
-        let url = 'ExportDefectReportController.php'; // Panggil controller baru
+        let url = 'ExportDefectReportController.php';
 
         if (tanggalAwal) {
             url += '?tanggal_awal=' + tanggalAwal;
@@ -641,20 +672,27 @@ isLogin();
             }
         }
 
-        // Redirect ke URL export
-        window.location.href = url;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        // Tutup loading setelah 2 detik
         setTimeout(() => {
             Swal.close();
+            // Tampilkan notifikasi sukses
             Swal.fire({
                 icon: 'success',
                 title: 'Export Berhasil',
-                text: 'File Excel sedang di-download',
+                html: `
+                <p class="mb-0">${dataCount} data laporan berhasil diexport</p>
+                <p class="text-muted small mt-2">File akan terdownload otomatis</p>
+            `,
                 timer: 2000,
                 showConfirmButton: false
             });
-        }, 2000);
+        }, 1500);
     }
 
     function updateSummaryCards(response) {
@@ -781,17 +819,6 @@ isLogin();
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
     }
 
-    .btn {
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 500;
-    }
-
-    .btn-sm {
-        padding: 0.4rem 1rem;
-        font-size: 0.85rem;
-    }
-
     .btn-outline-primary {
         border-color: #e0e0e0;
         color: #495057;
@@ -856,6 +883,11 @@ isLogin();
         .rounded-circle {
             width: 40px;
             height: 40px;
+        }
+
+        .btn-sm {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
         }
 
         .rounded-circle i {

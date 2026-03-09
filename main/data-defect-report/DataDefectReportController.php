@@ -187,7 +187,7 @@ function getReports($connection)
     }
 
     // Order by
-    $sql .= " ORDER BY nama_section ASC, id ASC";
+    $sql .= " ORDER BY CONVERT(date, tanggal_ditemukan) DESC, id DESC";
 
     $stmt = sqlsrv_prepare($connection, $sql, $params);
 

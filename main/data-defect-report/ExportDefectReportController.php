@@ -26,6 +26,16 @@ if ($connection === false) {
 $tanggal_awal = $_GET['tanggal_awal'] ?? '';
 $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
 
+if (!$tanggal_awal && !$tanggal_akhir) {
+    http_response_code(400);
+    die('Filter tanggal wajib untuk export data');
+}
+
+if ($tanggal_awal && $tanggal_akhir && $tanggal_awal > $tanggal_akhir) {
+    http_response_code(400);
+    die('Tanggal awal tidak boleh lebih besar dari tanggal akhir');
+}
+
 // Validasi tanggal
 $validateDate = fn($date) => DateTime::createFromFormat('Y-m-d', $date) ?: false;
 
