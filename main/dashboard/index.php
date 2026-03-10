@@ -7,9 +7,6 @@ isLogin();
 <?php
 include '../layout/head.php';
 ?>
-<!-- Tambahkan di bagian head atau sebelum script -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 
 <?php include '../layout/sidebar.php'; ?>
 <?php include '../layout/header.php'; ?>
@@ -29,852 +26,1298 @@ include '../layout/head.php';
         </div>
     </div>
 
-    <!-- Summary Cards Row -->
+    <!-- Loading Indicator untuk cards -->
+    <div id="loading-stats" class="text-center py-3" style="display: none;">
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Memuat data dashboard...</p>
+    </div>
+
+    <!-- Content - 3 Cards -->
+    <div class="row" id="dashboard-cards">
+        <!-- Card 1: Total Defect -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow-sm h-100" id="card-total-defect">
+                <div class="card-body d-flex align-items-center">
+                    <div class="bg-light-danger rounded-2 p-3 me-3">
+                        <i class="ti ti-bug fs-6 text-danger"></i>
+                    </div>
+                    <div>
+                        <p class="text-dark mb-1 fw-semibold">Total Defect</p>
+                        <h4 class="mb-0 fw-bold" id="total-defect">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Total Customer -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow-sm h-100" id="card-total-customer">
+                <div class="card-body d-flex align-items-center">
+                    <div class="bg-light-success rounded-2 p-3 me-3">
+                        <i class="ti ti-building-skyscraper fs-6 text-success"></i>
+                    </div>
+                    <div>
+                        <p class="text-dark mb-1 fw-semibold">Total Customer</p>
+                        <h4 class="mb-0 fw-bold" id="total-customer">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Total Section & Total Problem (setengah-setengah) -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow-sm h-100" id="card-section-problem">
+                <div class="card-body p-0 d-flex align-items-center h-100">
+                    <div class="row g-0 w-100">
+                        <!-- Total Section -->
+                        <div class="col-6 border-end">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-primary rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-section fs-6 text-primary"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Section</p>
+                                <h4 class="mb-0 fw-bold" id="total-section">0</h4>
+                            </div>
+                        </div>
+                        <!-- Total Problem -->
+                        <div class="col-6">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-danger rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-alert-triangle fs-6 text-danger"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Problem</p>
+                                <h4 class="mb-0 fw-bold" id="total-problem">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section - 2 charts per row -->
+    <div class="row mt-4">
+        <!-- Chart 1: Pareto Chart (Bar + Line) -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="card-title mb-0">Pareto Chart - Defect per Kategori</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Loading indicator untuk Pareto chart -->
+                    <div id="loading-pareto" class="text-center py-3" style="display: none;">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data chart...</p>
+                    </div>
+                    <div id="pareto-chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 2: Horizontal Bar Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="card-title mb-0">Defect per Section</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Tambahkan loading indicator untuk horizontal bar chart -->
+                    <div id="loading-horizontal-bar" class="text-center py-3" style="display: none;">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data chart...</p>
+                    </div>
+                    <div id="horizontal-bar-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
-
-        <!-- Card Total Trips Today -->
-        <div class="col-lg-3">
-            <div class="card overflow-hidden">
-                <div class="card-body p-4">
-
-                    <!-- Baris 1: Judul + Icon -->
-                    <div class="d-flex align-items-center justify-content-between">
-                        <p class="mb-0 small fw-medium text-muted">Total Trips Today</p>
-                        <div class="bg-primary bg-opacity-10 p-2 rounded">
-                            <i class="ti ti-truck text-primary fs-5"></i>
-                        </div>
+        <!-- Chart 3: Line Chart dengan Filter -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Trend Defect</h5>
+                    <!-- Filter Buttons -->
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary filter-period active" data-period="daily">
+                            Daily
+                        </button>
+                        <button type="button" class="btn btn-outline-primary filter-period" data-period="weekly">
+                            Weekly
+                        </button>
+                        <button type="button" class="btn btn-outline-primary filter-period" data-period="monthly">
+                            Monthly
+                        </button>
                     </div>
-
-                    <!-- Baris 2: Angka + Growth -->
-                    <div class="d-flex align-items-center justify-content-between mt-3">
-                        <h2 class="mb-0 fw-semibold">156</h2>
-                        <span class="text-success fw-semibold small">
-                            <i class="ti ti-arrow-up me-1"></i> +12.5%
-                        </span>
-                    </div>
-
                 </div>
-            </div>
-        </div>
-
-        <!-- Card Active Vehicles -->
-        <div class="col-lg-3">
-            <div class="card overflow-hidden">
-                <div class="card-body p-4">
-
-                    <!-- Baris 1: Judul + Icon -->
-                    <div class="d-flex align-items-center justify-content-between">
-                        <p class="mb-0 small fw-medium text-muted">Active Vehicles</p>
-                        <div class="bg-success bg-opacity-10 p-2 rounded">
-                            <i class="ti ti-truck-delivery text-success fs-5"></i>
-                        </div>
-                    </div>
-
-                    <!-- Baris 2: Angka + Growth -->
-                    <div class="d-flex align-items-center justify-content-between mt-3">
-                        <h2 class="mb-0 fw-semibold">42/60</h2>
-                        <span class="text-success fw-semibold small">
-                            <i class="ti ti-arrow-up me-1"></i> +5.2%
-                        </span>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Card On-Time Delivery -->
-        <div class="col-lg-3">
-            <div class="card overflow-hidden">
-                <div class="card-body p-4">
-
-                    <!-- Baris 1: Judul + Icon -->
-                    <div class="d-flex align-items-center justify-content-between">
-                        <p class="mb-0 small fw-medium text-muted">On-Time Delivery</p>
-                        <div class="p-2 rounded" style="background-color: rgba(111, 66, 193, 0.1);">
-                            <i class="ti ti-clock-check fs-5" style="color: #6f42c1;"></i>
-                        </div>
-                    </div>
-
-                    <!-- Baris 2: Angka + Growth -->
-                    <div class="d-flex align-items-center justify-content-between mt-3">
-                        <h2 class="mb-0 fw-semibold">94.8%</h2>
-                        <span class="text-success fw-semibold small">
-                            <i class="ti ti-arrow-up me-1"></i> +2.3%
-                        </span>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Card Capacity Utilization -->
-        <div class="col-lg-3">
-            <div class="card overflow-hidden">
-                <div class="card-body p-4">
-
-                    <!-- Baris 1: Judul + Icon -->
-                    <div class="d-flex align-items-center justify-content-between">
-                        <p class="mb-0 small fw-medium text-muted">Capacity Utilization</p>
-                        <div class="bg-warning bg-opacity-10 p-2 rounded">
-                            <i class="ti ti-chart-bar text-warning fs-5"></i>
-                        </div>
-                    </div>
-
-                    <!-- Baris 2: Angka + Growth -->
-                    <div class="d-flex align-items-center justify-content-between mt-3">
-                        <h2 class="mb-0 fw-semibold">78%</h2>
-                        <span class="text-danger fw-semibold small">
-                            <i class="ti ti-arrow-down me-1"></i> -3.1%
-                        </span>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Row untuk 2 Card dengan ukuran sama -->
-    <div class="row mt-4">
-        <!-- Left Column: Vehicle Tracking Map -->
-        <div class="col-lg-6">
-            <div class="card">
                 <div class="card-body">
-                    <!-- Header Card -->
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="ti ti-map-2 text-primary fs-5"></i>
-                            <h5 class="fw-semibold mb-0">Vehicle Tracking Map</h5>
+                    <!-- Loading indicator untuk line chart -->
+                    <div id="loading-line-chart" class="text-center py-3" style="display: none;">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
+                        <p class="mt-2">Memuat data trend...</p>
                     </div>
-
-                    <!-- Container untuk Leaflet Map -->
-                    <div id="vehicleTrackingMap" style="height: 380px; width: 100%; border-radius: 8px; z-index: 1;"></div>
-
+                    <div id="line-chart"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Trips per Day Chart -->
-        <div class="col-lg-6">
-            <div class="card">
+        <!-- Chart 4: Donut Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="card-title mb-0">Komposisi Defect</h5>
+                </div>
                 <div class="card-body">
-                    <!-- Header Card -->
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="ti ti-chart-line text-primary fs-5"></i>
-                            <h5 class="fw-semibold mb-0">Trips per Day (Last 7 Days)</h5>
-                        </div>
-                    </div>
-
-                    <!-- Container untuk Apex Chart -->
-                    <div id="tripsChart" style="height: 380px; width: 100%;"></div>
-
+                    <div id="donut-chart"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Row untuk 2 Card baru (Cost per Route & Vehicle Utilization) -->
-    <div class="row mt-4">
-        <!-- Left Column: Cost per Route Chart -->
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-body">
-                    <!-- Header Card -->
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="ti ti-currency-dollar text-primary fs-5"></i>
-                            <h5 class="fw-semibold mb-0">Cost per Route (IDR x1000)</h5>
-                        </div>
-                    </div>
+    <!-- Anda bisa tambahkan konten lain di sini -->
 
-                    <!-- Container untuk Apex Chart -->
-                    <div id="costPerRouteChart" style="height: 350px; width: 100%;"></div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column: Vehicle Utilization Chart -->
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-body">
-                    <!-- Header Card -->
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="ti ti-gauge text-primary fs-5"></i>
-                            <h5 class="fw-semibold mb-0">Vehicle Utilization (%)</h5>
-                        </div>
-                    </div>
-
-                    <!-- Container untuk Apex Chart -->
-                    <div id="vehicleUtilizationChart" style="height: 350px; width: 100%;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Row untuk Route Schedule Table -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <!-- Header Card -->
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="ti ti-calendar-clock text-primary fs-5"></i>
-                            <h5 class="fw-semibold mb-0">Route Schedule Today</h5>
-                        </div>
-                        <div>
-                            <button class="btn btn-sm btn-primary" onclick="refreshTable()">
-                                <i class="ti ti-refresh me-1"></i>Refresh
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Table -->
-                    <div class="table-responsive">
-                        <table id="routeScheduleTable" class="table table-striped table-bordered w-100">
-                            <thead>
-                                <tr>
-                                    <th>Route ID</th>
-                                    <th>Route Details</th>
-                                    <th>Vehicle</th>
-                                    <th>Driver</th>
-                                    <th>Time</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>RTE-001</td>
-                                    <td>Jakarta Pusat - Bekasi (via Tol Cikunir)</td>
-                                    <td>Truck A-01 (Box 10 ton)</td>
-                                    <td>Budi Santoso</td>
-                                    <td>08:00 - 10:30</td>
-                                    <td><span class="badge bg-success">On Going</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-002</td>
-                                    <td>Jakarta Selatan - Depok (via Margonda)</td>
-                                    <td>Truck A-02 (Box 8 ton)</td>
-                                    <td>Ahmad Hidayat</td>
-                                    <td>09:00 - 11:15</td>
-                                    <td><span class="badge bg-success">On Going</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-003</td>
-                                    <td>Jakarta Barat - Tangerang (via Kembangan)</td>
-                                    <td>Truck B-01 (Wingbox 12 ton)</td>
-                                    <td>Rudi Hermawan</td>
-                                    <td>07:30 - 09:45</td>
-                                    <td><span class="badge bg-success">On Going</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-004</td>
-                                    <td>Jakarta Utara - Cikarang (via Tol Cilincing)</td>
-                                    <td>Truck C-01 (Fuso 15 ton)</td>
-                                    <td>Slamet Riyadi</td>
-                                    <td>10:00 - 13:30</td>
-                                    <td><span class="badge bg-warning">Loading</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-005</td>
-                                    <td>Jakarta Timur - Bogor (via Tol Jagorawi)</td>
-                                    <td>Truck A-03 (Box 10 ton)</td>
-                                    <td>Joko Susilo</td>
-                                    <td>08:30 - 11:45</td>
-                                    <td><span class="badge" style="background-color: gray; color: white;">Planned</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-006</td>
-                                    <td>Jakarta Pusat - Cileungsi (via Tol Jorr)</td>
-                                    <td>Truck B-02 (Wingbox 12 ton)</td>
-                                    <td>Dedi Kurniawan</td>
-                                    <td>09:15 - 12:30</td>
-                                    <td><span class="badge bg-success">On Going</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-007</td>
-                                    <td>Jakarta Selatan - Ciputat (via Pondok Pinang)</td>
-                                    <td>Truck A-04 (Box 8 ton)</td>
-                                    <td>Agus Salim</td>
-                                    <td>11:00 - 13:15</td>
-                                    <td><span class="badge bg-warning">Loading</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-008</td>
-                                    <td>Jakarta Barat - Serpong (via Tol Ulujami)</td>
-                                    <td>Truck C-02 (Fuso 15 ton)</td>
-                                    <td>Hendra Wijaya</td>
-                                    <td>07:00 - 09:30</td>
-                                    <td><span class="badge bg-secondary">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-009</td>
-                                    <td>Jakarta Utara - Karawang (via Tol Cikampek)</td>
-                                    <td>Truck A-05 (Box 10 ton)</td>
-                                    <td>Wawan Setiawan</td>
-                                    <td>12:00 - 15:45</td>
-                                    <td><span class="badge bg-danger">Delayed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>RTE-010</td>
-                                    <td>Jakarta Timur - Cibubur (via Alternatif)</td>
-                                    <td>Truck B-03 (Wingbox 12 ton)</td>
-                                    <td>Eko Prasetyo</td>
-                                    <td>13:30 - 15:45</td>
-                                    <td><span class="badge bg-danger">Delayed</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<?php include '../layout/footer.php'; ?>
+<?php include '../layout/scripts.php'; ?>
 
+<!-- Definisikan konstanta API -->
 <script>
-    // Inisialisasi DataTable
-    let routeTable;
-    // Inisialisasi Vehicle Tracking Map
-    function initVehicleTrackingMap() {
-        // Koordinat pusat (Jakarta area)
-        const centerPoint = [-6.2088, 106.8456];
+    // API Constants - Biar gampang maintenance
+    const API = {
+        dashboard: 'DashboardController.php',
+        chart: 'ChartDashboardController.php'
+    };
+</script>
 
-        // Inisialisasi map
-        const vehicleMap = L.map('vehicleTrackingMap').setView(centerPoint, 11);
+<!-- Script untuk mengambil data statistik dan render charts -->
+<script>
+    // Variabel global untuk menyimpan instance chart
+    let lineChartInstance = null;
+    let donutChartInstance = null;
+    let paretoChartInstance = null;
+    let horizontalBarChartInstance = null;
 
-        // Tambah tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(vehicleMap);
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardStats();
+        loadParetoChart();
+        loadDefectBySectionChart();
+        loadLineChart('daily'); // Default daily
 
-        // Sample vehicle positions (mock data)
-        const vehicles = [{
-                pos: [-6.1754, 106.8272],
-                status: 'on-route',
-                name: 'Truck A-01'
-            },
-            {
-                pos: [-6.2146, 106.8456],
-                status: 'on-route',
-                name: 'Truck A-02'
-            },
-            {
-                pos: [-6.2402, 106.7889],
-                status: 'loading',
-                name: 'Truck B-01'
-            },
-            {
-                pos: [-6.1890, 106.8223],
-                status: 'idle',
-                name: 'Truck C-01'
-            },
-            {
-                pos: [-6.1584, 106.8836],
-                status: 'on-route',
-                name: 'Truck A-03'
-            },
-            {
-                pos: [-6.1982, 106.9126],
-                status: 'on-route',
-                name: 'Truck A-04'
-            },
-            {
-                pos: [-6.2287, 106.7966],
-                status: 'loading',
-                name: 'Truck B-02'
-            }
-        ];
+        // Event listeners untuk filter buttons line chart
+        const filterButtons = document.querySelectorAll('.filter-period');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
 
-        // Icon kustom untuk setiap status
-        vehicles.forEach(v => {
-            let iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-';
-            let color;
+                // Update active state
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
 
-            switch (v.status) {
-                case 'on-route':
-                    color = 'green';
-                    break;
-                case 'loading':
-                    color = 'orange';
-                    break;
-                case 'idle':
-                    color = 'red';
-                    break;
-                default:
-                    color = 'blue';
-            }
-
-            const markerIcon = L.icon({
-                iconUrl: iconUrl + color + '.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
+                // Get period and load chart
+                const period = this.getAttribute('data-period');
+                loadLineChart(period);
             });
-
-            L.marker(v.pos, {
-                    icon: markerIcon
-                })
-                .bindPopup(`<b>${v.name}</b><br>Status: ${v.status}<br>Speed: ${Math.floor(Math.random() * 40 + 20)} km/h`)
-                .addTo(vehicleMap);
         });
 
-        // Tambah rute sample (rute utama)
-        L.Routing.control({
-            waypoints: [
-                L.latLng(-6.2088, 106.8456),
-                L.latLng(-6.1754, 106.8272),
-                L.latLng(-6.1584, 106.8836),
-                L.latLng(-6.2088, 106.8456)
-            ],
-            routeWhileDragging: false,
-            showAlternatives: false,
-            fitSelectedRoutes: false,
-            show: false,
-            lineOptions: {
-                styles: [{
-                    color: '#5D87FF',
-                    opacity: 0.6,
-                    weight: 4
-                }]
-            },
-            createMarker: function() {
-                return null;
-            }
-        }).addTo(vehicleMap);
+        // Panggil donut chart dengan filter
+        renderDonutChart();
+    });
 
-        // Simpan ke window
-        window.vehicleMap = vehicleMap;
+    // Function untuk load statistik
+    function loadDashboardStats() {
+        // Tampilkan loading
+        document.getElementById('loading-stats').style.display = 'block';
+
+        // Panggil API dashboard
+        fetch(API.dashboard + '?action=getDashboardStats')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                // Sembunyikan loading
+                document.getElementById('loading-stats').style.display = 'none';
+
+                if (result.status === 'success') {
+                    // Isi data ke element
+                    document.getElementById('total-defect').textContent = result.data.total_defect;
+                    document.getElementById('total-customer').textContent = result.data.total_customer;
+                    document.getElementById('total-section').textContent = result.data.total_section;
+                    document.getElementById('total-problem').textContent = result.data.total_problem;
+
+                    console.log('Data dashboard berhasil dimuat:', result.data);
+                } else {
+                    console.error('Gagal:', result.message);
+                    // Tampilkan pesan error di card stats
+                    showNoDataMessage('total-defect', '0');
+                    showNoDataMessage('total-customer', '0');
+                    showNoDataMessage('total-section', '0');
+                    showNoDataMessage('total-problem', '0');
+                }
+            })
+            .catch(error => {
+                // Sembunyikan loading
+                document.getElementById('loading-stats').style.display = 'none';
+                console.error('Error:', error);
+
+                // Tampilkan 0 jika error
+                document.getElementById('total-defect').textContent = '0';
+                document.getElementById('total-customer').textContent = '0';
+                document.getElementById('total-section').textContent = '0';
+                document.getElementById('total-problem').textContent = '0';
+            });
     }
 
-    // Inisialisasi Trips Chart dengan ApexCharts
-    function initTripsChart() {
+    // Function untuk menampilkan pesan no data
+    function showNoDataMessage(elementId, message = 'Tidak ada data tersedia') {
+        const element = document.getElementById(elementId);
+        if (element) {
+            // Jika element adalah chart container
+            if (elementId.includes('chart')) {
+                element.innerHTML = `
+                    <div class="d-flex flex-column align-items-center justify-content-center" style="height: 350px;">
+                        <i class="ti ti-database-off" style="font-size: 64px; color: #adb5bd;"></i>
+                        <p class="mt-3 text-muted">${message}</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // ============================================
+    // PARETO CHART - Top 5 Impacted Customers vs Average
+    // ============================================
+    function loadParetoChart() {
+        // Cek apakah element loading-pareto ada
+        const loadingElement = document.getElementById('loading-pareto');
+        const chartElement = document.querySelector('#pareto-chart');
+
+        if (!loadingElement || !chartElement) {
+            console.error('Element loading-pareto atau pareto-chart tidak ditemukan');
+            return;
+        }
+
+        // Tampilkan loading
+        loadingElement.style.display = 'block';
+        chartElement.innerHTML = ''; // Kosongkan chart
+
+        // Hapus chart sebelumnya jika ada
+        if (paretoChartInstance) {
+            paretoChartInstance.destroy();
+        }
+
+        // Panggil API chart
+        fetch(API.chart + '?action=getTopCustomersChart')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                // Sembunyikan loading
+                loadingElement.style.display = 'none';
+
+                if (result.status === 'success') {
+                    // CEK DATA KOSONG
+                    if (!result.data ||
+                        !result.data.categories ||
+                        result.data.categories.length === 0 ||
+                        !result.data.series ||
+                        !result.data.series[0] ||
+                        !result.data.series[0].data ||
+                        result.data.series[0].data.length === 0) {
+
+                        showNoDataMessage('pareto-chart', 'Tidak ada data defect customer');
+                        return;
+                    }
+
+                    // Render chart dengan data dari API
+                    renderParetoChart(result.data);
+                    console.log('Data Pareto chart berhasil dimuat:', result.data);
+                } else {
+                    console.error('Gagal load Pareto chart:', result.message);
+                    showNoDataMessage('pareto-chart', 'Gagal memuat data');
+                }
+            })
+            .catch(error => {
+                // Sembunyikan loading
+                loadingElement.style.display = 'none';
+                console.error('Error load Pareto chart:', error);
+                showNoDataMessage('pareto-chart', 'Terjadi kesalahan koneksi');
+            });
+    }
+
+    // Function render Pareto chart dengan data dari API
+    function renderParetoChart(data) {
+        const chartElement = document.querySelector("#pareto-chart");
+
+        // CEK DATA KOSONG
+        if (!data || !data.categories || data.categories.length === 0) {
+            showNoDataMessage('pareto-chart', 'Tidak ada data untuk ditampilkan');
+            return;
+        }
+
+        const barColors = [
+            '#4F81BD',
+            '#9BBB59',
+            '#F79646',
+            '#8064A9',
+            '#4BACC6'
+        ];
+
         const options = {
+            series: [{
+                    name: data.series[0].name,
+                    type: 'column',
+                    data: data.series[0].data
+                },
+                {
+                    name: data.series[1].name,
+                    type: 'line',
+                    data: data.series[1].data
+                }
+            ],
+
             chart: {
-                type: 'line',
                 height: 350,
+                type: 'line',
+                stacked: false,
                 toolbar: {
                     show: false
                 },
-                zoom: {
-                    enabled: false
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
                 }
             },
+
+            stroke: {
+                width: [0, 3],
+                curve: 'smooth'
+            },
+
+            plotOptions: {
+                bar: {
+                    columnWidth: '50%',
+                    borderRadius: 4,
+                    distributed: true
+                }
+            },
+
+            colors: [
+                function({
+                    dataPointIndex
+                }) {
+                    return barColors[dataPointIndex % barColors.length];
+                },
+                '#FF4560'
+            ],
+
+            labels: data.categories,
+
+            markers: {
+                size: [0, 5],
+                hover: {
+                    size: 7
+                }
+            },
+
+            yaxis: [{
+                    title: {
+                        text: 'Jumlah Defect'
+                    },
+                    min: 0,
+                    labels: {
+                        formatter: function(val) {
+                            return Math.round(val);
+                        }
+                    }
+                },
+                {
+                    opposite: true,
+                    title: {
+                        text: 'Rata-rata Defect'
+                    },
+                    min: 0,
+                    labels: {
+                        formatter: function(val) {
+                            return val.toFixed(1);
+                        }
+                    }
+                }
+            ],
+
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                    formatter: function(y, {
+                        seriesIndex
+                    }) {
+                        if (seriesIndex === 0) {
+                            return Math.round(y) + ' defects';
+                        }
+                        return y.toFixed(1) + ' defects (avg)';
+                    }
+                }
+            },
+
+            legend: {
+                horizontalAlign: 'center',
+                offsetX: 40
+            },
+
+            grid: {
+                borderColor: '#e0e0e0',
+                row: {
+                    colors: ['#f8f9fa', 'transparent'],
+                    opacity: 0.3
+                }
+            },
+
+            dataLabels: {
+                enabled: false
+            },
+
+            noData: {
+                text: 'Tidak ada data tersedia',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: {
+                    fontSize: '14px',
+                    fontFamily: 'Helvetica, Arial, sans-serif'
+                }
+            }
+        };
+
+        paretoChartInstance = new ApexCharts(chartElement, options);
+        paretoChartInstance.render();
+    }
+
+    // ============================================
+    // HORIZONTAL BAR CHART - Defect Distribution by Production Section
+    // ============================================
+    function loadDefectBySectionChart() {
+        // Cek apakah element loading ada
+        const loadingElement = document.getElementById('loading-horizontal-bar');
+        const chartElement = document.querySelector('#horizontal-bar-chart');
+
+        if (!chartElement) {
+            console.error('Element horizontal-bar-chart tidak ditemukan');
+            return;
+        }
+
+        // Tampilkan loading
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+
+        // Kosongkan chart
+        chartElement.innerHTML = '';
+
+        // Hapus chart sebelumnya jika ada
+        if (horizontalBarChartInstance) {
+            horizontalBarChartInstance.destroy();
+        }
+
+        // Panggil API chart untuk defect by section
+        fetch(API.chart + '?action=getDefectBySectionChart')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                // Sembunyikan loading
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+
+                if (result.status === 'success' && result.data) {
+                    // CEK DATA KOSONG
+                    const categories = result.data.categories || [];
+                    const seriesData = result.data.series?.[0]?.data || [];
+
+                    if (categories.length === 0 || seriesData.length === 0) {
+                        showNoDataMessage('horizontal-bar-chart', 'Tidak ada data defect per section');
+                        return;
+                    }
+
+                    // Render chart dengan data dari API
+                    renderHorizontalBarChart(result.data);
+                    console.log('Data defect by section berhasil dimuat:', result.data);
+                } else {
+                    console.error('Data defect by section kosong atau gagal');
+                    showNoDataMessage('horizontal-bar-chart', 'Gagal memuat data');
+                }
+            })
+            .catch(error => {
+                // Sembunyikan loading
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                console.error('Error load defect by section chart:', error);
+                showNoDataMessage('horizontal-bar-chart', 'Terjadi kesalahan koneksi');
+            });
+    }
+
+    // Function render Horizontal Bar Chart dengan data dari API
+    function renderHorizontalBarChart(data) {
+        const chartElement = document.querySelector("#horizontal-bar-chart");
+
+        if (!chartElement) {
+            console.error('Element horizontal-bar-chart tidak ditemukan');
+            return;
+        }
+
+        // Hapus chart sebelumnya jika ada
+        chartElement.innerHTML = '';
+
+        // CEK DATA KOSONG
+        if (!data) {
+            showNoDataMessage('horizontal-bar-chart', 'Tidak ada data untuk ditampilkan');
+            return;
+        }
+
+        // Pastikan categories ada
+        const categories = data.categories || [];
+
+        // Ambil data dari series dengan format yang benar
+        let seriesData = [];
+        if (data.series && data.series[0] && data.series[0].data) {
+            seriesData = data.series[0].data;
+        } else if (data.series && data.series[0]) {
+            seriesData = data.series[0];
+        }
+
+        // Jika categories atau seriesData kosong
+        if (categories.length === 0 || seriesData.length === 0) {
+            showNoDataMessage('horizontal-bar-chart', 'Tidak ada data untuk ditampilkan');
+            return;
+        }
+
+        renderHorizontalBarChartWithOptions(chartElement, categories, seriesData);
+    }
+
+    // Helper function untuk render chart dengan opsi yang sudah jadi
+    function renderHorizontalBarChartWithOptions(chartElement, categories, seriesData) {
+        // Generate warna berdasarkan jumlah data
+        const colors = [
+            '#4F81BD', '#9BBB59', '#F79646', '#C0504E',
+            '#8064A2', '#4BACC6', '#F15B5B', '#9E5F9E',
+            '#5A9E6B', '#E78C35', '#5A9E9E', '#B55A5A'
+        ];
+
+        const options = {
             series: [{
-                name: 'Trips',
-                data: [165, 172, 158, 182, 178, 195, 188]
+                name: 'Jumlah Defect',
+                data: seriesData
             }],
+            chart: {
+                type: 'bar',
+                height: Math.max(350, categories.length * 35), // Tinggi dinamis
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                    distributed: true,
+                    barHeight: '70%',
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            colors: colors.slice(0, categories.length),
             xaxis: {
-                categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                labels: {
+                categories: categories,
+                title: {
+                    text: 'Jumlah Defect',
                     style: {
-                        colors: '#5A6A85',
-                        fontSize: '12px'
+                        fontSize: '14px',
+                        fontWeight: 600
+                    }
+                },
+                labels: {
+                    formatter: function(val) {
+                        return Math.round(val);
                     }
                 }
             },
             yaxis: {
-                labels: {
+                title: {
+                    text: 'Production Section',
                     style: {
-                        colors: '#5A6A85',
-                        fontSize: '12px'
+                        fontSize: '14px',
+                        fontWeight: 600
                     }
                 },
-                min: 140,
-                max: 210
+                labels: {
+                    style: {
+                        fontSize: '12px'
+                    },
+                    trim: true,
+                    maxWidth: 200
+                }
+            },
+            title: {
+                text: 'Defect Distribution by Production Section',
+                align: 'center',
+                style: {
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    display: 'none'
+                }
+            },
+            legend: {
+                show: false
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return val + " defects";
+                    }
+                }
             },
             grid: {
-                borderColor: '#e0e6ed',
-                strokeDashArray: 5,
+                borderColor: '#e0e0e0',
                 xaxis: {
                     lines: {
                         show: true
                     }
+                },
+                yaxis: {
+                    lines: {
+                        show: false
+                    }
+                },
+                padding: {
+                    left: 20,
+                    right: 20
                 }
             },
-            colors: ['#5D87FF'],
-            markers: {
-                size: 5,
-                colors: ['#5D87FF'],
-                strokeColors: '#ffffff',
-                strokeWidth: 2,
+            states: {
                 hover: {
-                    size: 7
+                    filter: {
+                        type: 'lighten',
+                        value: 0.1
+                    }
+                }
+            },
+            noData: {
+                text: 'Tidak ada data tersedia',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: {
+                    fontSize: '14px',
+                    fontFamily: 'Helvetica, Arial, sans-serif'
+                }
+            },
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 400
+                    },
+                    yaxis: {
+                        labels: {
+                            maxWidth: 120,
+                            style: {
+                                fontSize: '11px'
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        // Render chart
+        horizontalBarChartInstance = new ApexCharts(chartElement, options);
+        horizontalBarChartInstance.render();
+    }
+
+    // ============================================
+    // LINE CHART - Trend Defect dengan Filter Daily, Weekly, Monthly
+    // ============================================
+    function loadLineChart(period = 'daily') {
+        const chartElement = document.querySelector("#line-chart");
+        const loadingElement = document.getElementById('loading-line-chart');
+
+        if (!chartElement) {
+            console.error('Element line-chart tidak ditemukan');
+            return;
+        }
+
+        // Tampilkan loading
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        chartElement.innerHTML = '';
+
+        // Hapus chart sebelumnya jika ada
+        if (lineChartInstance) {
+            lineChartInstance.destroy();
+        }
+
+        // Panggil API
+        fetch(API.chart + `?action=getLineChart&period=${period}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                // Sembunyikan loading
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+
+                if (result.status === 'success' && result.data) {
+                    // CEK DATA KOSONG
+                    const categories = result.data.categories || [];
+                    const seriesData = result.data.series?.[0]?.data || [];
+
+                    if (categories.length === 0 || seriesData.length === 0) {
+                        showNoDataMessage('line-chart', 'Tidak ada data trend defect');
+                        return;
+                    }
+
+                    // Render chart dengan data dari API
+                    renderLineChart(result.data, period);
+                    console.log(`Line chart (${period}) berhasil dimuat:`, result.data);
+                } else {
+                    console.error('Gagal load line chart:', result.message);
+                    showNoDataMessage('line-chart', 'Gagal memuat data');
+                }
+            })
+            .catch(error => {
+                // Sembunyikan loading
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                console.error('Error load line chart:', error);
+                showNoDataMessage('line-chart', 'Terjadi kesalahan koneksi');
+            });
+    }
+
+    // Function render Line Chart dengan data dari API
+    function renderLineChart(data, period) {
+        const chartElement = document.querySelector("#line-chart");
+
+        // CEK DATA KOSONG
+        if (!data || !data.categories || data.categories.length === 0) {
+            showNoDataMessage('line-chart', 'Tidak ada data untuk ditampilkan');
+            return;
+        }
+
+        // Bersihkan element
+        chartElement.innerHTML = '';
+
+        // Siapkan title berdasarkan period
+        let titleText = 'Trend Defect ';
+        if (period === 'daily') {
+            titleText += '7 Hari Terakhir';
+        } else if (period === 'weekly') {
+            titleText += 'Minggu Ini';
+        } else {
+            titleText += 'Tahun ' + new Date().getFullYear();
+        }
+
+        const options = {
+            series: data.series,
+            chart: {
+                height: 350,
+                type: 'line',
+                zoom: {
+                    enabled: false
+                },
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            dataLabels: {
+                enabled: false,
+                offsetY: -10,
+                style: {
+                    fontSize: '12px',
+                    colors: ['#304758']
+                },
+                background: {
+                    enabled: true,
+                    padding: 4,
+                    borderRadius: 2,
+                    borderWidth: 0,
+                    opacity: 0.8
                 }
             },
             stroke: {
                 curve: 'smooth',
                 width: 3
             },
-            tooltip: {
-                y: {
-                    formatter: function(val) {
-                        return val + ' trips'
-                    }
+            colors: ['#4F81BD'],
+            markers: {
+                size: 5,
+                colors: ['#fff'],
+                strokeColors: '#4F81BD',
+                strokeWidth: 2,
+                hover: {
+                    size: 7
                 }
-            },
-            legend: {
-                show: false
-            }
-        };
-
-        const chart = new ApexCharts(document.querySelector("#tripsChart"), options);
-        chart.render();
-
-        // Simpan ke window
-        window.tripsChart = chart;
-    }
-
-    // Inisialisasi Cost per Route Chart
-    function initCostPerRouteChart() {
-        const options = {
-            chart: {
-                type: 'bar',
-                height: 350,
-                toolbar: {
-                    show: false
-                },
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
-            },
-            plotOptions: {
-                bar: {
-                    borderRadius: 6,
-                    horizontal: false,
-                    columnWidth: '55%',
-                    distributed: true,
-                    dataLabels: {
-                        position: 'top'
-                    }
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function(val) {
-                    return 'Rp ' + val;
-                },
-                offsetY: -20,
-                style: {
-                    fontSize: '11px',
-                    colors: ['#5A6A85']
-                }
-            },
-            series: [{
-                name: 'Cost (IDR x1000)',
-                data: [425, 385, 315, 565, 685]
-            }],
-            colors: ['#5D87FF', '#49BEFF', '#FFAE1F', '#FA896B', '#13DEB9'],
-            xaxis: {
-                categories: ['Route 1', 'Route 2', 'Route 3', 'Route 4', 'Route 5'],
-                labels: {
-                    style: {
-                        colors: '#5A6A85',
-                        fontSize: '12px',
-                        fontWeight: 500
-                    }
-                },
-                axisBorder: {
-                    show: false
-                },
-                axisTicks: {
-                    show: false
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: {
-                        colors: '#5A6A85',
-                        fontSize: '12px'
-                    },
-                    formatter: function(val) {
-                        return 'Rp ' + val;
-                    }
-                },
-                title: {
-                    text: 'Cost (IDR x1000)',
-                    style: {
-                        color: '#5A6A85',
-                        fontSize: '12px',
-                        fontWeight: 500
-                    }
-                },
-                min: 200,
-                max: 800
             },
             grid: {
-                borderColor: '#e0e6ed',
-                strokeDashArray: 5,
-                xaxis: {
-                    lines: {
-                        show: true
-                    }
+                borderColor: '#e0e0e0',
+                row: {
+                    colors: ['#f3f3f3', 'transparent'],
+                    opacity: 0.5
                 },
-                yaxis: {
-                    lines: {
-                        show: true
-                    }
+                padding: {
+                    top: 20,
+                    bottom: 20
                 }
             },
-            tooltip: {
-                y: {
-                    formatter: function(val) {
-                        return 'Rp ' + val + ' x1000'
-                    }
-                }
-            },
-            legend: {
-                show: false
-            }
-        };
-
-        const chart = new ApexCharts(document.querySelector("#costPerRouteChart"), options);
-        chart.render();
-        window.costPerRouteChart = chart;
-    }
-
-    // Inisialisasi Vehicle Utilization Chart (Bar Chart untuk 5 Truk)
-    function initVehicleUtilizationChart() {
-        const options = {
-            chart: {
-                type: 'bar',
-                height: 350,
-                toolbar: {
-                    show: false
-                },
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
-            },
-            plotOptions: {
-                bar: {
-                    borderRadius: 6,
-                    horizontal: false,
-                    columnWidth: '55%',
-                    distributed: false,
-                    dataLabels: {
-                        position: 'top'
-                    }
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function(val) {
-                    return val + '%';
-                },
-                offsetY: -20,
-                style: {
-                    fontSize: '12px',
-                    colors: ['#5A6A85']
-                }
-            },
-            series: [{
-                name: 'Utilization',
-                data: [92, 78, 45, 88, 65]
-            }],
-            colors: ['#5D87FF', '#49BEFF', '#FFAE1F', '#FA896B', '#13DEB9'],
             xaxis: {
-                categories: ['Truck A-01', 'Truck B-02', 'Truck C-03', 'Truck D-04', 'Truck E-05'],
-                labels: {
+                categories: data.categories,
+                title: {
+                    text: getXAxisTitle(period),
                     style: {
-                        colors: '#5A6A85',
-                        fontSize: '12px',
-                        fontWeight: 500
+                        fontSize: '14px',
+                        fontWeight: 600
                     }
                 },
-                axisBorder: {
-                    show: false
-                },
-                axisTicks: {
-                    show: false
-                }
-            },
-            yaxis: {
                 labels: {
+                    rotate: period === 'monthly' || period === 'daily' ? -45 : 0,
+                    rotateAlways: period === 'monthly' || period === 'daily',
                     style: {
-                        colors: '#5A6A85',
                         fontSize: '12px'
                     },
-                    formatter: function(val) {
-                        return val + '%';
-                    }
+                    trim: true,
+                    maxHeight: 120
                 },
+                tickAmount: data.categories ? data.categories.length : (period === 'daily' ? 7 : (period === 'weekly' ? 4 : 12))
+            },
+            yaxis: {
                 title: {
-                    text: 'Utilization Percentage (%)',
+                    text: 'Jumlah Defect',
                     style: {
-                        color: '#5A6A85',
-                        fontSize: '12px',
-                        fontWeight: 500
+                        fontSize: '14px',
+                        fontWeight: 600
                     }
                 },
                 min: 0,
-                max: 100
+                labels: {
+                    formatter: function(val) {
+                        return Math.round(val);
+                    }
+                }
             },
-            grid: {
-                borderColor: '#e0e6ed',
-                strokeDashArray: 5,
-                xaxis: {
-                    lines: {
-                        show: true
-                    }
-                },
-                yaxis: {
-                    lines: {
-                        show: true
-                    }
+            title: {
+                text: titleText,
+                align: 'center',
+                style: {
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    display: 'none'
                 }
             },
             tooltip: {
                 y: {
                     formatter: function(val) {
-                        return val + '% utilization'
+                        return val + " defects";
                     }
                 }
             },
-            legend: {
-                show: false
+            noData: {
+                text: 'Tidak ada data tersedia',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: {
+                    fontSize: '14px',
+                    fontFamily: 'Helvetica, Arial, sans-serif'
+                }
             },
-            // annotations: {
-            //     yaxis: [{
-            //         y: 85,
-            //         y2: 100,
-            //         borderColor: '#13DEB9',
-            //         fillColor: 'rgba(19, 222, 185, 0.1)',
-            //         label: {
-            //             text: 'Optimal',
-            //             style: {
-            //                 color: '#13DEB9',
-            //                 fontSize: '11px',
-            //                 fontWeight: 600
-            //             },
-            //             position: 'right'
-            //         }
-            //     }, {
-            //         y: 70,
-            //         y2: 84,
-            //         borderColor: '#5D87FF',
-            //         fillColor: 'rgba(93, 135, 255, 0.1)',
-            //         label: {
-            //             text: 'Good',
-            //             style: {
-            //                 color: '#5D87FF',
-            //                 fontSize: '11px',
-            //                 fontWeight: 600
-            //             },
-            //             position: 'right'
-            //         }
-            //     }, {
-            //         y: 50,
-            //         y2: 69,
-            //         borderColor: '#FFAE1F',
-            //         fillColor: 'rgba(255, 174, 31, 0.1)',
-            //         label: {
-            //             text: 'Fair',
-            //             style: {
-            //                 color: '#FFAE1F',
-            //                 fontSize: '11px',
-            //                 fontWeight: 600
-            //             },
-            //             position: 'right'
-            //         }
-            //     }, {
-            //         y: 0,
-            //         y2: 49,
-            //         borderColor: '#FA896B',
-            //         fillColor: 'rgba(250, 137, 107, 0.1)',
-            //         label: {
-            //             text: 'Low',
-            //             style: {
-            //                 color: '#FA896B',
-            //                 fontSize: '11px',
-            //                 fontWeight: 600
-            //             },
-            //             position: 'right'
-            //         }
-            //     }]
-            // }
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 300
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    xaxis: {
+                        labels: {
+                            rotate: -45,
+                            style: {
+                                fontSize: '10px'
+                            }
+                        }
+                    }
+                }
+            }]
         };
 
-        const chart = new ApexCharts(document.querySelector("#vehicleUtilizationChart"), options);
-        chart.render();
-        window.vehicleUtilizationChart = chart;
+        // Render chart
+        lineChartInstance = new ApexCharts(chartElement, options);
+        lineChartInstance.render();
+
+        console.log(`Line chart rendered with ${period} data:`, data);
     }
 
-    // Inisialisasi DataTable
-    function initDataTable() {
-        routeTable = $('#routeScheduleTable').DataTable({
-            responsive: true,
-            pageLength: 10,
-            lengthMenu: [
-                [5, 10, 25, 50, -1],
-                [5, 10, 25, 50, "All"]
-            ],
-            order: [
-                [4, 'asc']
-            ], // Sort by Time column
-            columnDefs: [{
-                targets: 5, // Status column
-                render: function(data, type, row) {
-                    if (type === 'display') {
-                        // Data sudah berisi HTML badge, jadi kembalikan apa adanya
-                        return data;
-                    }
-                    // Untuk sorting/filtering, ambil teks saja
-                    return $(data).text();
-                }
-            }],
-            language: {
-                search: "Search:",
-                lengthMenu: "Show _MENU_ entries",
-                info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                paginate: {
-                    first: "First",
-                    last: "Last",
-                    next: "Next",
-                    previous: "Previous"
-                }
-            }
-        });
-    }
-
-    // Fungsi refresh table
-    function refreshTable() {
-        if (routeTable) {
-            routeTable.draw();
+    // Helper function untuk mendapatkan title X axis
+    function getXAxisTitle(period) {
+        switch (period) {
+            case 'daily':
+                return '';
+            case 'weekly':
+                return '';
+            default:
+                return '';
         }
     }
 
-    // Panggil di DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', function() {
-        initVehicleTrackingMap();
-        initTripsChart();
-        initCostPerRouteChart();
-        initVehicleUtilizationChart();
-        initDataTable();
-    });
+    // ============================================
+    // DONUT CHART - Dengan Filter Customer/Part No (Top 5)
+    // ============================================
+    function renderDonutChart() {
+        const chartElement = document.querySelector("#donut-chart");
 
-    // Update cleanup
-    window.addEventListener('beforeunload', function() {
-        if (window.vehicleMap) window.vehicleMap.remove();
-        if (window.tripsChart) window.tripsChart.destroy();
-        if (window.costPerRouteChart) window.costPerRouteChart.destroy();
-        if (window.vehicleUtilizationChart) window.vehicleUtilizationChart.destroy();
-        if (routeTable) routeTable.destroy();
-    });
+        // Bersihkan element dan buat container untuk filter jika belum ada
+        if (!document.querySelector('#donut-chart-container')) {
+            const container = document.createElement('div');
+            container.id = 'donut-chart-container';
+            container.innerHTML = `
+            <div class="d-flex justify-content-end mb-3">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary filter-donut active" data-donut-type="customer">
+                        <i class="ti ti-users me-1"></i>Per Customer
+                    </button>
+                    <button type="button" class="btn btn-outline-primary filter-donut" data-donut-type="partno">
+                        <i class="ti ti-package me-1"></i>Per Part No
+                    </button>
+                </div>
+            </div>
+            <div id="donut-chart-content"></div>
+        `;
+            chartElement.parentNode.insertBefore(container, chartElement);
+            chartElement.remove();
+            container.querySelector('#donut-chart-content').id = 'donut-chart';
+
+            // Add event listeners untuk filter buttons
+            const filterButtons = container.querySelectorAll('.filter-donut');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Update active state
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Get type and load chart
+                    const type = this.getAttribute('data-donut-type');
+                    loadDonutChart(type);
+                });
+            });
+        }
+
+        // Load default chart (customer)
+        loadDonutChart('customer');
+    }
+
+    function loadDonutChart(type = 'customer') {
+        const chartElement = document.querySelector("#donut-chart");
+        const loadingElement = document.getElementById('loading-donut');
+
+        if (!chartElement) {
+            console.error('Element donut-chart tidak ditemukan');
+            return;
+        }
+
+        // Buat loading indicator jika belum ada
+        if (!loadingElement) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading-donut';
+            loadingDiv.className = 'text-center py-3';
+            loadingDiv.style.display = 'none';
+            loadingDiv.innerHTML = `
+            <div class="spinner-border text-info" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Memuat data donut chart...</p>
+        `;
+            chartElement.parentNode.insertBefore(loadingDiv, chartElement);
+        }
+
+        // Tampilkan loading
+        document.getElementById('loading-donut').style.display = 'block';
+        chartElement.innerHTML = '';
+
+        // Hapus chart sebelumnya jika ada
+        if (donutChartInstance) {
+            donutChartInstance.destroy();
+        }
+
+        // Panggil API dengan parameter kategori (customer/partno)
+        fetch(API.chart + `?action=getDoughnutChart&kategori=${type}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                // Sembunyikan loading
+                document.getElementById('loading-donut').style.display = 'none';
+
+                if (result.status === 'success' && result.data) {
+                    // CEK DATA KOSONG
+                    const labels = result.data.labels || [];
+                    const seriesData = result.data.datasets?.[0]?.data || [];
+
+                    if (labels.length === 0 || seriesData.length === 0) {
+                        const title = type === 'customer' ? 'customer' : 'part number';
+                        showNoDataMessage('donut-chart', `Tidak ada data defect per ${title}`);
+                        return;
+                    }
+
+                    // Render chart dengan data dari API
+                    renderDonutChartWithData(result.data, type);
+                    console.log(`Donut chart (${type}) berhasil dimuat:`, result.data);
+                } else {
+                    console.error('Gagal load donut chart:', result.message);
+                    showNoDataMessage('donut-chart', 'Gagal memuat data');
+                }
+            })
+            .catch(error => {
+                // Sembunyikan loading
+                document.getElementById('loading-donut').style.display = 'none';
+                console.error('Error load donut chart:', error);
+                showNoDataMessage('donut-chart', 'Terjadi kesalahan koneksi');
+            });
+    }
+
+    function renderDonutChartWithData(data, type) {
+        const chartElement = document.querySelector("#donut-chart");
+
+        if (!chartElement) {
+            console.error('Element donut-chart tidak ditemukan');
+            return;
+        }
+
+        // CEK DATA KOSONG
+        if (!data || !data.labels || data.labels.length === 0) {
+            showNoDataMessage('donut-chart', 'Tidak ada data untuk ditampilkan');
+            return;
+        }
+
+        // Pastikan data memiliki format yang benar (dari API)
+        if (!data || !data.labels || !data.datasets || !data.datasets[0]) {
+            console.error('Data tidak valid:', data);
+            return;
+        }
+
+        // Ambil data dari struktur API
+        const labels = data.labels;
+        const series = data.datasets[0].data;
+        const percentages = data.datasets[0].percentages || [];
+
+        // Siapkan title berdasarkan type
+        const titleText = type === 'customer' ? 'Top 5 Customer' : 'Top 5 Part Number';
+
+        const options = {
+            series: series,
+            chart: {
+                type: 'donut',
+                height: 380,
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            labels: labels,
+            // Warna untuk 5 item
+            colors: ['#4F81BD', '#9BBB59', '#F79646', '#C0504E', '#8064A2'],
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '60%',
+                        labels: {
+                            show: true,
+                            name: {
+                                show: true,
+                                fontSize: '14px',
+                                fontFamily: 'Helvetica, Arial, sans-serif',
+                                fontWeight: 600,
+                                color: '#373d3f',
+                                offsetY: -10
+                            },
+                            value: {
+                                show: true,
+                                fontSize: '13px',
+                                fontFamily: 'Helvetica, Arial, sans-serif',
+                                fontWeight: 400,
+                                color: '#666',
+                                offsetY: 10,
+                                formatter: function(val) {
+                                    return val + " defects";
+                                }
+                            },
+                            total: {
+                                show: true,
+                                label: 'Total Defects',
+                                fontSize: '14px',
+                                fontFamily: 'Helvetica, Arial, sans-serif',
+                                fontWeight: 600,
+                                color: '#373d3f',
+                                formatter: function(w) {
+                                    const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                    return total + " defects";
+                                }
+                            }
+                        }
+                    },
+                    expandOnClick: true,
+                    offset: 0
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            legend: {
+                position: 'bottom',
+                horizontalAlign: 'center',
+                fontSize: '13px',
+                markers: {
+                    width: 12,
+                    height: 12,
+                    radius: 2
+                },
+                itemMargin: {
+                    horizontal: 10,
+                    vertical: 5
+                },
+                formatter: function(seriesName, opts) {
+                    const percentage = percentages[opts.seriesIndex] ?
+                        ` (${percentages[opts.seriesIndex]}%)` :
+                        '';
+                    return seriesName + percentage;
+                }
+            },
+            stroke: {
+                width: 2,
+                colors: ['#fff']
+            },
+            fill: {
+                opacity: 0.9
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val, {
+                        seriesIndex
+                    }) {
+                        const percentage = percentages[seriesIndex] ?
+                            ` (${percentages[seriesIndex]}%)` :
+                            '';
+                        return val + " defects" + percentage;
+                    }
+                }
+            },
+            states: {
+                hover: {
+                    filter: {
+                        type: 'lighten',
+                        value: 0.1
+                    }
+                },
+                active: {
+                    filter: {
+                        type: 'none'
+                    },
+                    allowMultipleDataPointsSelection: false
+                }
+            },
+            noData: {
+                text: 'Tidak ada data tersedia',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: {
+                    fontSize: '14px',
+                    fontFamily: 'Helvetica, Arial, sans-serif'
+                }
+            },
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 350
+                    },
+                    legend: {
+                        position: 'bottom',
+                        fontSize: '11px',
+                        itemMargin: {
+                            horizontal: 5,
+                            vertical: 3
+                        }
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                labels: {
+                                    show: false
+                                }
+                            }
+                        }
+                    }
+                }
+            }],
+            title: {
+                text: `Komposisi Defect ${titleText}`,
+                align: 'center',
+                style: {
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    display: 'none'
+                }
+            }
+        };
+
+        // Render chart
+        donutChartInstance = new ApexCharts(chartElement, options);
+        donutChartInstance.render();
+    }
 </script>
-
-<?php include '../layout/footer.php'; ?>
-<?php include '../layout/scripts.php'; ?>

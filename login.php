@@ -2,45 +2,67 @@
 require_once 'helper/connection.php';
 session_start();
 
-// Check if form submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $noreg = trim($_POST['noreg']);
     $password = trim($_POST['password']);
 
-    if (!empty($noreg) && !empty($password)) {
-
-        if ($password === 'insanprima' || $password === 'excited' || $password === 'harness') {
-            // Prepare and execute the query
-            $sql = "SELECT * FROM db_pegawai WHERE noreg = ?";
-            $params = array($noreg);
-            $stmt = sqlsrv_query($connection, $sql, $params);
-
-            if ($stmt === false) {
-                die(print_r(sqlsrv_errors(), true));
-            }
-
-            // Fetch the data
-            $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
-
-            if ($row) {
-                // Store user data in session
-                $_SESSION['login'] = true;
-                $_SESSION['noreg'] = $row['noreg'];
-                $_SESSION['name'] = $row['name'];
-                $_SESSION['ext'] = $row['ext'];
-                $_SESSION['message'] = "Login berhasil!";
-                header('Location: main/Dashboard/');
-                exit();
-            } else {
-                $_SESSION['error_message'] = "Noreg tidak ditemukan.";
-            }
-        } else {
-            $_SESSION['error_message'] = "Password salah.";
-        }
-    } else {
+    // Cek field kosong
+    if (empty($noreg) || empty($password)) {
         $_SESSION['error_message'] = "Silakan isi semua field.";
+        header("Location: login.php");
+        exit();
     }
+
+    // Cek password
+    if (!in_array($password, ['insanprima', 'excited', 'harness'])) {
+        $_SESSION['error_message'] = "Password salah.";
+        header("Location: login.php");
+        exit();
+    }
+
+    // Query pegawai
+    $sql = "SELECT * FROM db_pegawai WHERE noreg = ?";
+    $params = [$noreg];
+    $stmt = sqlsrv_query($connection, $sql, $params);
+
+    if ($stmt === false) {
+        die(print_r(sqlsrv_errors(), true));
+    }
+
+    $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+
+    // Cek noreg
+    if (!$row) {
+        $_SESSION['error_message'] = "Noreg tidak ditemukan.";
+        header("Location: login.php");
+        exit();
+    }
+
+    // Cek resign
+    if (!empty($row['tgl_resign'])) {
+        $_SESSION['error_message'] = "Akun tidak aktif karena karyawan sudah tidak bekerja.";
+        header("Location: login.php");
+        exit();
+    }
+
+    // Cek divisi
+    if (!in_array($row['divisi'], ['Plant 1', 'PRIMA GO AI'])) {
+        $_SESSION['error_message'] = "Akses ditolak. Sistem ini hanya dapat digunakan oleh karyawan Plant 1 dan PRIMA GO AI.";
+        header("Location: login.php");
+        exit();
+    }
+
+    // LOGIN BERHASIL
+    $_SESSION['login'] = true;
+    $_SESSION['noreg'] = $row['noreg'];
+    $_SESSION['name'] = $row['name'];
+    $_SESSION['ext'] = $row['ext'];
+    $_SESSION['divisi'] = $row['divisi'];
+    $_SESSION['message'] = "Login berhasil!";
+
+    header('Location: main/Dashboard/');
+    exit();
 }
 ?>
 

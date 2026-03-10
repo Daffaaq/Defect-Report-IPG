@@ -19,7 +19,7 @@ isLogin();
                 <h4 class="fw-semibold mb-0">Laporan Claim Defect</h4>
                 <ol class="breadcrumb border border-info px-3 py-2 rounded">
                     <li class="breadcrumb-item">
-                        <a href="../dashboard/" class="text-muted">Dashboard</a>
+                        <a href="../dashboard/index.php" class="text-muted">Dashboard</a>
                     </li>
                     <li class="breadcrumb-item active">Laporan Claim Defect</li>
                 </ol>

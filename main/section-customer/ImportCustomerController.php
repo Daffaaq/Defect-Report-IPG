@@ -189,20 +189,6 @@ function importCustomers($connection)
                 }
             }
 
-            // Cek duplikat Nama Singkatan
-            $checkSqlSingkatan = "SELECT id FROM customer_table WHERE LOWER(nama_singkatan) = LOWER(?)";
-            $checkParamsSingkatan = [$nama_singkatan];
-            $checkStmtSingkatan = sqlsrv_prepare($connection, $checkSqlSingkatan, $checkParamsSingkatan);
-
-            if ($checkStmtSingkatan && sqlsrv_execute($checkStmtSingkatan)) {
-                $existingSingkatan = sqlsrv_fetch_array($checkStmtSingkatan, SQLSRV_FETCH_ASSOC);
-                if ($existingSingkatan) {
-                    $duplicates[] = "Baris $rowNumber: Singkatan '$nama_singkatan' sudah digunakan";
-                    $errorCount++;
-                    continue;
-                }
-            }
-
             // Insert data
             $sql = "INSERT INTO customer_table (nama_customer, nama_singkatan, created_at) VALUES (?, ?, GETDATE())";
             $params = [$nama_customer, $nama_singkatan];
