@@ -24,6 +24,8 @@ assets/*
 !composer.json
 !composer.lock
 
+auto_push.py
+
 # =========================
 # System / Env
 # =========================

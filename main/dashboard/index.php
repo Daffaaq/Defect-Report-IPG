@@ -461,6 +461,16 @@ include '../layout/head.php';
                 }
             ],
 
+            xaxis: {
+                categories: data.categories,
+                labels: {
+                    style: {
+                        fontSize: '10px', // ubah ukuran font label
+                        fontFamily: 'Helvetica, Arial, sans-serif'
+                    }
+                }
+            },
+
             tooltip: {
                 shared: true,
                 intersect: false,
@@ -1153,7 +1163,7 @@ include '../layout/head.php';
         const percentages = data.datasets[0].percentages || [];
 
         // Siapkan title berdasarkan type
-        const titleText = type === 'customer' ? 'Top 5 Customer' : 'Top 5 Part Number';
+        const titleText = type === 'customer' ? 'Customer' : 'Part Number';
 
         const options = {
             series: series,
