@@ -1189,28 +1189,16 @@ include '../layout/head.php';
                         labels: {
                             show: true,
                             name: {
-                                show: true,
-                                fontSize: '14px',
-                                fontFamily: 'Helvetica, Arial, sans-serif',
-                                fontWeight: 600,
-                                color: '#373d3f',
-                                offsetY: -10
+                                show: false // MATIKAN NAMA AGAR TIDAK MUNCUL
                             },
                             value: {
-                                show: true,
-                                fontSize: '13px',
-                                fontFamily: 'Helvetica, Arial, sans-serif',
-                                fontWeight: 400,
-                                color: '#666',
-                                offsetY: 10,
-                                formatter: function(val) {
-                                    return val + " defects";
-                                }
+                                show: false // MATIKAN VALUE AGAR TIDAK MUNCUL
                             },
                             total: {
                                 show: true,
+                                showAlways: true, // PAKSA SELALU TAMPIL
                                 label: 'Total Defects',
-                                fontSize: '14px',
+                                fontSize: '16px',
                                 fontFamily: 'Helvetica, Arial, sans-serif',
                                 fontWeight: 600,
                                 color: '#373d3f',
@@ -1308,7 +1296,12 @@ include '../layout/head.php';
                         pie: {
                             donut: {
                                 labels: {
-                                    show: false
+                                    show: true,
+                                    total: {
+                                        show: true,
+                                        showAlways: true,
+                                        fontSize: '14px'
+                                    }
                                 }
                             }
                         }
