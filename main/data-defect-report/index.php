@@ -608,6 +608,10 @@ isLogin();
         let tanggalAwal = $('#tanggalAwal').val();
         let tanggalAkhir = $('#tanggalAkhir').val();
 
+        console.log('tanggalAwal', tanggalAwal);
+        console.log('tanggalAkhir', tanggalAkhir);
+        // breakpoint;
+
         if (!tanggalAwal && !tanggalAkhir) {
             Swal.fire({
                 icon: 'warning',
@@ -631,6 +635,9 @@ isLogin();
             } else if (tanggalAwal && !tanggalAkhir) {
                 let tglAwal = formatDate(tanggalAwal);
                 pesanTanggal = `Tidak ada laporan untuk tanggal ${tglAwal}`;
+            } else if (!tanggalAwal && tanggalAkhir) {
+                let tglAkhir = formatDate(tanggalAkhir);
+                pesanTanggal = `Tidak ada laporan untuk tanggal ${tglAkhir}`;
             }
 
             Swal.fire({
@@ -663,21 +670,27 @@ isLogin();
             showConfirmButton: false
         });
 
-        let url = 'ExportDefectReportController.php';
+        // Buat URL dengan parameter secara manual
+        let params = [];
 
+        // Selalu tambahkan parameter jika ada nilainya
         if (tanggalAwal) {
-            url += '?tanggal_awal=' + tanggalAwal;
-            if (tanggalAkhir) {
-                url += '&tanggal_akhir=' + tanggalAkhir;
-            }
+            params.push('tanggal_awal=' + encodeURIComponent(tanggalAwal));
+        }
+        if (tanggalAkhir) {
+            params.push('tanggal_akhir=' + encodeURIComponent(tanggalAkhir));
         }
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = '';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Gabungkan parameter dengan &
+        let url = 'ExportDefectReportController.php';
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        console.log('URL Export:', url); // Untuk debugging
+
+        // Gunakan window.location.href
+        window.location.href = url;
 
         setTimeout(() => {
             Swal.close();

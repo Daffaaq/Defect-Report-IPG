@@ -3,15 +3,11 @@ session_start();
 include '../../helper/connection.php';
 require_once '../../vendor/autoload.php'; // Jika pakai Composer untuk PhpSpreadsheet
 
-// Atau jika tidak pakai Composer, include manual PhpSpreadsheet
-// require_once '../../vendor/phpoffice/phpspreadsheet/src/Bootstrap.php';
-
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Font;
 
 // Matikan error reporting
 ini_set('display_errors', 0);
@@ -26,18 +22,18 @@ if ($connection === false) {
 $tanggal_awal = $_GET['tanggal_awal'] ?? '';
 $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
 
-if (!$tanggal_awal && !$tanggal_akhir) {
+var_dump($tanggal_awal, $tanggal_akhir);
+
+// Validasi: minimal salah satu tanggal terisi
+if (empty($tanggal_awal) && empty($tanggal_akhir)) {
     http_response_code(400);
     die('Filter tanggal wajib untuk export data');
 }
 
-if ($tanggal_awal && $tanggal_akhir && $tanggal_awal > $tanggal_akhir) {
-    http_response_code(400);
-    die('Tanggal awal tidak boleh lebih besar dari tanggal akhir');
-}
-
-// Validasi tanggal
-$validateDate = fn($date) => DateTime::createFromFormat('Y-m-d', $date) ?: false;
+// Validasi format tanggal
+$validateDate = function ($date) {
+    return DateTime::createFromFormat('Y-m-d', $date) !== false;
+};
 
 // Build query
 $params = [];
@@ -58,23 +54,48 @@ $whereConditions = [];
 $filter_text = "SEMUA DATA";
 
 // Filter berdasarkan tanggal
-if ($tanggal_awal && $tanggal_akhir) {
-    $tanggal_awal_obj = $validateDate($tanggal_awal);
-    $tanggal_akhir_obj = $validateDate($tanggal_akhir);
+if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
 
-    if ($tanggal_awal_obj && $tanggal_akhir_obj) {
-        $whereConditions[] = "tanggal_ditemukan BETWEEN ? AND ?";
-        $params[] = $tanggal_awal;
-        $params[] = $tanggal_akhir;
-        $filter_text = "PERIODE " . date('d/m/Y', strtotime($tanggal_awal)) . " - " . date('d/m/Y', strtotime($tanggal_akhir));
+    if (!$validateDate($tanggal_awal) || !$validateDate($tanggal_akhir)) {
+        http_response_code(400);
+        die('Format tanggal tidak valid');
     }
-} elseif ($tanggal_awal && !$tanggal_akhir) {
-    $tanggal_awal_obj = $validateDate($tanggal_awal);
-    if ($tanggal_awal_obj) {
-        $whereConditions[] = "tanggal_ditemukan = ?";
-        $params[] = $tanggal_awal;
-        $filter_text = "TANGGAL " . date('d/m/Y', strtotime($tanggal_awal));
+
+    if ($tanggal_awal > $tanggal_akhir) {
+        http_response_code(400);
+        die('Tanggal awal tidak boleh lebih besar dari tanggal akhir');
     }
+
+    $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) BETWEEN ? AND ?";
+    $params[] = $tanggal_awal;
+    $params[] = $tanggal_akhir;
+
+    $filter_text = "PERIODE "
+        . date('d/m/Y', strtotime($tanggal_awal))
+        . " - "
+        . date('d/m/Y', strtotime($tanggal_akhir));
+} elseif (!empty($tanggal_awal)) {
+
+    if (!$validateDate($tanggal_awal)) {
+        http_response_code(400);
+        die('Format tanggal awal tidak valid');
+    }
+
+    $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
+    $params[] = $tanggal_awal;
+
+    $filter_text = "DARI " . date('d/m/Y', strtotime($tanggal_awal)) . " SAMPAI SEKARANG";
+} elseif (!empty($tanggal_akhir)) {
+
+    if (!$validateDate($tanggal_akhir)) {
+        http_response_code(400);
+        die('Format tanggal akhir tidak valid');
+    }
+
+    $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
+    $params[] = $tanggal_akhir;
+
+    $filter_text = "SAMPAI " . date('d/m/Y', strtotime($tanggal_akhir));
 }
 
 if (!empty($whereConditions)) {
@@ -85,8 +106,14 @@ $sql .= " ORDER BY tanggal_ditemukan DESC, id DESC";
 
 // Eksekusi query
 $stmt = sqlsrv_prepare($connection, $sql, $params);
-if (!$stmt || !sqlsrv_execute($stmt)) {
-    die('Gagal mengambil data');
+if (!$stmt) {
+    $errors = sqlsrv_errors();
+    die('Gagal menyiapkan query: ' . print_r($errors, true));
+}
+
+if (!sqlsrv_execute($stmt)) {
+    $errors = sqlsrv_errors();
+    die('Gagal mengeksekusi query: ' . print_r($errors, true));
 }
 
 // Fetch data
@@ -110,13 +137,19 @@ $sheet = $spreadsheet->getActiveSheet();
 // Set judul dan header
 $sheet->setCellValue('A1', 'LAPORAN CLAIM DEFECT');
 $sheet->setCellValue('A2', $filter_text);
-$queryTime = sqlsrv_query($connection, "SELECT GETDATE() as server_time");
-$rowTime = sqlsrv_fetch_array($queryTime, SQLSRV_FETCH_ASSOC);
-$dbTime = $rowTime['server_time'] instanceof DateTime
-    ? $rowTime['server_time']->format('d/m/Y H:i:s')
-    : date('d/m/Y H:i:s', strtotime($rowTime['server_time']));
 
+// Ambil waktu server
+$queryTime = sqlsrv_query($connection, "SELECT GETDATE() as server_time");
+if ($queryTime) {
+    $rowTime = sqlsrv_fetch_array($queryTime, SQLSRV_FETCH_ASSOC);
+    $dbTime = $rowTime['server_time'] instanceof DateTime
+        ? $rowTime['server_time']->format('d/m/Y H:i:s')
+        : date('d/m/Y H:i:s', strtotime($rowTime['server_time']));
+} else {
+    $dbTime = date('d/m/Y H:i:s');
+}
 $sheet->setCellValue('A3', 'Tanggal Export: ' . $dbTime);
+
 // Header kolom
 $headers = [
     'A' => 'No',
@@ -196,36 +229,54 @@ $sheet->getStyle('A3')->applyFromArray([
 $rowNumber = 6;
 $no = 1;
 
-foreach ($rows as $row) {
-    $sheet->setCellValue('A' . $rowNumber, $no++);
-    $sheet->setCellValue('B' . $rowNumber, date('d/m/Y', strtotime($row['tanggal_ditemukan'])));
-    $sheet->setCellValue('C' . $rowNumber, $row['nama_customer']);
-    $sheet->setCellValue('D' . $rowNumber, $row['lotno'] ?? '-');
-    $sheet->setCellValue('E' . $rowNumber, $row['partno'] ?? '-');
-    $sheet->setCellValue('F' . $rowNumber, $row['nama_section']);
-    $sheet->setCellValue('G' . $rowNumber, $row['nama_defect']);
-    $sheet->setCellValue('H' . $rowNumber, $row['nama_operator'] ?? '-');
-    $sheet->setCellValue('I' . $rowNumber, $row['deskripsi_masalah'] ?? '-');
-
+if (empty($rows)) {
+    // Jika tidak ada data, tampilkan pesan
+    $sheet->setCellValue('A' . $rowNumber, 'TIDAK ADA DATA');
+    $sheet->mergeCells('A' . $rowNumber . ':I' . $rowNumber);
+    $sheet->getStyle('A' . $rowNumber)->applyFromArray([
+        'font' => [
+            'bold' => true,
+            'color' => ['rgb' => 'FF0000']
+        ],
+        'alignment' => [
+            'horizontal' => Alignment::HORIZONTAL_CENTER
+        ]
+    ]);
     $rowNumber++;
+} else {
+    foreach ($rows as $row) {
+        $sheet->setCellValue('A' . $rowNumber, $no++);
+        $sheet->setCellValue('B' . $rowNumber, date('d/m/Y', strtotime($row['tanggal_ditemukan'])));
+        $sheet->setCellValue('C' . $rowNumber, $row['nama_customer'] ?? '-');
+        $sheet->setCellValue('D' . $rowNumber, $row['lotno'] ?? '-');
+        $sheet->setCellValue('E' . $rowNumber, $row['partno'] ?? '-');
+        $sheet->setCellValue('F' . $rowNumber, $row['nama_section'] ?? '-');
+        $sheet->setCellValue('G' . $rowNumber, $row['nama_defect'] ?? '-');
+        $sheet->setCellValue('H' . $rowNumber, $row['nama_operator'] ?? '-');
+        $sheet->setCellValue('I' . $rowNumber, $row['deskripsi_masalah'] ?? '-');
+
+        $rowNumber++;
+    }
 }
 
 // Style data
 $lastRow = $rowNumber - 1;
-$sheet->getStyle('A6:I' . $lastRow)->applyFromArray([
-    'borders' => [
-        'allBorders' => [
-            'borderStyle' => Border::BORDER_THIN,
-            'color' => ['rgb' => 'CCCCCC']
+if ($lastRow >= 6) {
+    $sheet->getStyle('A6:I' . $lastRow)->applyFromArray([
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+                'color' => ['rgb' => 'CCCCCC']
+            ]
+        ],
+        'alignment' => [
+            'vertical' => Alignment::VERTICAL_CENTER
         ]
-    ],
-    'alignment' => [
-        'vertical' => Alignment::VERTICAL_CENTER
-    ]
-]);
+    ]);
 
-// Wrap text untuk kolom deskripsi
-$sheet->getStyle('I6:I' . $lastRow)->getAlignment()->setWrapText(true);
+    // Wrap text untuk kolom deskripsi
+    $sheet->getStyle('I6:I' . $lastRow)->getAlignment()->setWrapText(true);
+}
 
 // Set lebar kolom
 $sheet->getColumnDimension('A')->setWidth(5);   // No
@@ -243,10 +294,21 @@ $sheet->freezePane('A6');
 
 // Buat nama file
 $filename = 'Laporan_Claim_Defect_' . date('Ymd_His') . '.xlsx';
-if ($tanggal_awal && $tanggal_akhir) {
-    $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '_to_' . $tanggal_akhir . '.xlsx';
-} elseif ($tanggal_awal) {
+if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
+    if ($tanggal_awal == $tanggal_akhir) {
+        $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '.xlsx';
+    } else {
+        $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '_to_' . $tanggal_akhir . '.xlsx';
+    }
+} elseif (!empty($tanggal_awal)) {
     $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '.xlsx';
+} elseif (!empty($tanggal_akhir)) {
+    $filename = 'Laporan_Claim_Defect_' . $tanggal_akhir . '.xlsx';
+}
+
+// Bersihkan output buffer sebelum mengirim header
+if (ob_get_level()) {
+    ob_end_clean();
 }
 
 // Set header untuk download

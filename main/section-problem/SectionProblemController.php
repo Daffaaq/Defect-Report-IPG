@@ -111,6 +111,9 @@ function handleDefectActions($connection, $action)
             case 'getDetail':
                 getDefectDetail($connection);
                 break;
+            case 'updateSection': // CASE BARU
+                updateSectionName($connection);
+                break;
             default:
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Aksi tidak valid']);
@@ -409,6 +412,88 @@ function updateDefect($connection)
 
     http_response_code(200);
     echo json_encode(['status' => 'success', 'message' => $message]);
+    exit;
+}
+
+// Function baru untuk update section name secara massal
+function updateSectionName($connection)
+{
+    $old_section = trim($_POST['old_section'] ?? '');
+    $new_section = trim($_POST['new_section'] ?? '');
+
+    if (empty($old_section) || empty($new_section)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Data tidak lengkap']);
+        exit;
+    }
+
+    if ($old_section === $new_section) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Nama section baru harus berbeda']);
+        exit;
+    }
+
+    // CEK APAKAH SECTION BARU SUDAH ADA (CASE INSENSITIVE)
+    $checkSql = "SELECT nama_section FROM defect_table 
+                 WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS";
+    $checkParams = [$new_section];
+    $checkStmt = sqlsrv_prepare($connection, $checkSql, $checkParams);
+
+    $existingSection = null;
+
+    if ($checkStmt && sqlsrv_execute($checkStmt)) {
+        $row = sqlsrv_fetch_array($checkStmt, SQLSRV_FETCH_ASSOC);
+        if ($row) {
+            $existingSection = $row['nama_section'];
+        }
+    }
+
+    // Jika section baru sudah ada, gunakan format yang sudah ada
+    if ($existingSection) {
+        $new_section_final = $existingSection;
+    } else {
+        $new_section_final = $new_section;
+    }
+
+    // Mulai transaction
+    sqlsrv_begin_transaction($connection);
+
+    try {
+        // UPDATE SEMUA DEFECT DENGAN SECTION LAMA KE SECTION BARU
+        $updateSql = "UPDATE defect_table 
+                      SET nama_section = ? 
+                      WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS";
+        $updateParams = [$new_section_final, $old_section];
+        $updateStmt = sqlsrv_prepare($connection, $updateSql, $updateParams);
+
+        if (!$updateStmt || !sqlsrv_execute($updateStmt)) {
+            throw new Exception("Gagal mengupdate section");
+        }
+
+        $affectedRows = sqlsrv_rows_affected($updateStmt);
+
+        if ($affectedRows === 0) {
+            throw new Exception("Tidak ada data yang diupdate");
+        }
+
+        sqlsrv_commit($connection);
+
+        // Buat pesan response
+        $message = "Berhasil mengupdate section dari '{$old_section}' menjadi '{$new_section_final}'";
+
+        http_response_code(200);
+        echo json_encode([
+            'status' => 'success',
+            'message' => $message,
+            'updated_count' => $affectedRows,
+            'old_section' => $old_section,
+            'new_section' => $new_section_final
+        ]);
+    } catch (Exception $e) {
+        sqlsrv_rollback($connection);
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    }
     exit;
 }
 

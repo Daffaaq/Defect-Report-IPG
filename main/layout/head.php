@@ -8,7 +8,7 @@
     <!--  Title -->
     <title>Modernize Landing Page</title>
     <!--  Favicon -->
-    <link rel="shortcut icon" type="image/png" href="../../assets/modernize/images/logos/favicon.ico">
+    <link rel="shortcut icon" type="image/png" href="../../assets/images/logoipg.ico">
     <!--  Aos -->
     <link rel="stylesheet" href="../../assets/modernize/libs/aos/dist/aos.css">
     <link rel="stylesheet" href="../../assets/modernize/libs/owl.carousel/dist/assets/owl.carousel.min.css">
@@ -25,11 +25,11 @@
 <body>
     <!-- Preloader -->
     <div class="preloader">
-        <img src="../../assets/modernize/images/logos/favicon.ico" alt="loader" class="lds-ripple img-fluid" />
+        <img src="../../assets/images/logoipg.ico" alt="loader" class="lds-ripple img-fluid" />
     </div>
     <!-- Preloader -->
     <div class="preloader">
-        <img src="../../assets/modernize/images/logos/favicon.ico" alt="loader" class="lds-ripple img-fluid" />
+        <img src="../../assets/images/logoipg.ico" alt="loader" class="lds-ripple img-fluid" />
     </div>
     <!--  Body Wrapper -->
     <div class="page-wrapper" id="main-wrapper" data-theme="blue_theme" data-layout="vertical" data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">

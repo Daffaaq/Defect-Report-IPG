@@ -146,39 +146,68 @@ function getReports($connection)
     $filter_message = "";
 
     // KASUS 1: Filter rentang tanggal (kedua tanggal diisi)
+    // Build WHERE clause
     if ($tanggal_awal && $tanggal_akhir) {
-        $tanggal_awal_obj = $validateDate($tanggal_awal);
-        $tanggal_akhir_obj = $validateDate($tanggal_akhir);
 
-        if (!$tanggal_awal_obj || !$tanggal_akhir_obj) {
+        $awal = $validateDate($tanggal_awal);
+        $akhir = $validateDate($tanggal_akhir);
+
+        if (!$awal || !$akhir) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD']);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
+            ]);
             return;
         }
 
-        if ($tanggal_awal_obj > $tanggal_akhir_obj) {
+        if ($awal > $akhir) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir']);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            ]);
             return;
         }
 
-        $whereConditions[] = "tanggal_ditemukan BETWEEN ? AND ?";
+        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) BETWEEN ? AND ?";
         $params[] = $tanggal_awal;
         $params[] = $tanggal_akhir;
+
         $filter_message = "rentang $tanggal_awal sampai $tanggal_akhir";
-    }
-    // KASUS 2: Filter satu tanggal (hanya tanggal awal diisi)
-    elseif ($tanggal_awal && !$tanggal_akhir) {
-        $tanggal_awal_obj = $validateDate($tanggal_awal);
-        if (!$tanggal_awal_obj) {
+        $filter_type = "range";
+    } elseif ($tanggal_awal) {
+
+        if (!$validateDate($tanggal_awal)) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD']);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Format tanggal tidak valid'
+            ]);
             return;
         }
 
-        $whereConditions[] = "tanggal_ditemukan = ?";
+        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
         $params[] = $tanggal_awal;
-        $filter_message = "tanggal $tanggal_awal";
+
+        $filter_message = "mulai $tanggal_awal sampai sekarang";
+        $filter_type = "from";
+    } elseif ($tanggal_akhir) {
+
+        if (!$validateDate($tanggal_akhir)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Format tanggal tidak valid'
+            ]);
+            return;
+        }
+
+        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
+        $params[] = $tanggal_akhir;
+
+        $filter_message = "sampai $tanggal_akhir";
+        $filter_type = "until";
     }
 
     // Gabungkan WHERE conditions jika ada
