@@ -160,7 +160,7 @@ isLogin();
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <div class="table-responsive">
-                <table id="reportTable" class="table table-hover" style="width:100%">
+                <table id="reportTable" class="table table-hover align-middle nowrap" style="width:100%">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -171,6 +171,9 @@ isLogin();
                             <th>Section</th>
                             <th>Defect</th>
                             <th>Operator</th>
+                            <th>Aksi Claim Defect</th>
+                            <th>Nama Operator Pengambil</th>
+                            <th>Tanggal Pengambilan</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -379,7 +382,6 @@ isLogin();
         });
     }
 
-
     function initializeTable() {
         reportTable = $('#reportTable').DataTable({
             columns: [{
@@ -387,7 +389,7 @@ isLogin();
                     width: '50px',
                     className: 'text-center',
                     render: function(data, type, row, meta) {
-                        return meta.row + 1;
+                        return '';
                     }
                 },
                 {
@@ -436,29 +438,109 @@ isLogin();
                     }
                 },
                 {
+                    data: 'aksi_claim_defect',
+                    render: function(data) {
+
+                        if (!data) return '-';
+
+                        if (data === 'Repair') {
+                            return `<span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Repair</span>`;
+                        }
+
+                        if (data === 'Scrap') {
+                            return `<span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Scrap</span>`;
+                        }
+
+                        return escapeHtml(data);
+                    }
+                },
+                {
+                    data: 'nama_operator_pengambil',
+                    width: '150px',
+                    className: 'text-nowrap',
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            // Jika row dalam mode edit, tampilkan input
+                            if (row._editing) {
+                                return `<input type="text" class="form-control form-control-sm inline-edit" 
+                               value="${escapeHtml(data || '')}" 
+                               data-field="nama_operator_pengambil"
+                               data-id="${row.id}"
+                               placeholder="Nama operator">`;
+                            }
+                            // Tampilan normal
+                            return data ? escapeHtml(data) : '-';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: 'tanggal_pengambilan',
+                    width: '120px',
+                    className: 'text-nowrap',
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            // Jika row dalam mode edit, tampilkan input date
+                            if (row._editing) {
+                                let dateValue = data ? data.split(' ')[0] : '';
+                                return `<input type="date" class="form-control form-control-sm inline-edit" 
+                               value="${dateValue}" 
+                               data-field="tanggal_pengambilan"
+                               data-id="${row.id}">`;
+                            }
+                            // Tampilan normal
+                            return data ? formatDate(data) : '-';
+                        }
+                        return data;
+                    }
+                },
+                {
                     data: null,
-                    width: '80px',
+                    width: '150px',
                     className: 'text-center',
                     orderable: false,
                     render: function(data, type, row) {
-                        return `
-                        <button class="btn btn-sm btn-info" onclick="showDetail(${row.id})" data-bs-toggle="tooltip" title="Lihat Detail">
-                        <i class="ti ti-eye"></i>
-                    </button>`;
+                        // Cek apakah row ini sedang dalam mode edit
+                        if (row._editing) {
+                            return `
+                <button class="btn btn-sm btn-success me-1" onclick="saveInlineEdit(${row.id})">
+                    <i class="ti ti-check"></i> Simpan
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="cancelInlineEdit(${row.id})">
+                    <i class="ti ti-x"></i> Batal
+                </button>
+            `;
+                        } else {
+                            return `
+                <button class="btn btn-sm btn-primary me-1" onclick="editInline(${row.id})" title="Edit Data">
+                    <i class="ti ti-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-info" onclick="showDetail(${row.id})" title="Lihat Detail">
+                    <i class="ti ti-eye"></i>
+                </button>
+            `;
+                        }
                     }
                 }
             ],
-            ordering: false,
-            order: [],
+            ordering: true,
+            order: [
+                [1, 'desc']
+            ],
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json'
             },
-            responsive: true,
+            scrollX: true,
+            responsive: false,
             pageLength: 10,
             lengthMenu: [
                 [10, 25, 50, 100, -1],
                 [10, 25, 50, 100, "Semua"]
             ],
+            rowCallback: function(row, data, displayIndex) {
+                let pageStart = this.api().page.info().start;
+                $('td:first-child', row).html(pageStart + displayIndex + 1);
+            },
             drawCallback: function() {
                 let data = reportTable.rows().data().toArray();
                 if (data.length > 0) {
@@ -501,25 +583,15 @@ isLogin();
         let tanggalAwal = $('#tanggalAwal').val();
         let tanggalAkhir = $('#tanggalAkhir').val();
 
-        // Validate dates
-        if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
-            return;
-        }
-
         $('#loadingSpinner').fadeIn();
         $('#summaryCards').hide();
-        $('#filterInfo').hide(); // Always hide first
+        $('#filterInfo').hide();
 
         let url = baseUrl + '?action=getReports';
 
-        // If both dates are empty, don't send filter (will get last 1000)
         if (tanggalAwal || tanggalAkhir) {
-            if (tanggalAwal) {
-                url += '&tanggal_awal=' + tanggalAwal;
-            }
-            if (tanggalAkhir) {
-                url += '&tanggal_akhir=' + tanggalAkhir;
-            }
+            if (tanggalAwal) url += '&tanggal_awal=' + tanggalAwal;
+            if (tanggalAkhir) url += '&tanggal_akhir=' + tanggalAkhir;
         }
 
         $.ajax({
@@ -530,13 +602,18 @@ isLogin();
                 $('#loadingSpinner').fadeOut();
 
                 if (response.status === 'success') {
+                    // HAPUS semua data lama
                     reportTable.clear();
 
+                    // Tambah data baru
+                    reportTable.rows.add(response.data);
+
+                    // DRAW ulang dengan mempertahankan order
+                    reportTable.draw();
+
                     if (response.data.length > 0) {
-                        reportTable.rows.add(response.data).draw();
                         updateSummaryCards(response);
 
-                        // Cek dengan ketat: hanya tampilkan jika ada tanggal yang dipilih DAN response.message ada
                         let hasDateFilter = tanggalAwal || tanggalAkhir;
                         let hasMessage = response.message && response.message.trim() !== '';
 
@@ -544,7 +621,6 @@ isLogin();
                             showFilterInfo(response);
                         }
                     } else {
-                        reportTable.clear().draw();
                         showEmptyResult(response);
                         $('#summaryCards').hide();
                         $('#filterInfo').hide();
@@ -747,7 +823,7 @@ isLogin();
 
         $('#reportTable tbody').html(`
             <tr>
-                <td colspan="9" class="text-center py-5">
+                <td colspan="12" class="text-center py-5">
                     <i class="ti ti-database-off" style="font-size: 3rem; color: #dee2e6;"></i>
                     <p class="mt-3 text-muted">${message}</p>
                     <button class="btn btn-sm btn-primary mt-2" onclick="setQuickFilter('week')">
@@ -803,9 +879,221 @@ isLogin();
     $(function() {
         $('[data-bs-toggle="tooltip"]').tooltip();
     });
+
+    // Tambahkan fungsi untuk handle double click
+    $(document).on('dblclick', '#reportTable tbody td', function(e) {
+        let table = $('#reportTable').DataTable();
+        let columnIndex = $(this).index();
+        let rowData = table.row($(this).closest('tr')).data();
+
+        if (!rowData) return;
+
+        // Cek apakah kolom yang di-double-click adalah nama_operator_pengambil (index 9) atau tanggal_pengambilan (index 10)
+        if (columnIndex === 9 || columnIndex === 10) {
+            // Nonaktifkan edit mode untuk semua row
+            table.rows().every(function() {
+                let rowData = this.data();
+                if (rowData._editing) {
+                    rowData._editing = false;
+                    this.data(rowData);
+                }
+            });
+
+            // Aktifkan edit mode untuk row yang dipilih
+            rowData._editing = true;
+            table.row($(this).closest('tr')).data(rowData).draw(false);
+
+            // Auto focus ke input yang sesuai
+            setTimeout(function() {
+                $(`input[data-id="${rowData.id}"]`).first().focus();
+            }, 100);
+        }
+    });
+
+    // Update fungsi editInline untuk konsistensi
+    function editInline(id) {
+        let table = $('#reportTable').DataTable();
+
+        // Nonaktifkan edit mode untuk semua row
+        table.rows().every(function() {
+            let rowData = this.data();
+            if (rowData._editing) {
+                rowData._editing = false;
+                this.data(rowData);
+            }
+        });
+
+        // Aktifkan edit mode untuk row yang dipilih
+        table.rows().every(function() {
+            let rowData = this.data();
+            if (rowData.id == id) {
+                rowData._editing = true;
+                this.data(rowData);
+            }
+        });
+
+        // Redraw dengan mempertahankan sorting
+        table.draw(false);
+    }
+
+    // Update fungsi cancelInlineEdit untuk memastikan konsistensi
+    function cancelInlineEdit(id) {
+        let table = $('#reportTable').DataTable();
+
+        table.rows().every(function() {
+            let rowData = this.data();
+            if (rowData.id == id) {
+                rowData._editing = false;
+                this.data(rowData);
+            }
+        });
+
+        table.draw(false);
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Dibatalkan',
+            text: 'Perubahan dibatalkan',
+            timer: 1000,
+            showConfirmButton: false
+        });
+    }
+
+    // Modifikasi fungsi saveInlineEdit untuk handle kedua field
+    function saveInlineEdit(id) {
+        let operatorValue = $(`input[data-field="nama_operator_pengambil"][data-id="${id}"]`).val();
+        let tanggalValue = $(`input[data-field="tanggal_pengambilan"][data-id="${id}"]`).val();
+
+        if (!operatorValue || operatorValue.trim() === '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Nama operator pengambil tidak boleh kosong'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Menyimpan...',
+            text: 'Harap tunggu',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        $.ajax({
+            url: 'UpdateDefectReportController.php?action=update',
+            type: 'POST',
+            data: {
+                id: id,
+                nama_operator_pengambil: operatorValue.trim(),
+                tanggal_pengambilan: tanggalValue || ''
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    let table = $('#reportTable').DataTable();
+
+                    // Update data di row yang benar
+                    table.rows().every(function() {
+                        let rowData = this.data();
+                        if (rowData.id == id) {
+                            rowData.nama_operator_pengambil = operatorValue.trim();
+                            rowData.tanggal_pengambilan = tanggalValue || null;
+                            rowData._editing = false;
+                            this.data(rowData);
+                        }
+                    });
+
+                    // Redraw dengan mempertahankan sorting
+                    table.draw(false);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Data berhasil diupdate',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    throw new Error(response.message || 'Gagal mengupdate data');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error:', xhr.responseText);
+
+                let table = $('#reportTable').DataTable();
+                table.rows().every(function() {
+                    let rowData = this.data();
+                    if (rowData.id == id) {
+                        rowData._editing = false;
+                        this.data(rowData);
+                    }
+                });
+
+                table.draw(false);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal mengupdate data'
+                });
+            }
+        });
+    }
+
+    // Handle Enter key untuk save
+    $(document).on('keypress', '.inline-edit', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            let id = $(this).data('id');
+            saveInlineEdit(id);
+        }
+    });
+
+    // Handle Escape key untuk cancel
+    $(document).on('keydown', '.inline-edit', function(e) {
+        if (e.which === 27) { // Escape key
+            e.preventDefault();
+            let id = $(this).data('id');
+            cancelInlineEdit(id);
+        }
+    });
 </script>
 
 <style>
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    #reportTable thead th {
+        background: #f8fafc;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        border-bottom: 2px solid #e9ecef;
+        padding: 14px 12px;
+    }
+
+    #reportTable tbody td {
+        padding: 12px;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    #reportTable tbody tr {
+        transition: all .2s ease;
+    }
+
+    #reportTable tbody tr:hover {
+        background-color: #f1f5ff;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 8px !important;
+    }
+
     /* Simple Clean Design */
     .card {
         border-radius: 12px;
@@ -937,5 +1225,74 @@ isLogin();
     /* Border Top */
     .border-top {
         border-top: 1px solid #e0e0e0 !important;
+    }
+
+    /* Tambahkan di bagian style */
+    .inline-edit {
+        border: 2px solid #0d6efd !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    }
+
+    tr.inline-editing-row {
+        background-color: #fff3cd !important;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .inline-edit:focus {
+        border-color: #0a58ca !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+    }
+
+    /* Indikasi bahwa kolom bisa di-double-click */
+    #reportTable tbody td:nth-child(10),
+    #reportTable tbody td:nth-child(11) {
+        cursor: pointer;
+        position: relative;
+    }
+
+    #reportTable tbody td:nth-child(10):hover::after,
+    #reportTable tbody td:nth-child(11):hover::after {
+        content: "Double-click untuk edit";
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        z-index: 1000;
+        pointer-events: none;
+        margin-bottom: 5px;
+    }
+
+    /* Styling untuk row yang sedang diedit */
+    tr.inline-editing-row {
+        background-color: #fff3cd !important;
+    }
+
+    .inline-edit {
+        border: 2px solid #0d6efd !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        transition: all 0.2s ease;
+    }
+
+    .inline-edit:focus {
+        border-color: #0a58ca !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+        outline: none;
+    }
+
+    /* Tooltip untuk double-click */
+    [data-dblclick="true"] {
+        cursor: pointer;
     }
 </style>

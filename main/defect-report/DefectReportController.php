@@ -139,6 +139,7 @@ function insertClaim($connection)
     $nama_operator = trim($_POST['nama_operator'] ?? '');
     $deskripsi_masalah = trim($_POST['deskripsi_masalah'] ?? '');
     $nama_customer = trim($_POST['nama_customer'] ?? '');
+    $aksi_claim_defect = trim($_POST['aksi_claim_defect'] ?? '');
 
     // Validasi data wajib
     $errors = [];
@@ -175,6 +176,10 @@ function insertClaim($connection)
         $errors[] = 'Nama Customer wajib diisi';
     }
 
+    if (empty($aksi_claim_defect)) {
+        $errors[] = 'Aksi Claim Defect wajib diisi';
+    }
+
     if (!empty($errors)) {
         http_response_code(400);
         echo json_encode([
@@ -185,29 +190,43 @@ function insertClaim($connection)
         exit;
     }
 
-    // Validasi format tanggal
+    // Validasi format tanggal ditemukan
     $tanggal_obj = DateTime::createFromFormat('Y-m-d', $tanggal_ditemukan);
     if (!$tanggal_obj || $tanggal_obj->format('Y-m-d') !== $tanggal_ditemukan) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Format tanggal tidak valid. Gunakan format YYYY-MM-DD'
+            'message' => 'Format tanggal ditemukan tidak valid. Gunakan YYYY-MM-DD'
         ]);
         exit;
     }
 
+    // Validasi tanggal repair (jika ada)
+    if (!empty($tanggal_repair)) {
+        $repair_obj = DateTime::createFromFormat('Y-m-d', $tanggal_repair);
+        if (!$repair_obj || $repair_obj->format('Y-m-d') !== $tanggal_repair) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Format tanggal repair tidak valid. Gunakan YYYY-MM-DD'
+            ]);
+            exit;
+        }
+    }
+
     // Query insert
     $sql = "INSERT INTO report_claim_defect (
-        nama_section, 
-        nama_defect, 
-        lotno, 
-        partno, 
-        tanggal_ditemukan, 
-        nama_operator, 
-        deskripsi_masalah, 
-        nama_customer, 
-        created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+    nama_section,
+    nama_defect,
+    lotno,
+    partno,
+    tanggal_ditemukan,
+    nama_operator,
+    deskripsi_masalah,
+    nama_customer,
+    aksi_claim_defect,
+    created_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
 
     $params = [
         $nama_section,
@@ -217,7 +236,8 @@ function insertClaim($connection)
         $tanggal_ditemukan,
         $nama_operator,
         $deskripsi_masalah,
-        $nama_customer
+        $nama_customer,
+        $aksi_claim_defect
     ];
 
     $stmt = sqlsrv_prepare($connection, $sql, $params);
@@ -263,7 +283,8 @@ function insertClaim($connection)
             'tanggal_ditemukan' => $tanggal_ditemukan,
             'nama_operator' => $nama_operator,
             'deskripsi_masalah' => $deskripsi_masalah,
-            'nama_customer' => $nama_customer
+            'nama_customer' => $nama_customer,
+            'aksi_claim_defect' => $aksi_claim_defect
         ]
     ]);
     exit;

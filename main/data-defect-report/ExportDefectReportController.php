@@ -22,8 +22,6 @@ if ($connection === false) {
 $tanggal_awal = $_GET['tanggal_awal'] ?? '';
 $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
 
-var_dump($tanggal_awal, $tanggal_akhir);
-
 // Validasi: minimal salah satu tanggal terisi
 if (empty($tanggal_awal) && empty($tanggal_akhir)) {
     http_response_code(400);
@@ -35,7 +33,7 @@ $validateDate = function ($date) {
     return DateTime::createFromFormat('Y-m-d', $date) !== false;
 };
 
-// Build query
+// Build query dengan kolom baru
 $params = [];
 $sql = "SELECT 
             id, 
@@ -47,6 +45,9 @@ $sql = "SELECT
             nama_operator, 
             deskripsi_masalah,
             nama_customer, 
+            aksi_claim_defect,
+            nama_operator_pengambil,
+            CONVERT(varchar, tanggal_pengambilan, 120) as tanggal_pengambilan,
             CONVERT(varchar, created_at, 120) as created_at
         FROM report_claim_defect";
 
@@ -150,17 +151,20 @@ if ($queryTime) {
 }
 $sheet->setCellValue('A3', 'Tanggal Export: ' . $dbTime);
 
-// Header kolom
+// Header kolom (SEKARANG 12 KOLOM)
 $headers = [
     'A' => 'No',
-    'B' => 'Tanggal',
+    'B' => 'Tanggal Ditemukan',
     'C' => 'Customer',
     'D' => 'Lot No',
     'E' => 'Part No',
     'F' => 'Section',
     'G' => 'Defect',
     'H' => 'Operator',
-    'I' => 'Deskripsi Masalah'
+    'I' => 'Deskripsi Masalah',
+    'J' => 'Aksi Claim Defect',
+    'K' => 'Operator Pengambil',
+    'L' => 'Tanggal Pengambilan'
 ];
 
 foreach ($headers as $column => $header) {
@@ -168,7 +172,7 @@ foreach ($headers as $column => $header) {
 }
 
 // Style header
-$sheet->getStyle('A5:I5')->applyFromArray([
+$sheet->getStyle('A5:L5')->applyFromArray([
     'font' => [
         'bold' => true,
         'color' => ['rgb' => 'FFFFFF'],
@@ -190,8 +194,8 @@ $sheet->getStyle('A5:I5')->applyFromArray([
     ]
 ]);
 
-// Style judul
-$sheet->mergeCells('A1:I1');
+// Style judul (sesuaikan dengan jumlah kolom)
+$sheet->mergeCells('A1:L1');
 $sheet->getStyle('A1')->applyFromArray([
     'font' => [
         'bold' => true,
@@ -202,7 +206,7 @@ $sheet->getStyle('A1')->applyFromArray([
     ]
 ]);
 
-$sheet->mergeCells('A2:I2');
+$sheet->mergeCells('A2:L2');
 $sheet->getStyle('A2')->applyFromArray([
     'font' => [
         'bold' => true,
@@ -214,7 +218,7 @@ $sheet->getStyle('A2')->applyFromArray([
     ]
 ]);
 
-$sheet->mergeCells('A3:I3');
+$sheet->mergeCells('A3:L3');
 $sheet->getStyle('A3')->applyFromArray([
     'font' => [
         'italic' => true,
@@ -232,7 +236,7 @@ $no = 1;
 if (empty($rows)) {
     // Jika tidak ada data, tampilkan pesan
     $sheet->setCellValue('A' . $rowNumber, 'TIDAK ADA DATA');
-    $sheet->mergeCells('A' . $rowNumber . ':I' . $rowNumber);
+    $sheet->mergeCells('A' . $rowNumber . ':L' . $rowNumber);
     $sheet->getStyle('A' . $rowNumber)->applyFromArray([
         'font' => [
             'bold' => true,
@@ -255,6 +259,18 @@ if (empty($rows)) {
         $sheet->setCellValue('H' . $rowNumber, $row['nama_operator'] ?? '-');
         $sheet->setCellValue('I' . $rowNumber, $row['deskripsi_masalah'] ?? '-');
 
+        // Kolom baru
+        $sheet->setCellValue('J' . $rowNumber, $row['aksi_claim_defect'] ?? '-');
+        $sheet->setCellValue('K' . $rowNumber, $row['nama_operator_pengambil'] ?? '-');
+
+        // Format tanggal pengambilan
+        $tanggal_pengambilan = $row['tanggal_pengambilan'] ?? null;
+        if ($tanggal_pengambilan) {
+            $sheet->setCellValue('L' . $rowNumber, date('d/m/Y', strtotime($tanggal_pengambilan)));
+        } else {
+            $sheet->setCellValue('L' . $rowNumber, '-');
+        }
+
         $rowNumber++;
     }
 }
@@ -262,7 +278,7 @@ if (empty($rows)) {
 // Style data
 $lastRow = $rowNumber - 1;
 if ($lastRow >= 6) {
-    $sheet->getStyle('A6:I' . $lastRow)->applyFromArray([
+    $sheet->getStyle('A6:L' . $lastRow)->applyFromArray([
         'borders' => [
             'allBorders' => [
                 'borderStyle' => Border::BORDER_THIN,
@@ -276,18 +292,28 @@ if ($lastRow >= 6) {
 
     // Wrap text untuk kolom deskripsi
     $sheet->getStyle('I6:I' . $lastRow)->getAlignment()->setWrapText(true);
+
+    // Style khusus untuk kolom aksi claim defect
+    $sheet->getStyle('J6:J' . $lastRow)->applyFromArray([
+        'font' => [
+            'bold' => true
+        ]
+    ]);
 }
 
-// Set lebar kolom
+// Set lebar kolom (sesuaikan)
 $sheet->getColumnDimension('A')->setWidth(5);   // No
-$sheet->getColumnDimension('B')->setWidth(15);  // Tanggal
+$sheet->getColumnDimension('B')->setWidth(15);  // Tanggal Ditemukan
 $sheet->getColumnDimension('C')->setWidth(25);  // Customer
 $sheet->getColumnDimension('D')->setWidth(20);  // Lot No
 $sheet->getColumnDimension('E')->setWidth(20);  // Part No
 $sheet->getColumnDimension('F')->setWidth(20);  // Section
 $sheet->getColumnDimension('G')->setWidth(30);  // Defect
 $sheet->getColumnDimension('H')->setWidth(20);  // Operator
-$sheet->getColumnDimension('I')->setWidth(40);  // Deskripsi
+$sheet->getColumnDimension('I')->setWidth(40);  // Deskripsi Masalah
+$sheet->getColumnDimension('J')->setWidth(18);  // Aksi Claim Defect
+$sheet->getColumnDimension('K')->setWidth(20);  // Operator Pengambil
+$sheet->getColumnDimension('L')->setWidth(18);  // Tanggal Pengambilan
 
 // Freeze pane
 $sheet->freezePane('A6');

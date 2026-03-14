@@ -138,6 +138,9 @@ function getReports($connection)
                 CONVERT(varchar, tanggal_ditemukan, 120) as tanggal_ditemukan,
                 nama_operator, 
                 nama_customer, 
+                nama_operator_pengambil,
+                CONVERT(varchar, tanggal_pengambilan, 120) as tanggal_pengambilan,
+                aksi_claim_defect,
                 CONVERT(varchar, created_at, 120) as created_at
             FROM report_claim_defect";
 

@@ -106,7 +106,9 @@ function getDashboardStats($connection)
             'total_defect' => 0,
             'total_customer' => 0,
             'total_section' => 0,
-            'total_problem' => 0
+            'total_problem' => 0,
+            'total_repair' => 0,  // Tambahan
+            'total_scrap' => 0     // Tambahan
         ];
 
         // 1. Query Total Defect dari report_claim_defect
@@ -160,6 +162,32 @@ function getDashboardStats($connection)
             $stats['total_problem'] = (int)$row4['totalDefect'];
         }
         sqlsrv_free_stmt($stmt4);
+
+        // 5. Query Total REPAIR dari report_claim_defect
+        $sql5 = "SELECT COUNT(*) AS TotalRepair FROM report_claim_defect WHERE aksi_claim_defect = 'Repair'";
+        $stmt5 = sqlsrv_query($connection, $sql5);
+
+        if ($stmt5 === false) {
+            throw new Exception("Gagal query total repair: " . print_r(sqlsrv_errors(), true));
+        }
+
+        if ($row5 = sqlsrv_fetch_array($stmt5, SQLSRV_FETCH_ASSOC)) {
+            $stats['total_repair'] = (int)$row5['TotalRepair'];
+        }
+        sqlsrv_free_stmt($stmt5);
+
+        // 6. Query Total SCRAP dari report_claim_defect
+        $sql6 = "SELECT COUNT(*) AS TotalScrap FROM report_claim_defect WHERE aksi_claim_defect = 'Scrap'";
+        $stmt6 = sqlsrv_query($connection, $sql6);
+
+        if ($stmt6 === false) {
+            throw new Exception("Gagal query total scrap: " . print_r(sqlsrv_errors(), true));
+        }
+
+        if ($row6 = sqlsrv_fetch_array($stmt6, SQLSRV_FETCH_ASSOC)) {
+            $stats['total_scrap'] = (int)$row6['TotalScrap'];
+        }
+        sqlsrv_free_stmt($stmt6);
 
         // Kirim response sukses
         echo json_encode([

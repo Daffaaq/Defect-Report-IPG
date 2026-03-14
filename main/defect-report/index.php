@@ -103,6 +103,39 @@ isLogin();
                                 <textarea class="form-control" id="deskripsi_masalah" name="deskripsi_masalah"
                                     rows="4" placeholder="Jelaskan detail masalah yang ditemukan..." required></textarea>
                             </div>
+
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label fw-semibold mb-3">
+                                    Aksi Claim Defect <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="row g-3">
+
+                                    <!-- Repair -->
+                                    <div class="col-md-6">
+                                        <label class="claim-option w-100">
+                                            <input type="radio" name="aksi_claim_defect" value="Repair" required>
+                                            <div class="claim-card repair-card">
+                                                <i class="ti ti-tool fs-5"></i>
+                                                <span>Repair</span>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <!-- Scrap -->
+                                    <div class="col-md-6">
+                                        <label class="claim-option w-100">
+                                            <input type="radio" name="aksi_claim_defect" value="Scrap">
+                                            <div class="claim-card scrap-card">
+                                                <i class="ti ti-trash fs-5"></i>
+                                                <span>Scrap</span>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </div>
+
                         </div>
 
                         <!-- Tombol Aksi -->
@@ -427,6 +460,9 @@ isLogin();
         if (!$('#section').val()) errors.push('Section harus dipilih');
         if (!$('#nama_defect').val()) errors.push('Nama defect harus dipilih');
         if (!$('#deskripsi_masalah').val().trim()) errors.push('Deskripsi masalah harus diisi');
+        let aksiClaim = $('input[name="aksi_claim_defect"]:checked').val();
+
+        if (!aksiClaim) errors.push('Aksi Claim Defect harus dipilih');
 
         if (errors.length > 0) {
             Swal.fire('Validasi Gagal', errors.join('<br>'), 'error');
@@ -472,6 +508,10 @@ isLogin();
                     <td><strong>Deskripsi:</strong></td>
                     <td>${escapeHtml($('#deskripsi_masalah').val())}</td>
                 </tr>
+                <tr>
+    <td><strong>Aksi Claim:</strong></td>
+    <td>${escapeHtml(aksiClaim)}</td>
+</tr>
             </table>
         `;
 
@@ -499,6 +539,7 @@ isLogin();
         formData.append('nama_section', $('#section').val());
         formData.append('nama_defect', $('#nama_defect').val());
         formData.append('deskripsi_masalah', $('#deskripsi_masalah').val().trim());
+        formData.append('aksi_claim_defect', $('input[name="aksi_claim_defect"]:checked').val());
 
         // Kirim data
         $.ajax({
@@ -633,5 +674,51 @@ isLogin();
         font-size: 0.8rem;
         margin-top: 4px;
         display: block;
+    }
+
+    .claim-option input {
+        display: none;
+    }
+
+    .claim-card {
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 18px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    /* Hover effect */
+    .claim-card:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Repair color */
+    .repair-card {
+        color: #0d6efd;
+    }
+
+    /* Scrap color */
+    .scrap-card {
+        color: #dc3545;
+    }
+
+    /* Selected style */
+    .claim-option input:checked+.claim-card {
+        border-color: #0d6efd;
+        background: #e7f1ff;
+    }
+
+    /* Scrap selected */
+    .claim-option input[value="Scrap"]:checked+.claim-card {
+        border-color: #dc3545;
+        background: #fdeaea;
     }
 </style>

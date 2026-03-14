@@ -81,8 +81,8 @@ function handleChartActions($connection, $action)
 {
     try {
         switch ($action) {
-            case 'getTopCustomersChart':
-                getTopCustomersChart($connection);
+            case 'getSectionDefectChart':
+                getSectionDefectChart($connection);
                 break;
             case 'getDefectBySectionChart':
                 getDefectBySectionChart($connection);
@@ -106,74 +106,78 @@ function handleChartActions($connection, $action)
 }
 
 // ==========================
-// CHART: Top 5 Impacted Customers vs Average
+// CHART: Repair vs Scrap per Section
 // ==========================
-function getTopCustomersChart($connection)
+function getSectionDefectChart($connection)
 {
     header('Content-Type: application/json');
 
     try {
         $sql = "
-        WITH CustomerStats AS (
+        WITH SectionStats AS (
             SELECT 
-                nama_customer, 
-                COUNT(*) AS jml 
-            FROM report_claim_defect 
-            GROUP BY nama_customer
+                nama_section,
+                aksi_claim_defect,
+                COUNT(*) AS jml
+            FROM report_claim_defect
+            WHERE aksi_claim_defect IN ('Repair', 'Scrap')
+            GROUP BY nama_section, aksi_claim_defect
         ),
-        GlobalAvg AS (
-            SELECT AVG(CAST(jml AS FLOAT)) AS rata_rata FROM CustomerStats
+        SectionPivot AS (
+            SELECT 
+                nama_section,
+                ISNULL(MAX(CASE WHEN aksi_claim_defect = 'Repair' THEN jml END), 0) AS repair,
+                ISNULL(MAX(CASE WHEN aksi_claim_defect = 'Scrap' THEN jml END), 0) AS scrap
+            FROM SectionStats
+            GROUP BY nama_section
         )
-        SELECT TOP 5
-            d1.nama_customer,
-            d1.jml AS jumlah_defect,
-            CAST((SELECT rata_rata FROM GlobalAvg) AS DECIMAL(10,2)) AS garis_rata_rata
-        FROM 
-            CustomerStats d1
-        ORDER BY 
-            d1.jml DESC;
+        SELECT
+            nama_section,
+            repair,
+            scrap,
+            (repair + scrap) AS total_defect
+        FROM SectionPivot
+        ORDER BY total_defect DESC;
         ";
 
         $stmt = sqlsrv_query($connection, $sql);
 
         if ($stmt === false) {
-            throw new Exception("Gagal query top customers: " . print_r(sqlsrv_errors(), true));
+            throw new Exception("Gagal query section defect: " . print_r(sqlsrv_errors(), true));
         }
 
-        $customers = [];
-        $defects = [];
-        $averageLine = 0;
+        $sections = [];
+        $repairData = [];
+        $scrapData = [];
 
         while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
-            $customers[] = $row['nama_customer'];
-            $defects[] = (int)$row['jumlah_defect'];
-            // Ambil nilai rata-rata (sama untuk semua row)
-            $averageLine = (float)$row['garis_rata_rata'];
+            $sections[] = $row['nama_section'];
+            $repairData[] = (int)$row['repair'];
+            $scrapData[] = (int)$row['scrap'];
         }
 
         sqlsrv_free_stmt($stmt);
 
         // Siapkan data untuk chart
         $chartData = [
-            'categories' => $customers,
+            'categories' => $sections,
             'series' => [
                 [
-                    'name' => 'Jumlah Defect',
+                    'name' => 'Repair',
                     'type' => 'bar',
-                    'data' => $defects
+                    'data' => $repairData
                 ],
                 [
-                    'name' => 'Rata-rata',
-                    'type' => 'line',
-                    'data' => array_fill(0, count($customers), $averageLine) // Isi semua dengan nilai rata-rata
+                    'name' => 'Scrap',
+                    'type' => 'bar',
+                    'data' => $scrapData
                 ]
-            ],
-            'average' => $averageLine
+            ]
         ];
 
         echo json_encode([
             'status' => 'success',
-            'message' => 'Data chart top customers berhasil dimuat',
+            'message' => 'Data chart Repair vs Scrap per section berhasil dimuat',
             'data' => $chartData
         ]);
     } catch (Exception $e) {

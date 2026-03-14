@@ -34,41 +34,71 @@ include '../layout/head.php';
         <p class="mt-2">Memuat data dashboard...</p>
     </div>
 
-    <!-- Content - 3 Cards -->
+    <!-- Content - 3 Cards dengan masing-masing dibagi 2 (kiri-kanan) -->
     <div class="row" id="dashboard-cards">
-        <!-- Card 1: Total Defect -->
+        <!-- Kolom Kiri: Total Defect (kiri) & Total Customer (kanan) -->
         <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow-sm h-100" id="card-total-defect">
-                <div class="card-body d-flex align-items-center">
-                    <div class="bg-light-danger rounded-2 p-3 me-3">
-                        <i class="ti ti-bug fs-6 text-danger"></i>
-                    </div>
-                    <div>
-                        <p class="text-dark mb-1 fw-semibold">Total Defect</p>
-                        <h4 class="mb-0 fw-bold" id="total-defect">0</h4>
+            <div class="card shadow-sm h-100" id="card-left">
+                <div class="card-body p-0 d-flex align-items-center h-100">
+                    <div class="row g-0 w-100">
+                        <!-- Total Defect -->
+                        <div class="col-6 border-end">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-danger rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-bug fs-6 text-danger"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Defect</p>
+                                <h4 class="mb-0 fw-bold" id="total-defect">0</h4>
+                            </div>
+                        </div>
+                        <!-- Total Customer -->
+                        <div class="col-6">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-success rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-building-skyscraper fs-6 text-success"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Customer</p>
+                                <h4 class="mb-0 fw-bold" id="total-customer">0</h4>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Card 2: Total Customer -->
+        <!-- Kolom Tengah: Total Repair (kiri) & Total Scrap (kanan) -->
         <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow-sm h-100" id="card-total-customer">
-                <div class="card-body d-flex align-items-center">
-                    <div class="bg-light-success rounded-2 p-3 me-3">
-                        <i class="ti ti-building-skyscraper fs-6 text-success"></i>
-                    </div>
-                    <div>
-                        <p class="text-dark mb-1 fw-semibold">Total Customer</p>
-                        <h4 class="mb-0 fw-bold" id="total-customer">0</h4>
+            <div class="card shadow-sm h-100" id="card-middle">
+                <div class="card-body p-0 d-flex align-items-center h-100">
+                    <div class="row g-0 w-100">
+                        <!-- Total Repair -->
+                        <div class="col-6 border-end">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-primary rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-tools fs-6 text-primary"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Repair</p>
+                                <h4 class="mb-0 fw-bold" id="total-repair">0</h4>
+                            </div>
+                        </div>
+                        <!-- Total Scrap -->
+                        <div class="col-6">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-danger rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-trash fs-6 text-danger"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Scrap</p>
+                                <h4 class="mb-0 fw-bold" id="total-scrap">0</h4>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Card 3: Total Section & Total Problem (setengah-setengah) -->
+        <!-- Kolom Kanan: Total Section (kiri) & Total Problem (kanan) -->
         <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow-sm h-100" id="card-section-problem">
+            <div class="card shadow-sm h-100" id="card-right">
                 <div class="card-body p-0 d-flex align-items-center h-100">
                     <div class="row g-0 w-100">
                         <!-- Total Section -->
@@ -99,21 +129,21 @@ include '../layout/head.php';
 
     <!-- Charts Section - 2 charts per row -->
     <div class="row mt-4">
-        <!-- Chart 1: Pareto Chart (Bar + Line) -->
+        <!-- Chart 1: Repair vs Scrap per Section -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-transparent border-0">
-                    <h5 class="card-title mb-0">Pareto Chart - Defect per Kategori</h5>
+                    <h5 class="card-title mb-0">Repair vs Scrap per Section</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Loading indicator untuk Pareto chart -->
-                    <div id="loading-pareto" class="text-center py-3" style="display: none;">
+                    <!-- Loading indicator untuk Repair vs Scrap chart -->
+                    <div id="loading-repair-scrap" class="text-center py-3" style="display: none;">
                         <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <p class="mt-2">Memuat data chart...</p>
                     </div>
-                    <div id="pareto-chart"></div>
+                    <div id="repair-scrap-chart"></div>
                 </div>
             </div>
         </div>
@@ -204,12 +234,12 @@ include '../layout/head.php';
     // Variabel global untuk menyimpan instance chart
     let lineChartInstance = null;
     let donutChartInstance = null;
-    let paretoChartInstance = null;
+    let repairScrapChartInstance = null;
     let horizontalBarChartInstance = null;
 
     document.addEventListener('DOMContentLoaded', function() {
         loadDashboardStats();
-        loadParetoChart();
+        loadRepairScrapChart();
         loadDefectBySectionChart();
         loadLineChart('daily'); // Default daily
 
@@ -254,17 +284,21 @@ include '../layout/head.php';
                     // Isi data ke element
                     document.getElementById('total-defect').textContent = result.data.total_defect;
                     document.getElementById('total-customer').textContent = result.data.total_customer;
+                    document.getElementById('total-repair').textContent = result.data.total_repair;
+                    document.getElementById('total-scrap').textContent = result.data.total_scrap;
                     document.getElementById('total-section').textContent = result.data.total_section;
                     document.getElementById('total-problem').textContent = result.data.total_problem;
 
                     console.log('Data dashboard berhasil dimuat:', result.data);
                 } else {
                     console.error('Gagal:', result.message);
-                    // Tampilkan pesan error di card stats
-                    showNoDataMessage('total-defect', '0');
-                    showNoDataMessage('total-customer', '0');
-                    showNoDataMessage('total-section', '0');
-                    showNoDataMessage('total-problem', '0');
+                    // Tampilkan 0 jika gagal
+                    document.getElementById('total-defect').textContent = '0';
+                    document.getElementById('total-customer').textContent = '0';
+                    document.getElementById('total-repair').textContent = '0';
+                    document.getElementById('total-scrap').textContent = '0';
+                    document.getElementById('total-section').textContent = '0';
+                    document.getElementById('total-problem').textContent = '0';
                 }
             })
             .catch(error => {
@@ -275,6 +309,8 @@ include '../layout/head.php';
                 // Tampilkan 0 jika error
                 document.getElementById('total-defect').textContent = '0';
                 document.getElementById('total-customer').textContent = '0';
+                document.getElementById('total-repair').textContent = '0';
+                document.getElementById('total-scrap').textContent = '0';
                 document.getElementById('total-section').textContent = '0';
                 document.getElementById('total-problem').textContent = '0';
             });
@@ -297,29 +333,33 @@ include '../layout/head.php';
     }
 
     // ============================================
-    // PARETO CHART - Top 5 Impacted Customers vs Average
+    // REPAIR VS SCRAP PER SECTION CHART - Grouped Bar Chart
     // ============================================
-    function loadParetoChart() {
-        // Cek apakah element loading-pareto ada
-        const loadingElement = document.getElementById('loading-pareto');
-        const chartElement = document.querySelector('#pareto-chart');
+    function loadRepairScrapChart() {
+        // Cek apakah element loading ada
+        const loadingElement = document.getElementById('loading-repair-scrap');
+        const chartElement = document.querySelector('#repair-scrap-chart');
 
-        if (!loadingElement || !chartElement) {
-            console.error('Element loading-pareto atau pareto-chart tidak ditemukan');
+        if (!chartElement) {
+            console.error('Element repair-scrap-chart tidak ditemukan');
             return;
         }
 
         // Tampilkan loading
-        loadingElement.style.display = 'block';
-        chartElement.innerHTML = ''; // Kosongkan chart
-
-        // Hapus chart sebelumnya jika ada
-        if (paretoChartInstance) {
-            paretoChartInstance.destroy();
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
         }
 
-        // Panggil API chart
-        fetch(API.chart + '?action=getTopCustomersChart')
+        // Kosongkan chart
+        chartElement.innerHTML = '';
+
+        // Hapus chart sebelumnya jika ada
+        if (repairScrapChartInstance) {
+            repairScrapChartInstance.destroy();
+        }
+
+        // Panggil API chart untuk Repair vs Scrap
+        fetch(API.chart + '?action=getSectionDefectChart')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -328,72 +368,91 @@ include '../layout/head.php';
             })
             .then(result => {
                 // Sembunyikan loading
-                loadingElement.style.display = 'none';
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
 
-                if (result.status === 'success') {
+                if (result.status === 'success' && result.data) {
                     // CEK DATA KOSONG
-                    if (!result.data ||
-                        !result.data.categories ||
+                    if (!result.data.categories ||
                         result.data.categories.length === 0 ||
                         !result.data.series ||
-                        !result.data.series[0] ||
-                        !result.data.series[0].data ||
-                        result.data.series[0].data.length === 0) {
+                        result.data.series.length < 2) {
 
-                        showNoDataMessage('pareto-chart', 'Tidak ada data defect customer');
+                        showNoDataMessage('repair-scrap-chart', 'Tidak ada data repair vs scrap');
                         return;
                     }
 
                     // Render chart dengan data dari API
-                    renderParetoChart(result.data);
-                    console.log('Data Pareto chart berhasil dimuat:', result.data);
+                    renderRepairScrapChart(result.data);
+                    console.log('Data repair vs scrap chart berhasil dimuat:', result.data);
                 } else {
-                    console.error('Gagal load Pareto chart:', result.message);
-                    showNoDataMessage('pareto-chart', 'Gagal memuat data');
+                    console.error('Gagal load repair vs scrap chart:', result.message);
+                    showNoDataMessage('repair-scrap-chart', 'Gagal memuat data');
                 }
             })
             .catch(error => {
                 // Sembunyikan loading
-                loadingElement.style.display = 'none';
-                console.error('Error load Pareto chart:', error);
-                showNoDataMessage('pareto-chart', 'Terjadi kesalahan koneksi');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                console.error('Error load repair vs scrap chart:', error);
+                showNoDataMessage('repair-scrap-chart', 'Terjadi kesalahan koneksi');
             });
     }
 
-    // Function render Pareto chart dengan data dari API
-    function renderParetoChart(data) {
-        const chartElement = document.querySelector("#pareto-chart");
+    // Function render Repair vs Scrap Chart dengan data dari API
+    function renderRepairScrapChart(data) {
+        const chartElement = document.querySelector("#repair-scrap-chart");
 
-        // CEK DATA KOSONG
-        if (!data || !data.categories || data.categories.length === 0) {
-            showNoDataMessage('pareto-chart', 'Tidak ada data untuk ditampilkan');
+        if (!chartElement) {
+            console.error('Element repair-scrap-chart tidak ditemukan');
             return;
         }
 
-        const barColors = [
-            '#4F81BD',
-            '#9BBB59',
-            '#F79646',
-            '#8064A9',
-            '#4BACC6'
-        ];
+        // CEK DATA KOSONG
+        if (!data || !data.categories || data.categories.length === 0) {
+            showNoDataMessage('repair-scrap-chart', 'Tidak ada data untuk ditampilkan');
+            return;
+        }
+
+        // Ambil data series
+        const series = data.series || [];
+
+        // Cari data Repair dan Scrap
+        let repairData = null;
+        let scrapData = null;
+
+        series.forEach(s => {
+            if (s.name.toLowerCase() === 'repair') {
+                repairData = s;
+            } else if (s.name.toLowerCase() === 'scrap') {
+                scrapData = s;
+            }
+        });
+
+        // Jika data tidak lengkap, tampilkan pesan error
+        if (!repairData || !scrapData) {
+            console.error('Data repair atau scrap tidak lengkap');
+            showNoDataMessage('repair-scrap-chart', 'Data repair atau scrap tidak lengkap');
+            return;
+        }
 
         const options = {
             series: [{
-                    name: data.series[0].name,
-                    type: 'column',
-                    data: data.series[0].data
+                    name: 'Repair',
+                    type: 'bar',
+                    data: repairData.data
                 },
                 {
-                    name: data.series[1].name,
-                    type: 'line',
-                    data: data.series[1].data
+                    name: 'Scrap',
+                    type: 'bar',
+                    data: scrapData.data
                 }
             ],
-
             chart: {
                 height: 350,
-                type: 'line',
+                type: 'bar',
                 stacked: false,
                 toolbar: {
                     show: false
@@ -404,93 +463,76 @@ include '../layout/head.php';
                     speed: 800
                 }
             },
-
-            stroke: {
-                width: [0, 3],
-                curve: 'smooth'
-            },
-
+            colors: ['#28a745', '#dc3545'], // Hijau untuk Repair, Merah untuk Scrap
             plotOptions: {
                 bar: {
-                    columnWidth: '50%',
+                    horizontal: false,
+                    columnWidth: '55%',
                     borderRadius: 4,
-                    distributed: true
+                    borderRadiusApplication: 'end'
                 }
             },
-
-            colors: [
-                function({
-                    dataPointIndex
-                }) {
-                    return barColors[dataPointIndex % barColors.length];
-                },
-                '#FF4560'
-            ],
-
-            labels: data.categories,
-
-            markers: {
-                size: [0, 5],
-                hover: {
-                    size: 7
-                }
+            dataLabels: {
+                enabled: false
             },
-
-            yaxis: [{
-                    title: {
-                        text: 'Jumlah Defect'
-                    },
-                    min: 0,
-                    labels: {
-                        formatter: function(val) {
-                            return Math.round(val);
-                        }
-                    }
-                },
-                {
-                    opposite: true,
-                    title: {
-                        text: 'Rata-rata Defect'
-                    },
-                    min: 0,
-                    labels: {
-                        formatter: function(val) {
-                            return val.toFixed(1);
-                        }
-                    }
-                }
-            ],
-
+            stroke: {
+                show: true,
+                width: 2,
+                colors: ['transparent']
+            },
             xaxis: {
                 categories: data.categories,
+                title: {
+                    text: 'Production Section',
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600
+                    }
+                },
                 labels: {
                     style: {
-                        fontSize: '10px', // ubah ukuran font label
-                        fontFamily: 'Helvetica, Arial, sans-serif'
+                        fontSize: '11px'
+                    },
+                    rotate: -45,
+                    rotateAlways: true,
+                    trim: true,
+                    maxHeight: 120
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Jumlah Defect',
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600
+                    }
+                },
+                min: 0,
+                labels: {
+                    formatter: function(val) {
+                        return Math.round(val);
                     }
                 }
             },
-
+            fill: {
+                opacity: 1
+            },
             tooltip: {
-                shared: true,
-                intersect: false,
                 y: {
-                    formatter: function(y, {
-                        seriesIndex
-                    }) {
-                        if (seriesIndex === 0) {
-                            return Math.round(y) + ' defects';
-                        }
-                        return y.toFixed(1) + ' defects (avg)';
+                    formatter: function(val) {
+                        return val + " defects";
                     }
                 }
             },
-
             legend: {
+                position: 'top',
                 horizontalAlign: 'center',
-                offsetX: 40
+                markers: {
+                    width: 12,
+                    height: 12,
+                    radius: 2
+                }
             },
-
             grid: {
                 borderColor: '#e0e0e0',
                 row: {
@@ -498,11 +540,6 @@ include '../layout/head.php';
                     opacity: 0.3
                 }
             },
-
-            dataLabels: {
-                enabled: false
-            },
-
             noData: {
                 text: 'Tidak ada data tersedia',
                 align: 'center',
@@ -511,11 +548,28 @@ include '../layout/head.php';
                     fontSize: '14px',
                     fontFamily: 'Helvetica, Arial, sans-serif'
                 }
-            }
+            },
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 400
+                    },
+                    xaxis: {
+                        labels: {
+                            rotate: -45,
+                            style: {
+                                fontSize: '10px'
+                            }
+                        }
+                    }
+                }
+            }]
         };
 
-        paretoChartInstance = new ApexCharts(chartElement, options);
-        paretoChartInstance.render();
+        // Simpan instance chart ke variabel global
+        window.repairScrapChartInstance = new ApexCharts(chartElement, options);
+        window.repairScrapChartInstance.render();
     }
 
     // ============================================
@@ -1324,3 +1378,48 @@ include '../layout/head.php';
         donutChartInstance.render();
     }
 </script>
+
+<!-- Tambahan CSS untuk styling card -->
+<style>
+    #card-left .border-end,
+    #card-middle .border-end,
+    #card-right .border-end {
+        border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+
+    #card-left .p-3,
+    #card-middle .p-3,
+    #card-right .p-3 {
+        padding: 1.5rem 0.5rem !important;
+    }
+
+    .bg-light-primary {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    .bg-light-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .bg-light-success {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    @media (max-width: 768px) {
+
+        #card-left .p-3,
+        #card-middle .p-3,
+        #card-right .p-3 {
+            padding: 1rem 0.25rem !important;
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+        }
+    }
+</style>
