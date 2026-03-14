@@ -973,6 +973,15 @@ isLogin();
             return;
         }
 
+        if (!tanggalValue || tanggalValue.trim() === '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Tanggal pengambilan tidak boleh kosong'
+            });
+            return;
+        }
+
         Swal.fire({
             title: 'Menyimpan...',
             text: 'Harap tunggu',

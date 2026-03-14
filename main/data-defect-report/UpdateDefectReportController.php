@@ -86,19 +86,34 @@ function updateReport($connection)
         return;
     }
 
-    // Validasi tanggal_pengambilan (boleh kosong)
-    if (!empty($tanggal_pengambilan)) {
-        // Cek format tanggal YYYY-MM-DD
-        if (!DateTime::createFromFormat('Y-m-d', $tanggal_pengambilan)) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
-            ]);
-            return;
-        }
-    } else {
-        $tanggal_pengambilan = null; // Set ke NULL jika kosong
+    // Validasi nama_operator_pengambil wajib diisi
+    if (empty(trim($nama_operator_pengambil))) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Nama operator pengambil tidak boleh kosong'
+        ]);
+        return;
+    }
+
+    // Validasi tanggal_pengambilan wajib diisi
+    if (empty($tanggal_pengambilan)) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Tanggal pengambilan tidak boleh kosong'
+        ]);
+        return;
+    }
+
+    // Validasi format tanggal YYYY-MM-DD
+    if (!DateTime::createFromFormat('Y-m-d', $tanggal_pengambilan)) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
+        ]);
+        return;
     }
 
     // Cek apakah data dengan ID tersebut ada
@@ -131,7 +146,7 @@ function updateReport($connection)
             WHERE id = ?";
 
     $params = [
-        $nama_operator_pengambil ?: null, // Jika empty string, jadi NULL
+        trim($nama_operator_pengambil),
         $tanggal_pengambilan,
         $id
     ];
@@ -168,7 +183,7 @@ function updateReport($connection)
             'message' => 'Data berhasil diupdate',
             'data' => [
                 'id' => $id,
-                'nama_operator_pengambil' => $nama_operator_pengambil,
+                'nama_operator_pengambil' => trim($nama_operator_pengambil),
                 'tanggal_pengambilan' => $tanggal_pengambilan
             ]
         ]);
@@ -178,7 +193,7 @@ function updateReport($connection)
             'message' => 'Tidak ada perubahan data',
             'data' => [
                 'id' => $id,
-                'nama_operator_pengambil' => $nama_operator_pengambil,
+                'nama_operator_pengambil' => trim($nama_operator_pengambil),
                 'tanggal_pengambilan' => $tanggal_pengambilan
             ]
         ]);
