@@ -8,11 +8,11 @@ isLogin();
 <?php include '../layout/header.php'; ?>
 
 <!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="../../assets/local/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="../../assets/local/responsive.bootstrap5.min.css">
 <!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link href="../../assets/local/select2.min.css" rel="stylesheet" />
+<link href="../../assets/local/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <div class="container-fluid">
     <!-- Header -->
@@ -278,12 +278,12 @@ isLogin();
 <?php include '../layout/scripts.php'; ?>
 
 <!-- SweetAlert2 & DataTables & Select2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="../../assets/local/sweetalert2@11.js"></script>
+<script src="../../assets/local/jquery.dataTables.min.js"></script>
+<script src="../../assets/local/dataTables.bootstrap5.min.js"></script>
+<script src="../../assets/local/dataTables.responsive.min.js"></script>
+<script src="../../assets/local/responsive.bootstrap5.min.js"></script>
+<script src="../../assets/local/select2.min.js"></script>
 
 <script>
     let defectTable;

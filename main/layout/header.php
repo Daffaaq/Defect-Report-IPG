@@ -1,3 +1,9 @@
+<?php
+$noreg = isset($_SESSION['noreg']) ? htmlspecialchars($_SESSION['noreg']) : 'default';
+$ext   = isset($_SESSION['ext']) ? htmlspecialchars($_SESSION['ext']) : 'jpg';
+
+$foto = "http://122.144.4.194:31985/indoprima_gemilang/public/img/" . $noreg . "." . $ext;
+?>
 <div class="body-wrapper">
     <header class="app-header">
         <nav class="navbar navbar-expand-lg navbar-light">
@@ -29,7 +35,7 @@
                             <a class="nav-link pe-0" href="javascript:void(0)" id="drop1" data-bs-toggle="dropdown" aria-expanded="false">
                                 <div class="d-flex align-items-center">
                                     <div class="user-profile-img">
-                                        <img src="../../assets/modernize/images/profile/user-1.jpg" class="rounded-circle" width="35" height="35" alt="" />
+                                        <img src="<?= $foto ?>" class="rounded-circle" width="35" height="35" alt="" />
                                     </div>
                                 </div>
                             </a>
@@ -39,49 +45,35 @@
                                         <h5 class="mb-0 fs-5 fw-semibold">User Profile</h5>
                                     </div>
                                     <div class="d-flex align-items-center py-9 mx-7 border-bottom">
-                                        <img src="../../assets/modernize/images/profile/user-1.jpg" class="rounded-circle" width="80" height="80" alt="" />
+
+
+
+                                        <img src="<?= $foto ?>" class="rounded-circle" width="80" height="80" alt="foto user" />
+
                                         <div class="ms-3">
                                             <h5 class="mb-1 fs-3">
                                                 <?php
-                                                // Tampilkan nama user dari session jika tersedia
                                                 echo isset($_SESSION['nama']) ? htmlspecialchars($_SESSION['nama']) : 'Guest';
                                                 ?>
                                             </h5>
+
                                             <p class="mb-0 d-flex text-dark align-items-center gap-2">
                                                 <i class="ti ti-id fs-4"></i>
                                                 <?php
-                                                // Tampilkan NoReg pegawai dari session jika tersedia
                                                 echo isset($_SESSION['noreg']) ? htmlspecialchars($_SESSION['noreg']) : '-';
                                                 ?>
                                             </p>
                                         </div>
+
                                     </div>
                                     <div class="message-body">
-                                        <a href="./page-user-profile.html" class="py-8 px-7 mt-8 d-flex align-items-center">
+                                        <a href="../../logout.php" class="py-8 px-7 mt-8 d-flex align-items-center">
                                             <span class="d-flex align-items-center justify-content-center bg-light rounded-1 p-6">
-                                                <img src="../../assets/modernize/images/svgs/icon-account.svg" alt="" width="24" height="24">
+                                                <i class="ti ti-logout fs-6"></i>
                                             </span>
                                             <div class="w-75 d-inline-block v-middle ps-3">
-                                                <h6 class="mb-1 bg-hover-primary fw-semibold"> My Profile </h6>
-                                                <span class="d-block text-dark">Account Settings</span>
-                                            </div>
-                                        </a>
-                                        <a href="./app-email.html" class="py-8 px-7 d-flex align-items-center">
-                                            <span class="d-flex align-items-center justify-content-center bg-light rounded-1 p-6">
-                                                <img src="../../assets/modernize/images/svgs/icon-inbox.svg" alt="" width="24" height="24">
-                                            </span>
-                                            <div class="w-75 d-inline-block v-middle ps-3">
-                                                <h6 class="mb-1 bg-hover-primary fw-semibold">My Inbox</h6>
-                                                <span class="d-block text-dark">Messages & Emails</span>
-                                            </div>
-                                        </a>
-                                        <a href="./app-notes.html" class="py-8 px-7 d-flex align-items-center">
-                                            <span class="d-flex align-items-center justify-content-center bg-light rounded-1 p-6">
-                                                <img src="../../assets/modernize/images/svgs/icon-tasks.svg" alt="" width="24" height="24">
-                                            </span>
-                                            <div class="w-75 d-inline-block v-middle ps-3">
-                                                <h6 class="mb-1 bg-hover-primary fw-semibold">My Task</h6>
-                                                <span class="d-block text-dark">To-do and Daily Tasks</span>
+                                                <h6 class="mb-1 bg-hover-primary fw-semibold">Logout</h6>
+                                                <span class="d-block text-dark">Sign out from system</span>
                                             </div>
                                         </a>
                                     </div>

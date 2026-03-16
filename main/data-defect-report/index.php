@@ -8,8 +8,8 @@ isLogin();
 <?php include '../layout/header.php'; ?>
 
 <!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="../../assets/local/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="../../assets/local/responsive.bootstrap5.min.css">
 
 <div class="container-fluid">
     <!-- Header -->
@@ -314,14 +314,13 @@ isLogin();
 <?php include '../layout/scripts.php'; ?>
 
 <!-- SweetAlert2 & DataTables -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
+<script src="../../assets/local/sweetalert2@11.js"></script>
+<script src="../../assets/local/dataTables.bootstrap5.min.js"></script>
+<script src="../../assets/local/dataTables.responsive.min.js"></script>
+<script src="../../assets/local/responsive.bootstrap5.min.js"></script>
 
 <!-- Moment.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="../../assets/local/moment.min.js"></script>
 
 <script>
     let reportTable;
