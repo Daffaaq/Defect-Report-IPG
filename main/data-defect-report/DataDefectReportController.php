@@ -84,8 +84,11 @@ function handleReportActions($connection, $action)
             case 'getReports':
                 getReports($connection);
                 break;
-            case 'show':  // Tambahkan case baru
+            case 'show':
                 showReport($connection);
+                break;
+            case 'getCustomerOptions':
+                getCustomerOptions($connection);
                 break;
             default:
                 http_response_code(400);
@@ -106,27 +109,16 @@ function getReports($connection)
     // Ambil parameter filter dari URL
     $tanggal_awal = $_GET['tanggal_awal'] ?? '';
     $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
+    $lot_nos = isset($_GET['lot_nos']) ? explode(',', $_GET['lot_nos']) : [];
+    $customers = isset($_GET['customers']) ? explode(',', $_GET['customers']) : [];
 
     // Helper: validasi tanggal
     $validateDate = fn($date) => DateTime::createFromFormat('Y-m-d', $date) ?: false;
 
-    // Jika kedua tanggal kosong, kembalikan response kosong
-    if (empty($tanggal_awal) && empty($tanggal_akhir)) {
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Silakan pilih rentang tanggal untuk melihat laporan',
-            'data' => [],
-            'filter' => [
-                'tanggal_awal' => null,
-                'tanggal_akhir' => null,
-                'total_data' => 0,
-                'filter_type' => 'none'
-            ]
-        ]);
-        return;
-    }
-
     $params = [];
+    $whereConditions = [];
+    $filter_message = "";
+    $filter_type = "none";
 
     // Base query
     $sql = "SELECT 
@@ -140,18 +132,16 @@ function getReports($connection)
                 nama_customer, 
                 nama_operator_pengambil,
                 CONVERT(varchar, tanggal_pengambilan, 120) as tanggal_pengambilan,
+                nama_group,
+                qty,
                 aksi_claim_defect,
                 CONVERT(varchar, created_at, 120) as created_at
             FROM report_claim_defect";
 
-    // Build WHERE clause berdasarkan filter
-    $whereConditions = [];
-    $filter_message = "";
-
-    // KASUS 1: Filter rentang tanggal (kedua tanggal diisi)
-    // Build WHERE clause
+    // ====================================
+    // FILTER TANGGAL
+    // ====================================
     if ($tanggal_awal && $tanggal_akhir) {
-
         $awal = $validateDate($tanggal_awal);
         $akhir = $validateDate($tanggal_akhir);
 
@@ -176,11 +166,9 @@ function getReports($connection)
         $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) BETWEEN ? AND ?";
         $params[] = $tanggal_awal;
         $params[] = $tanggal_akhir;
-
         $filter_message = "rentang $tanggal_awal sampai $tanggal_akhir";
         $filter_type = "range";
     } elseif ($tanggal_awal) {
-
         if (!$validateDate($tanggal_awal)) {
             http_response_code(400);
             echo json_encode([
@@ -192,11 +180,9 @@ function getReports($connection)
 
         $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
         $params[] = $tanggal_awal;
-
         $filter_message = "mulai $tanggal_awal sampai sekarang";
         $filter_type = "from";
     } elseif ($tanggal_akhir) {
-
         if (!$validateDate($tanggal_akhir)) {
             http_response_code(400);
             echo json_encode([
@@ -208,15 +194,56 @@ function getReports($connection)
 
         $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
         $params[] = $tanggal_akhir;
-
         $filter_message = "sampai $tanggal_akhir";
         $filter_type = "until";
     }
 
-    // Gabungkan WHERE conditions jika ada
-    if (!empty($whereConditions)) {
-        $sql .= " WHERE " . implode(" AND ", $whereConditions);
+    // ====================================
+    // FILTER LOT NO
+    // ====================================
+    if (!empty($lot_nos) && $lot_nos[0] !== '') {
+        $lot_placeholders = implode(',', array_fill(0, count($lot_nos), '?'));
+        $whereConditions[] = "lotno IN ($lot_placeholders)";
+        foreach ($lot_nos as $lot) {
+            $params[] = trim($lot);
+        }
+        $filter_message = count($lot_nos) . " lot dipilih";
+        $filter_type = "lot";
     }
+
+    // ====================================
+    // FILTER CUSTOMER
+    // ====================================
+    if (!empty($customers) && $customers[0] !== '') {
+        $customer_placeholders = implode(',', array_fill(0, count($customers), '?'));
+        $whereConditions[] = "nama_customer IN ($customer_placeholders)";
+        foreach ($customers as $customer) {
+            $params[] = trim($customer);
+        }
+        $filter_message = count($customers) . " customer dipilih";
+        $filter_type = "customer";
+    }
+
+    // Jika tidak ada filter sama sekali
+    if (empty($whereConditions)) {
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Silakan pilih filter untuk melihat laporan',
+            'data' => [],
+            'filter' => [
+                'tanggal_awal' => null,
+                'tanggal_akhir' => null,
+                'lot_nos' => [],
+                'customers' => [],
+                'total_data' => 0,
+                'filter_type' => 'none'
+            ]
+        ]);
+        return;
+    }
+
+    // Gabungkan WHERE conditions
+    $sql .= " WHERE " . implode(" AND ", $whereConditions);
 
     // Order by
     $sql .= " ORDER BY CONVERT(date, tanggal_ditemukan) DESC, id DESC";
@@ -264,9 +291,24 @@ function getReports($connection)
 
     // Tentukan pesan berdasarkan hasil
     if ($total > 0) {
-        $message = "Berhasil memuat $total laporan untuk $filter_message";
+        $message = "Berhasil memuat $total laporan";
+        if ($filter_type == 'range') {
+            $message .= " untuk $filter_message";
+        } elseif ($filter_type == 'lot') {
+            $message .= " dengan $filter_message";
+        } elseif ($filter_type == 'customer') {
+            $message .= " dengan $filter_message";
+        }
     } else {
-        $message = "Tidak ada laporan untuk $filter_message";
+        if ($filter_type == 'range') {
+            $message = "Tidak ada laporan untuk $filter_message";
+        } elseif ($filter_type == 'lot') {
+            $message = "Tidak ada laporan untuk lot yang dipilih";
+        } elseif ($filter_type == 'customer') {
+            $message = "Tidak ada laporan untuk customer yang dipilih";
+        } else {
+            $message = "Tidak ada laporan";
+        }
     }
 
     echo json_encode([
@@ -276,8 +318,10 @@ function getReports($connection)
         'filter' => [
             'tanggal_awal' => $tanggal_awal ?: null,
             'tanggal_akhir' => $tanggal_akhir ?: null,
+            'lot_nos' => $lot_nos,
+            'customers' => $customers,
             'total_data' => $total,
-            'filter_type' => $tanggal_awal && $tanggal_akhir ? 'range' : 'single'
+            'filter_type' => $filter_type
         ]
     ]);
 }
@@ -312,6 +356,11 @@ function showReport($connection)
                 nama_operator, 
                 deskripsi_masalah,
                 nama_customer, 
+                nama_group,
+                    qty,
+                aksi_claim_defect,
+                nama_operator_pengambil,
+                CONVERT(varchar, tanggal_pengambilan, 120) as tanggal_pengambilan,
                 CONVERT(varchar, created_at, 120) as created_at
             FROM report_claim_defect 
             WHERE id = ?";
@@ -363,5 +412,41 @@ function showReport($connection)
         'status' => 'success',
         'message' => 'Data berhasil dimuat',
         'data' => $formattedRow
+    ]);
+}
+
+// ====================================
+// FUNGSI UNTUK GET OPTIONS CUSTOMER
+// ====================================
+function getCustomerOptions($connection)
+{
+    header('Content-Type: application/json');
+
+    $sql = "SELECT DISTINCT nama_customer 
+            FROM report_claim_defect 
+            WHERE nama_customer IS NOT NULL AND nama_customer != ''
+            ORDER BY nama_customer";
+
+    $stmt = sqlsrv_query($connection, $sql);
+
+    if (!$stmt) {
+        $errors = sqlsrv_errors();
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Gagal mengambil data customer',
+            'detail' => $errors
+        ]);
+        return;
+    }
+
+    $customers = [];
+    while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+        $customers[] = ['nama_customer' => $row['nama_customer']];
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $customers
     ]);
 }

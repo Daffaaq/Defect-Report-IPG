@@ -73,6 +73,10 @@ function updateReport($connection)
 {
     // Ambil data dari POST
     $id = $_POST['id'] ?? '';
+    $lotno = $_POST['lotno'] ?? '';
+    $aksi_claim_defect = $_POST['aksi_claim_defect'] ?? '';
+    $nama_group = $_POST['nama_group'] ?? '';
+    $qty = $_POST['qty'] ?? '';
     $nama_operator_pengambil = $_POST['nama_operator_pengambil'] ?? '';
     $tanggal_pengambilan = $_POST['tanggal_pengambilan'] ?? '';
 
@@ -86,32 +90,24 @@ function updateReport($connection)
         return;
     }
 
-    // Validasi nama_operator_pengambil wajib diisi
-    if (empty(trim($nama_operator_pengambil))) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Nama operator pengambil tidak boleh kosong'
-        ]);
-        return;
+    // Validasi format tanggal hanya jika diisi
+    if (!empty($tanggal_pengambilan)) {
+        if (!DateTime::createFromFormat('Y-m-d', $tanggal_pengambilan)) {
+            http_response_code(400);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
+            ]);
+            return;
+        }
     }
 
-    // Validasi tanggal_pengambilan wajib diisi
-    if (empty($tanggal_pengambilan)) {
+    // Validasi qty hanya jika diisi
+    if (!empty($qty) && (!is_numeric($qty) || $qty < 0)) {
         http_response_code(400);
         echo json_encode([
-            'status' => 'error',
-            'message' => 'Tanggal pengambilan tidak boleh kosong'
-        ]);
-        return;
-    }
-
-    // Validasi format tanggal YYYY-MM-DD
-    if (!DateTime::createFromFormat('Y-m-d', $tanggal_pengambilan)) {
-        http_response_code(400);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
+            'status'  => 'error',
+            'message' => 'Qty harus berupa angka positif'
         ]);
         return;
     }
@@ -139,13 +135,21 @@ function updateReport($connection)
         return;
     }
 
-    // Query update
+    // Query update dengan kolom tambahan
     $sql = "UPDATE report_claim_defect 
-            SET nama_operator_pengambil = ?, 
+            SET lotno = ?,
+                aksi_claim_defect = ?,
+                nama_group = ?,
+                qty = ?,
+                nama_operator_pengambil = ?, 
                 tanggal_pengambilan = ? 
             WHERE id = ?";
 
     $params = [
+        !empty($lotno) ? trim($lotno) : null,
+        !empty($aksi_claim_defect) ? trim($aksi_claim_defect) : null,
+        !empty($nama_group) ? trim($nama_group) : null,
+        !empty($qty) ? $qty : null,
         trim($nama_operator_pengambil),
         $tanggal_pengambilan,
         $id
@@ -183,6 +187,10 @@ function updateReport($connection)
             'message' => 'Data berhasil diupdate',
             'data' => [
                 'id' => $id,
+                'lotno' => !empty($lotno) ? trim($lotno) : null,
+                'aksi_claim_defect' => !empty($aksi_claim_defect) ? trim($aksi_claim_defect) : null,
+                'nama_group' => !empty($nama_group) ? trim($nama_group) : null,
+                'qty' => !empty($qty) ? $qty : null,
                 'nama_operator_pengambil' => trim($nama_operator_pengambil),
                 'tanggal_pengambilan' => $tanggal_pengambilan
             ]
@@ -193,6 +201,10 @@ function updateReport($connection)
             'message' => 'Tidak ada perubahan data',
             'data' => [
                 'id' => $id,
+                'lotno' => !empty($lotno) ? trim($lotno) : null,
+                'aksi_claim_defect' => !empty($aksi_claim_defect) ? trim($aksi_claim_defect) : null,
+                'nama_group' => !empty($nama_group) ? trim($nama_group) : null,
+                'qty' => !empty($qty) ? $qty : null,
                 'nama_operator_pengambil' => trim($nama_operator_pengambil),
                 'tanggal_pengambilan' => $tanggal_pengambilan
             ]

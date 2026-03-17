@@ -89,6 +89,24 @@ isLogin();
                                 </select>
                             </div>
 
+                            <!-- Group Defect -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nama_group" class="form-label fw-semibold">
+                                    Group<span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="nama_group" name="nama_group"
+                                    placeholder="Masukkan group" required>
+                            </div>
+
+                            <!-- Qty -->
+                            <div class="col-md-6 mb-3">
+                                <label for="qty" class="form-label fw-semibold">
+                                    Qty <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="qty" name="qty"
+                                    placeholder="Masukkan jumlah defect" min="1" required>
+                            </div>
+
                             <!-- Nama Defect (di tengah dengan offset) -->
                             <div class="col-md-6 offset-md-3 mb-3">
                                 <label for="nama_defect" class="form-label fw-semibold">Nama Defect <span class="text-danger">*</span></label>
@@ -459,6 +477,8 @@ isLogin();
         if (!$('#nama_operator').val().trim()) errors.push('Nama operator harus diisi');
         if (!$('#section').val()) errors.push('Section harus dipilih');
         if (!$('#nama_defect').val()) errors.push('Nama defect harus dipilih');
+        if (!$('#nama_group').val().trim()) errors.push('Group defect harus diisi');
+        if (!$('#qty').val()) errors.push('Qty harus diisi');
         if (!$('#deskripsi_masalah').val().trim()) errors.push('Deskripsi masalah harus diisi');
         let aksiClaim = $('input[name="aksi_claim_defect"]:checked').val();
 
@@ -505,6 +525,14 @@ isLogin();
                     <td>${escapeHtml(defectText)}</td>
                 </tr>
                 <tr>
+    <td><strong>Group Defect:</strong></td>
+    <td>${escapeHtml($('#nama_group').val())}</td>
+</tr>
+<tr>
+    <td><strong>Qty:</strong></td>
+    <td>${escapeHtml($('#qty').val())}</td>
+</tr>
+                <tr>
                     <td><strong>Deskripsi:</strong></td>
                     <td>${escapeHtml($('#deskripsi_masalah').val())}</td>
                 </tr>
@@ -538,6 +566,8 @@ isLogin();
         formData.append('nama_operator', $('#nama_operator').val().trim());
         formData.append('nama_section', $('#section').val());
         formData.append('nama_defect', $('#nama_defect').val());
+        formData.append('nama_group', $('#nama_group').val().trim());
+        formData.append('qty', $('#qty').val());
         formData.append('deskripsi_masalah', $('#deskripsi_masalah').val().trim());
         formData.append('aksi_claim_defect', $('input[name="aksi_claim_defect"]:checked').val());
 

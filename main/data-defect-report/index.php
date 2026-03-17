@@ -11,6 +11,10 @@ isLogin();
 <link rel="stylesheet" href="../../assets/local/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="../../assets/local/responsive.bootstrap5.min.css">
 
+<!-- Select2 CSS -->
+<link href="../../assets/local/select2.min.css" rel="stylesheet" />
+<link href="../../assets/local/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="container-fluid">
     <!-- Header -->
     <div class="card bg-light-info shadow-none position-relative overflow-hidden">
@@ -27,37 +31,68 @@ isLogin();
         </div>
     </div>
 
-    <!-- Filter Section Simple -->
+    <!-- Filter Section dengan Tabs/Panel Terpisah -->
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-lg-3 col-md-6">
-                    <label class="form-label fw-semibold text-primary">
-                        <i class="ti ti-calendar me-1"></i>Tanggal Awal
-                    </label>
-                    <input type="date" class="form-control" id="tanggalAwal" value="">
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <label class="form-label fw-semibold text-primary">
-                        <i class="ti ti-calendar me-1"></i>Tanggal Akhir
-                    </label>
-                    <input type="date" class="form-control" id="tanggalAkhir" value="">
-                </div>
-                <div class="col-lg-auto col-md-6">
-                    <label class="form-label fw-semibold text-primary opacity-0 d-none d-md-block">Aksi</label>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-secondary" onclick="resetFilter()"
-                            data-bs-toggle="tooltip" title="Reset filter">
-                            <i class="ti ti-refresh"></i>
-                        </button>
-                        <button class="btn btn-success" onclick="exportExcel()"
-                            data-bs-toggle="tooltip" title="Export ke Excel">
-                            <i class="ti ti-download"></i> Export Excel
-                        </button>
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs nav-fill mb-3" id="filterTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="filter-tanggal-tab" data-bs-toggle="tab"
+                        data-bs-target="#filter-tanggal" type="button" role="tab"
+                        aria-controls="filter-tanggal" aria-selected="true">
+                        <i class="ti ti-calendar me-2"></i>Filter by Tanggal
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="filter-lot-tab" data-bs-toggle="tab"
+                        data-bs-target="#filter-lot" type="button" role="tab"
+                        aria-controls="filter-lot" aria-selected="false">
+                        <i class="ti ti-barcode me-2"></i>Filter by Lot No
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="filter-customer-tab" data-bs-toggle="tab"
+                        data-bs-target="#filter-customer" type="button" role="tab"
+                        aria-controls="filter-customer" aria-selected="false">
+                        <i class="ti ti-users me-2"></i>Filter by Customer
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="filterTabsContent">
+                <!-- Tab 1: Filter Tanggal -->
+                <div class="tab-pane fade show active" id="filter-tanggal" role="tabpanel" tabindex="0">
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-calendar me-1"></i>Tanggal Awal
+                            </label>
+                            <input type="date" class="form-control" id="tanggalAwal" value="">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-calendar me-1"></i>Tanggal Akhir
+                            </label>
+                            <input type="date" class="form-control" id="tanggalAkhir" value="">
+                        </div>
+                        <div class="col-lg-4 col-md-12">
+                            <div class="d-flex flex-column h-100 justify-content-end">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary flex-grow-1" onclick="applyDateFilter()">
+                                        <i class="ti ti-filter me-2"></i>Terapkan
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="resetAllFilters()"
+                                        data-bs-toggle="tooltip" title="Reset semua filter">
+                                        <i class="ti ti-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-12">
-                    <div class="d-flex flex-wrap gap-2 align-items-center pt-3 border-top">
+
+                    <!-- Quick Filter untuk Tanggal -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center pt-3 mt-3 border-top">
                         <span class="text-muted me-2"><i class="ti ti-bolt"></i> Quick Filter:</span>
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="setQuickFilter('today')">
                             Hari Ini
@@ -72,6 +107,82 @@ isLogin();
                             Bulan Ini
                         </button>
                     </div>
+                </div>
+
+                <!-- Tab 2: Filter Lot No (INPUT MANUAL) -->
+                <div class="tab-pane fade" id="filter-lot" role="tabpanel" tabindex="0">
+                    <div class="row g-3">
+                        <div class="col-lg-8 col-md-8">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-barcode me-1"></i>Lot Number
+                            </label>
+                            <input type="text" class="form-control" id="filterLotNo"
+                                placeholder="Ketik nomor lot (pisahkan dengan koma untuk multiple)">
+                            <small class="text-muted mt-1 d-block">
+                                <i class="ti ti-info-circle me-1"></i>Contoh: LOT-001, LOT-002, LOT-003
+                            </small>
+                        </div>
+                        <div class="col-lg-4 col-md-4">
+                            <!-- Label tersembunyi untuk menjaga tinggi -->
+                            <label class="form-label fw-semibold text-primary invisible">
+                                <i class="ti ti-filter me-1"></i>Aksi
+                            </label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary flex-grow-1" onclick="applyLotFilter()">
+                                    <i class="ti ti-filter me-2"></i>Terapkan
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearLotFilter()">
+                                    <i class="ti ti-x"></i>
+                                </button>
+                            </div>
+                            <!-- Helper text tersembunyi untuk menjaga tinggi -->
+                            <small class="text-muted mt-1 d-block invisible">Placeholder</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Filter Customer (DROPDOWN MULTIPLE dengan Select2) -->
+                <div class="tab-pane fade" id="filter-customer" role="tabpanel" tabindex="0">
+                    <div class="row g-3">
+                        <div class="col-lg-8 col-md-8">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-users me-1"></i>Customer
+                            </label>
+                            <select class="form-select" id="filterCustomer" multiple="multiple" style="width: 100%;">
+                                <option value="">Memuat data...</option>
+                            </select>
+                            <small class="text-muted mt-1 d-block">
+                                <i class="ti ti-info-circle me-1"></i>Pilih customer (bisa search dan multiple)
+                            </small>
+                        </div>
+                        <div class="col-lg-4 col-md-4">
+                            <!-- Label tersembunyi untuk menjaga tinggi -->
+                            <label class="form-label fw-semibold text-primary invisible">
+                                <i class="ti ti-filter me-1"></i>Aksi
+                            </label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary flex-grow-1" onclick="applyCustomerFilter()">
+                                    <i class="ti ti-filter me-2"></i>Terapkan
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearCustomerFilter()">
+                                    <i class="ti ti-x"></i>
+                                </button>
+                            </div>
+                            <!-- Helper text tersembunyi untuk menjaga tinggi -->
+                            <small class="text-muted mt-1 d-block invisible">Placeholder</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters Summary -->
+            <div class="mt-3 pt-3 border-top" id="activeFiltersContainer" style="display: none;">
+                <div class="d-flex align-items-center">
+                    <span class="text-muted me-2"><i class="ti ti-filter"></i> Filter aktif:</span>
+                    <div class="d-flex flex-wrap gap-2" id="activeFilters"></div>
+                    <button class="btn btn-link btn-sm text-danger ms-auto" onclick="resetAllFilters()">
+                        <i class="ti ti-trash me-1"></i>Hapus semua
+                    </button>
                 </div>
             </div>
         </div>
@@ -159,7 +270,7 @@ isLogin();
     <!-- DataTables Report -->
     <div class="card border-0 shadow-sm">
         <div class="card-body">
-            <div class="table-responsive">
+            <div>
                 <table id="reportTable" class="table table-hover align-middle nowrap" style="width:100%">
                     <thead>
                         <tr>
@@ -171,6 +282,8 @@ isLogin();
                             <th>Section</th>
                             <th>Defect</th>
                             <th>Operator</th>
+                            <th>group</th>
+                            <th>QTY</th>
                             <th>Aksi Claim Defect</th>
                             <th>Nama Operator Pengambil</th>
                             <th>Tanggal Pengambilan</th>
@@ -206,7 +319,7 @@ isLogin();
                 </div>
 
                 <div id="detailContent" style="display: none;">
-                    <!-- Info Card -->
+                    <!-- Info Card (Tidak Bisa Diedit) -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <div class="bg-light rounded-3 p-3">
@@ -222,7 +335,7 @@ isLogin();
                         </div>
                     </div>
 
-                    <!-- Grid Details -->
+                    <!-- Grid Details - Baris 1 (Tidak Bisa Diedit) -->
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -242,13 +355,18 @@ isLogin();
                                 <h6 class="fw-semibold mb-0" id="detailDefect">-</h6>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Grid Details - Baris 2 (Tidak Bisa Diedit) -->
+                    <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="ti ti-barcode text-info me-2"></i>
                                     <span class="text-muted small">Lot Number</span>
                                 </div>
-                                <h6 class="fw-semibold mb-0" id="detailLotNo">-</h6>
+                                <h6 class="fw-semibold mb-0 detail-editable" data-field="lotno" data-id="" id="detailLotNo">-</h6>
+                                <small class="text-muted edit-hint">Double-click untuk edit</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -260,6 +378,10 @@ isLogin();
                                 <h6 class="fw-semibold mb-0" id="detailPartNo">-</h6>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Grid Details - Baris 3 (Tidak Bisa Diedit) -->
+                    <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
                                 <div class="d-flex align-items-center mb-2">
@@ -280,7 +402,69 @@ isLogin();
                         </div>
                     </div>
 
-                    <!-- Deskripsi Masalah -->
+                    <!-- Grid Details - Baris 4 (DATA TAMBAHAN - BISA DIEDIT) -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-users-group text-info me-2"></i>
+                                    <span class="text-muted small">Group</span>
+                                </div>
+                                <h6 class="fw-semibold mb-0 detail-editable" data-field="nama_group" data-id="" id="detailGroup">-</h6>
+                                <small class="text-muted edit-hint">Double-click untuk edit</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-numbers text-warning me-2"></i>
+                                    <span class="text-muted small">Quantity (QTY)</span>
+                                </div>
+                                <h6 class="fw-semibold mb-0 detail-editable" data-field="qty" data-id="" id="detailQty">-</h6>
+                                <small class="text-muted edit-hint">Double-click untuk edit</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid Details - Baris 5 (DATA TAMBAHAN - BISA DIEDIT) -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-clipboard-check text-primary me-2"></i>
+                                    <span class="text-muted small">Aksi Claim Defect</span>
+                                </div>
+                                <h6 class="fw-semibold mb-0 detail-editable" data-field="aksi_claim_defect" data-id="" id="detailAksiClaim">-</h6>
+                                <small class="text-muted edit-hint">Double-click untuk edit</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-user-check text-success me-2"></i>
+                                    <span class="text-muted small">Operator Pengambil</span>
+                                </div>
+                                <h6 class="fw-semibold mb-0 detail-editable" data-field="nama_operator_pengambil" data-id="" id="detailOperatorPengambil">-</h6>
+                                <small class="text-muted edit-hint">Double-click untuk edit</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid Details - Baris 6 (DATA TAMBAHAN - BISA DIEDIT) -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-calendar-event text-secondary me-2"></i>
+                                    <span class="text-muted small">Tanggal Pengambilan</span>
+                                </div>
+                                <h6 class="fw-semibold mb-0 detail-editable" data-field="tanggal_pengambilan" data-id="" id="detailTanggalPengambilan">-</h6>
+                                <small class="text-muted edit-hint">Double-click untuk edit</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deskripsi Masalah (Tidak Bisa Diedit) -->
                     <div class="mt-4">
                         <div class="border rounded-3 p-3">
                             <div class="d-flex align-items-center mb-2">
@@ -321,71 +505,94 @@ isLogin();
 
 <!-- Moment.js -->
 <script src="../../assets/local/moment.min.js"></script>
+<!-- Select2 JS -->
+<script src="../../assets/local/select2.min.js"></script>
 
 <script>
     let reportTable;
+    let isSaving = false;
     let baseUrl = 'DataDefectReportController.php';
-    let searchTimeout;
+
+    // ====================================
+    // KOLOM YANG BISA DI-EDIT PER CELL
+    // ====================================
+    const EDITABLE_COLS = {
+        3: 'lotno',
+        8: 'nama_group',
+        9: 'qty',
+        10: 'aksi_claim_defect',
+        11: 'nama_operator_pengambil',
+        12: 'tanggal_pengambilan'
+    };
+
+    // ====================================
+    // VARIABEL FILTER PER TAB
+    // ====================================
+    let filters = {
+        tanggal: {
+            aktif: false,
+            tanggalAwal: null,
+            tanggalAkhir: null
+        },
+        lot: {
+            aktif: false,
+            lotNos: []
+        },
+        customer: {
+            aktif: false,
+            customers: []
+        }
+    };
+
+    // Tab aktif saat ini
+    let activeTab = 'tanggal';
 
     $(document).ready(function() {
+        initializeTable();
+        loadCustomerOptions();
+        showEmptyInitialState();
+
+        // Event listeners
         $('#closeFilterInfo').on('click', function() {
             $('#filterInfo').fadeOut();
         });
-        initializeTable();
-        initializeEventListeners();
-        loadReports(); // Auto load on page load
+
+        // Tooltip initialization
+        $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // Event listener untuk pindah tab - RESET SEMUA
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            let targetId = $(e.target).attr('id');
+
+            // RESET SEMUA FILTER DAN INPUT
+            resetAllFiltersSilent();
+
+            // Set tab aktif
+            switch (targetId) {
+                case 'filter-tanggal-tab':
+                    activeTab = 'tanggal';
+                    break;
+                case 'filter-lot-tab':
+                    activeTab = 'lot';
+                    break;
+                case 'filter-customer-tab':
+                    activeTab = 'customer';
+                    break;
+            }
+
+            // Tampilkan state kosong
+            showEmptyInitialState();
+        });
     });
 
-    // Fungsi untuk menampilkan detail laporan
-    function showDetail(id) {
-        // Tampilkan loading, sembunyikan content
-        $('#detailLoading').show();
-        $('#detailContent').hide();
-
-        // Tampilkan modal
-        $('#detailModal').modal('show');
-
-        $.ajax({
-            url: baseUrl + '?action=show&id=' + id,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                $('#detailLoading').hide();
-
-                if (response.status === 'success' && response.data) {
-                    let data = response.data;
-
-                    // Isi data ke modal
-                    $('#detailId').text(data.id || '-');
-                    $('#detailTanggal').text(formatDate(data.tanggal_ditemukan) || '-');
-                    $('#detailSection').text(escapeHtml(data.nama_section) || '-');
-                    $('#detailDefect').text(escapeHtml(data.nama_defect) || '-');
-                    $('#detailLotNo').text(escapeHtml(data.lotno) || '-');
-                    $('#detailPartNo').text(escapeHtml(data.partno) || '-');
-                    $('#detailCustomer').text(escapeHtml(data.nama_customer) || '-');
-                    $('#detailOperator').text(escapeHtml(data.nama_operator) || '-');
-                    $('#detailDeskripsi').text(escapeHtml(data.deskripsi_masalah) || '-');
-                    $('#detailCreatedAt').text(formatDateTime(data.created_at) || '-');
-
-                    $('#detailContent').fadeIn();
-                } else {
-                    Swal.fire('Error', response.message || 'Gagal memuat detail data', 'error');
-                    $('#detailModal').modal('hide');
-                }
-            },
-            error: function(xhr) {
-                $('#detailLoading').hide();
-                Swal.fire('Error', 'Gagal memuat detail data', 'error');
-                $('#detailModal').modal('hide');
-            }
-        });
-    }
-
+    // ====================================
+    // FUNGSI INISIALISASI
+    // ====================================
     function initializeTable() {
         reportTable = $('#reportTable').DataTable({
             columns: [{
                     data: null,
-                    width: '50px',
+                    width: '5px',
                     className: 'text-center',
                     render: function(data, type, row, meta) {
                         return '';
@@ -393,7 +600,6 @@ isLogin();
                 },
                 {
                     data: 'tanggal_ditemukan',
-                    width: '100px',
                     className: 'text-nowrap',
                     render: function(data) {
                         if (!data) return '-';
@@ -408,7 +614,13 @@ isLogin();
                 },
                 {
                     data: 'lotno',
-                    render: function(data) {
+                    render: function(data, type, row) {
+                        if (type === 'display' && row._editingCells && row._editingCells['lotno']) {
+                            return `<input type="text" class="form-control form-control-sm inline-edit"
+                       value="${escapeHtml(data || '')}"
+                       data-field="lotno" data-id="${row.id}"
+                       placeholder="Lot No">`;
+                        }
                         return escapeHtml(data) || '-';
                     }
                 },
@@ -437,88 +649,95 @@ isLogin();
                     }
                 },
                 {
+                    data: 'nama_group',
+                    render: function(data, type, row) {
+                        if (type === 'display' && row._editingCells && row._editingCells['nama_group']) {
+                            return `<input type="text" class="form-control form-control-sm inline-edit"
+                       value="${escapeHtml(data || '')}"
+                       data-field="nama_group" data-id="${row.id}"
+                       placeholder="Nama Group">`;
+                        }
+                        return escapeHtml(data) || '-';
+                    }
+                },
+
+                // Col index 9 - QTY
+                {
+                    data: 'qty',
+                    className: 'text-end',
+                    render: function(data, type, row) {
+                        if (type === 'display' && row._editingCells && row._editingCells['qty']) {
+                            return `<input type="number" class="form-control form-control-sm inline-edit text-end"
+                       value="${data || ''}"
+                       data-field="qty" data-id="${row.id}"
+                       min="0" placeholder="0">`;
+                        }
+                        return data !== null ? data : '-';
+                    }
+                },
+
+                // Col index 10 - Aksi Claim Defect
+                {
                     data: 'aksi_claim_defect',
-                    render: function(data) {
-
+                    render: function(data, type, row) {
+                        if (type === 'display' && row._editingCells && row._editingCells['aksi_claim_defect']) {
+                            return `<select class="form-select form-select-sm inline-edit"
+                        data-field="aksi_claim_defect" data-id="${row.id}">
+                        <option value="">-- Pilih --</option>
+                        <option value="Repair" ${data === 'Repair' ? 'selected' : ''}>Repair</option>
+                        <option value="Scrap"  ${data === 'Scrap'  ? 'selected' : ''}>Scrap</option>
+                    </select>`;
+                        }
                         if (!data) return '-';
-
-                        if (data === 'Repair') {
-                            return `<span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Repair</span>`;
-                        }
-
-                        if (data === 'Scrap') {
-                            return `<span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Scrap</span>`;
-                        }
-
+                        if (data === 'Repair') return `<span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Repair</span>`;
+                        if (data === 'Scrap') return `<span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Scrap</span>`;
                         return escapeHtml(data);
                     }
                 },
+
+                // Col index 11 - Nama Operator Pengambil
                 {
                     data: 'nama_operator_pengambil',
                     width: '150px',
                     className: 'text-nowrap',
                     render: function(data, type, row) {
-                        if (type === 'display') {
-                            // Jika row dalam mode edit, tampilkan input
-                            if (row._editing) {
-                                return `<input type="text" class="form-control form-control-sm inline-edit" 
-                               value="${escapeHtml(data || '')}" 
-                               data-field="nama_operator_pengambil"
-                               data-id="${row.id}"
-                               placeholder="Nama operator">`;
-                            }
-                            // Tampilan normal
-                            return data ? escapeHtml(data) : '-';
+                        if (type === 'display' && row._editingCells && row._editingCells['nama_operator_pengambil']) {
+                            return `<input type="text" class="form-control form-control-sm inline-edit"
+                       value="${escapeHtml(data || '')}"
+                       data-field="nama_operator_pengambil" data-id="${row.id}"
+                       placeholder="Nama operator">`;
                         }
-                        return data;
+                        return data ? escapeHtml(data) : '-';
                     }
                 },
+
+                // Col index 12 - Tanggal Pengambilan
                 {
                     data: 'tanggal_pengambilan',
                     width: '120px',
                     className: 'text-nowrap',
                     render: function(data, type, row) {
-                        if (type === 'display') {
-                            // Jika row dalam mode edit, tampilkan input date
-                            if (row._editing) {
-                                let dateValue = data ? data.split(' ')[0] : '';
-                                return `<input type="date" class="form-control form-control-sm inline-edit" 
-                               value="${dateValue}" 
-                               data-field="tanggal_pengambilan"
-                               data-id="${row.id}">`;
-                            }
-                            // Tampilan normal
-                            return data ? formatDate(data) : '-';
+                        if (type === 'display' && row._editingCells && row._editingCells['tanggal_pengambilan']) {
+                            let dateValue = data ? data.split(' ')[0] : '';
+                            return `<input type="date" class="form-control form-control-sm inline-edit"
+                       value="${dateValue}"
+                       data-field="tanggal_pengambilan" data-id="${row.id}">`;
                         }
-                        return data;
+                        return data ? formatDate(data) : '-';
                     }
                 },
+                // Col index 13 - Aksi
                 {
                     data: null,
-                    width: '150px',
+                    width: '80px',
                     className: 'text-center',
                     orderable: false,
                     render: function(data, type, row) {
-                        // Cek apakah row ini sedang dalam mode edit
-                        if (row._editing) {
-                            return `
-                <button class="btn btn-sm btn-success me-1" onclick="saveInlineEdit(${row.id})">
-                    <i class="ti ti-check"></i> Simpan
-                </button>
-                <button class="btn btn-sm btn-secondary" onclick="cancelInlineEdit(${row.id})">
-                    <i class="ti ti-x"></i> Batal
-                </button>
-            `;
-                        } else {
-                            return `
-                <button class="btn btn-sm btn-primary me-1" onclick="editInline(${row.id})" title="Edit Data">
-                    <i class="ti ti-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-info" onclick="showDetail(${row.id})" title="Lihat Detail">
-                    <i class="ti ti-eye"></i>
-                </button>
-            `;
-                        }
+                        return `
+            <button class="btn btn-sm btn-info" onclick="showDetail(${row.id})" title="Lihat Detail">
+                <i class="ti ti-eye"></i>
+            </button>
+        `;
                     }
                 }
             ],
@@ -529,6 +748,7 @@ isLogin();
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json'
             },
+            autoWidth: false,
             scrollX: true,
             responsive: false,
             pageLength: 10,
@@ -549,92 +769,123 @@ isLogin();
         });
     }
 
-    function initializeEventListeners() {
-        // Auto load on input change with debounce
-        $('#tanggalAwal, #tanggalAkhir').on('change input', function() {
-            // Validate dates
-            let tanggalAwal = $('#tanggalAwal').val();
-            let tanggalAkhir = $('#tanggalAkhir').val();
-
-            if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Tanggal awal tidak boleh lebih besar dari tanggal akhir',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                return;
-            }
-
-            debounceLoadReports();
-        });
-    }
-
-    function debounceLoadReports() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            loadReports();
-        }, 500); // Delay 500ms
-    }
-
-    function loadReports() {
-        let tanggalAwal = $('#tanggalAwal').val();
-        let tanggalAkhir = $('#tanggalAkhir').val();
-
-        $('#loadingSpinner').fadeIn();
+    // Tampilkan state awal (table kosong)
+    function showEmptyInitialState() {
+        $('#loadingSpinner').fadeOut();
         $('#summaryCards').hide();
         $('#filterInfo').hide();
 
-        let url = baseUrl + '?action=getReports';
-
-        if (tanggalAwal || tanggalAkhir) {
-            if (tanggalAwal) url += '&tanggal_awal=' + tanggalAwal;
-            if (tanggalAkhir) url += '&tanggal_akhir=' + tanggalAkhir;
+        if (reportTable) {
+            reportTable.clear().draw();
         }
 
+        let message = '';
+        switch (activeTab) {
+            case 'tanggal':
+                message = 'Silakan pilih rentang tanggal dan klik Terapkan Filter Tanggal';
+                break;
+            case 'lot':
+                message = 'Silakan masukkan nomor lot dan klik Terapkan Filter Lot';
+                break;
+            case 'customer':
+                message = 'Silakan pilih customer dan klik Terapkan Filter Customer';
+                break;
+        }
+
+        $('#reportTable tbody').html(`
+            <tr>
+                <td colspan="12" class="text-center py-5">
+                    <i class="ti ti-filter" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <p class="mt-3 text-muted">${message}</p>
+                </td>
+            </tr>
+        `);
+    }
+
+    // ====================================
+    // LOAD DATA CUSTOMER (DROPDOWN dengan Select2)
+    // ====================================
+    function loadCustomerOptions() {
         $.ajax({
-            url: url,
+            url: baseUrl + '?action=getCustomerOptions',
             type: 'GET',
             dataType: 'json',
+            beforeSend: function() {
+                $('#filterCustomer').html('<option value="">Memuat data...</option>');
+            },
             success: function(response) {
-                $('#loadingSpinner').fadeOut();
-
-                if (response.status === 'success') {
-                    // HAPUS semua data lama
-                    reportTable.clear();
-
-                    // Tambah data baru
-                    reportTable.rows.add(response.data);
-
-                    // DRAW ulang dengan mempertahankan order
-                    reportTable.draw();
-
-                    if (response.data.length > 0) {
-                        updateSummaryCards(response);
-
-                        let hasDateFilter = tanggalAwal || tanggalAkhir;
-                        let hasMessage = response.message && response.message.trim() !== '';
-
-                        if (hasDateFilter && hasMessage) {
-                            showFilterInfo(response);
+                if (response.status === 'success' && response.data && response.data.length > 0) {
+                    let options = '';
+                    response.data.forEach(customer => {
+                        let customerName = customer.nama_customer || customer.customer || '';
+                        if (customerName && customerName.trim() !== '') {
+                            options += `<option value="${escapeHtml(customerName)}">${escapeHtml(customerName)}</option>`;
                         }
-                    } else {
-                        showEmptyResult(response);
-                        $('#summaryCards').hide();
-                        $('#filterInfo').hide();
-                    }
+                    });
+                    $('#filterCustomer').html(options);
+
+                    // Inisialisasi Select2 setelah data dimuat
+                    $('#filterCustomer').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Pilih customer...',
+                        allowClear: true,
+                        width: '100%'
+                    });
                 } else {
-                    Swal.fire('Error', response.message, 'error');
-                    reportTable.clear().draw();
+                    $('#filterCustomer').html('<option value="">Tidak ada data customer</option>');
+                    $('#filterCustomer').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Tidak ada data',
+                        disabled: true,
+                        width: '100%'
+                    });
                 }
             },
             error: function(xhr) {
-                $('#loadingSpinner').fadeOut();
-                Swal.fire('Error', 'Gagal memuat data', 'error');
-                reportTable.clear().draw();
+                console.error('Gagal load customer options:', xhr);
+                $('#filterCustomer').html('<option value="">Gagal memuat data</option>');
+                $('#filterCustomer').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Gagal memuat data',
+                    disabled: true,
+                    width: '100%'
+                });
             }
         });
+    }
+
+    // ====================================
+    // FUNGSI FILTER TANGGAL
+    // ====================================
+    function applyDateFilter() {
+        let tanggalAwal = $('#tanggalAwal').val();
+        let tanggalAkhir = $('#tanggalAkhir').val();
+
+        if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            });
+            return;
+        }
+
+        if (!tanggalAwal && !tanggalAkhir) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pilih Tanggal',
+                text: 'Silakan pilih minimal 1 tanggal'
+            });
+            return;
+        }
+
+        // Set filter tanggal
+        filters.tanggal.aktif = true;
+        filters.tanggal.tanggalAwal = tanggalAwal || null;
+        filters.tanggal.tanggalAkhir = tanggalAkhir || null;
+
+        // Load data
+        loadReportsByTab('tanggal');
     }
 
     function setQuickFilter(type) {
@@ -662,130 +913,217 @@ isLogin();
 
         $('#tanggalAwal').val(tanggalAwal);
         $('#tanggalAkhir').val(tanggalAkhir);
-        loadReports();
+
+        // Langsung terapkan filter
+        applyDateFilter();
     }
 
-    function resetFilter() {
+    // ====================================
+    // FUNGSI FILTER LOT (INPUT MANUAL)
+    // ====================================
+    function applyLotFilter() {
+        let lotInput = $('#filterLotNo').val().trim();
+
+        if (lotInput === '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Silakan masukkan nomor lot'
+            });
+            return;
+        }
+
+        // Set filter lot
+        filters.lot.aktif = true;
+        filters.lot.lotNos = lotInput.split(',').map(item => item.trim()).filter(item => item !== '');
+
+        // Load data
+        loadReportsByTab('lot');
+    }
+
+    function clearLotFilter() {
+        filters.lot.aktif = false;
+        filters.lot.lotNos = [];
+        $('#filterLotNo').val('');
+
+        if (activeTab === 'lot') {
+            showEmptyInitialState();
+        }
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Filter Lot Dihapus',
+            text: 'Filter lot telah dihapus',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+
+    // ====================================
+    // FUNGSI FILTER CUSTOMER (DROPDOWN) - TANPA SEARCH
+    // ====================================
+    function applyCustomerFilter() {
+        // Ambil nilai dari Select2
+        let selectedCustomers = $('#filterCustomer').val() || [];
+
+        if (selectedCustomers.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pilih Customer',
+                text: 'Silakan pilih minimal 1 customer'
+            });
+            return;
+        }
+
+        // Set filter customer
+        filters.customer.aktif = true;
+        filters.customer.customers = selectedCustomers;
+
+        // Load data
+        loadReportsByTab('customer');
+    }
+
+    function clearCustomerFilter() {
+        filters.customer.aktif = false;
+        filters.customer.customers = [];
+
+        // Reset Select2
+        $('#filterCustomer').val([]).trigger('change');
+
+        if (activeTab === 'customer') {
+            showEmptyInitialState();
+        }
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Filter Customer Dihapus',
+            text: 'Filter customer telah dihapus',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+
+    // ====================================
+    // FUNGSI LOAD REPORTS PER TAB
+    // ====================================
+    function loadReportsByTab(tab) {
+        $('#loadingSpinner').fadeIn();
+        $('#summaryCards').hide();
+        $('#filterInfo').hide();
+
+        let url = baseUrl + '?action=getReports';
+        let params = [];
+
+        switch (tab) {
+            case 'tanggal':
+                if (filters.tanggal.aktif) {
+                    if (filters.tanggal.tanggalAwal) {
+                        params.push('tanggal_awal=' + filters.tanggal.tanggalAwal);
+                    }
+                    if (filters.tanggal.tanggalAkhir) {
+                        params.push('tanggal_akhir=' + filters.tanggal.tanggalAkhir);
+                    }
+                }
+                break;
+
+            case 'lot':
+                if (filters.lot.aktif && filters.lot.lotNos.length > 0) {
+                    params.push('lot_nos=' + encodeURIComponent(filters.lot.lotNos.join(',')));
+                }
+                break;
+
+            case 'customer':
+                if (filters.customer.aktif && filters.customer.customers.length > 0) {
+                    params.push('customers=' + encodeURIComponent(filters.customer.customers.join(',')));
+                }
+                break;
+        }
+
+        if (params.length === 0) {
+            $('#loadingSpinner').fadeOut();
+            showEmptyInitialState();
+            return;
+        }
+
+        url += '&' + params.join('&');
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                $('#loadingSpinner').fadeOut();
+
+                if (response.status === 'success') {
+                    reportTable.clear();
+                    reportTable.rows.add(response.data);
+                    reportTable.draw();
+
+                    if (response.data.length > 0) {
+                        updateSummaryCards(response);
+                        $('#summaryCards').fadeIn();
+                    } else {
+                        $('#summaryCards').hide();
+                        showEmptyResult(response, tab);
+                    }
+                } else {
+                    Swal.fire('Error', response.message, 'error');
+                    reportTable.clear().draw();
+                }
+            },
+            error: function(xhr) {
+                $('#loadingSpinner').fadeOut();
+                Swal.fire('Error', 'Gagal memuat data', 'error');
+                reportTable.clear().draw();
+            }
+        });
+    }
+
+    // ====================================
+    // FUNGSI RESET ALL FILTERS (SILENT - TANPA SWEETALERT)
+    // ====================================
+    function resetAllFiltersSilent() {
+        // Reset semua filter
+        filters.tanggal.aktif = false;
+        filters.tanggal.tanggalAwal = null;
+        filters.tanggal.tanggalAkhir = null;
+
+        filters.lot.aktif = false;
+        filters.lot.lotNos = [];
+
+        filters.customer.aktif = false;
+        filters.customer.customers = [];
+
+        // Reset semua input
         $('#tanggalAwal').val('');
         $('#tanggalAkhir').val('');
-        loadReports();
+        $('#filterLotNo').val('');
+
+        // Reset Select2
+        $('#filterCustomer').val([]).trigger('change');
+    }
+    // ====================================
+    // FUNGSI RESET ALL FILTERS (DENGAN SWEETALERT)
+    // ====================================
+    function resetAllFilters() {
+        resetAllFiltersSilent();
+
+        // Tampilkan state kosong
+        showEmptyInitialState();
 
         Swal.fire({
             icon: 'success',
-            title: 'Reset Filter',
-            text: 'Filter telah direset',
-            timer: 2000,
+            title: 'Semua Filter Direset',
+            text: 'Semua filter telah dihapus',
+            timer: 1500,
             showConfirmButton: false
         });
     }
 
-    function exportExcel() {
-        let tanggalAwal = $('#tanggalAwal').val();
-        let tanggalAkhir = $('#tanggalAkhir').val();
-
-        console.log('tanggalAwal', tanggalAwal);
-        console.log('tanggalAkhir', tanggalAkhir);
-        // breakpoint;
-
-        if (!tanggalAwal && !tanggalAkhir) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Filter diperlukan',
-                text: 'Silakan pilih minimal 1 tanggal untuk export data'
-            });
-            return;
-        }
-
-        // Cek apakah ada data di tabel
-        let dataCount = reportTable.rows().count();
-
-        if (dataCount === 0) {
-            let pesanTanggal = '';
-
-            if (tanggalAwal && tanggalAkhir) {
-                // Format tanggal ke format dd/mm/yyyy
-                let tglAwal = formatDate(tanggalAwal);
-                let tglAkhir = formatDate(tanggalAkhir);
-                pesanTanggal = `Tidak ada laporan untuk rentang ${tglAwal} hingga ${tglAkhir}`;
-            } else if (tanggalAwal && !tanggalAkhir) {
-                let tglAwal = formatDate(tanggalAwal);
-                pesanTanggal = `Tidak ada laporan untuk tanggal ${tglAwal}`;
-            } else if (!tanggalAwal && tanggalAkhir) {
-                let tglAkhir = formatDate(tanggalAkhir);
-                pesanTanggal = `Tidak ada laporan untuk tanggal ${tglAkhir}`;
-            }
-
-            Swal.fire({
-                icon: 'error',
-                title: 'Tidak Dapat Export',
-                html: `
-            <div class="mb-3">
-                <i class="ti ti-database-off" style="font-size: 3rem; color: #dc3545;"></i>
-            </div>
-            <p class="fw-semibold">Tidak ada laporan untuk diexport!</p>
-            <p class="text-muted small">${pesanTanggal}</p>
-        `,
-                confirmButtonColor: '#dc3545',
-                confirmButtonText: 'Mengerti'
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: 'Menyiapkan Export',
-            html: `
-            <div class="mb-3">
-                <i class="ti ti-file-spreadsheet" style="font-size: 3rem; color: #198754;"></i>
-            </div>
-            <p class="mb-1">Mohon tunggu sebentar...</p>
-            <p class="text-muted small">Mengexport ${dataCount} data laporan</p>
-        `,
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading(),
-            showConfirmButton: false
-        });
-
-        // Buat URL dengan parameter secara manual
-        let params = [];
-
-        // Selalu tambahkan parameter jika ada nilainya
-        if (tanggalAwal) {
-            params.push('tanggal_awal=' + encodeURIComponent(tanggalAwal));
-        }
-        if (tanggalAkhir) {
-            params.push('tanggal_akhir=' + encodeURIComponent(tanggalAkhir));
-        }
-
-        // Gabungkan parameter dengan &
-        let url = 'ExportDefectReportController.php';
-        if (params.length > 0) {
-            url += '?' + params.join('&');
-        }
-
-        console.log('URL Export:', url); // Untuk debugging
-
-        // Gunakan window.location.href
-        window.location.href = url;
-
-        setTimeout(() => {
-            Swal.close();
-            // Tampilkan notifikasi sukses
-            Swal.fire({
-                icon: 'success',
-                title: 'Export Berhasil',
-                html: `
-                <p class="mb-0">${dataCount} data laporan berhasil diexport</p>
-                <p class="text-muted small mt-2">File akan terdownload otomatis</p>
-            `,
-                timer: 2000,
-                showConfirmButton: false
-            });
-        }, 1500);
-    }
-
+    // ====================================
+    // FUNGSI UPDATE TAMPILAN
+    // ====================================
     function updateSummaryCards(response) {
-        $('#summaryCards').fadeIn();
-
         let data = response.data;
         let totalLaporan = response.filter.total_data || data.length;
 
@@ -800,39 +1138,6 @@ isLogin();
         $('#totalDefect').text(uniqueDefects.length.toLocaleString());
     }
 
-    function showFilterInfo(response) {
-        if (response.message && response.message.trim() !== '') {
-            $('#filterMessage').text(response.message);
-
-            $('#filterInfo')
-                .removeClass('d-none')
-                .hide()
-                .fadeIn();
-        }
-    }
-
-    function showEmptyResult(response) {
-        let message = 'Tidak ada data untuk ditampilkan';
-
-        if (response.filter && response.filter.tanggal_awal && response.filter.tanggal_akhir) {
-            message = `Tidak ada laporan untuk rentang ${formatDate(response.filter.tanggal_awal)} - ${formatDate(response.filter.tanggal_akhir)}`;
-        } else if (response.filter && response.filter.tanggal_awal) {
-            message = `Tidak ada laporan untuk tanggal ${formatDate(response.filter.tanggal_awal)}`;
-        }
-
-        $('#reportTable tbody').html(`
-            <tr>
-                <td colspan="12" class="text-center py-5">
-                    <i class="ti ti-database-off" style="font-size: 3rem; color: #dee2e6;"></i>
-                    <p class="mt-3 text-muted">${message}</p>
-                    <button class="btn btn-sm btn-primary mt-2" onclick="setQuickFilter('week')">
-                        <i class="ti ti-calendar"></i> Lihat 7 Hari Terakhir
-                    </button>
-                </td>
-            </tr>
-        `);
-    }
-
     function updateSummary(data) {
         if (!data || data.length === 0) return;
 
@@ -845,75 +1150,496 @@ isLogin();
         $('#totalDefect').text(uniqueDefects.length.toLocaleString());
     }
 
-    // Utility Functions
-    function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        let parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    function showEmptyResult(response, tab) {
+        let message = 'Tidak ada data untuk ditampilkan';
+
+        switch (tab) {
+            case 'tanggal':
+                if (response.filter && response.filter.tanggal_awal && response.filter.tanggal_akhir) {
+                    message = `Tidak ada laporan untuk rentang ${formatDate(response.filter.tanggal_awal)} - ${formatDate(response.filter.tanggal_akhir)}`;
+                }
+                break;
+            case 'lot':
+                message = `Tidak ada laporan untuk lot yang dipilih`;
+                break;
+            case 'customer':
+                message = `Tidak ada laporan untuk customer yang dipilih`;
+                break;
         }
+
+        $('#reportTable tbody').html(`
+            <tr>
+                <td colspan="14" class="text-center py-5">
+                    <i class="ti ti-database-off" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <p class="mt-3 text-muted">${message}</p>
+                </td>
+            </tr>
+        `);
+    }
+
+    // ====================================
+    // FUNGSI DETAIL LAPORAN
+    // ====================================
+    function showDetail(id) {
+        $('#detailLoading').show();
+        $('#detailContent').hide();
+
+        // Reset semua field editable dan hapus class editing
+        $('.detail-editable')
+            .removeClass('editing saving save-success')
+            .removeAttr('style')
+            .html('-');
+
+        $('#detailModal').modal('show');
+
+        $.ajax({
+            url: baseUrl + '?action=show&id=' + id,
+            type: 'GET',
+            dataType: 'json',
+            timeout: 10000,
+            success: function(response) {
+                $('#detailLoading').hide();
+
+                if (response.status === 'success' && response.data) {
+                    let data = response.data;
+
+                    // Set data-id untuk semua field editable
+                    $('.detail-editable').attr('data-id', data.id);
+
+                    // Data existing (tidak bisa diedit)
+                    $('#detailId').text(data.id || '-');
+                    $('#detailTanggal').text(formatDate(data.tanggal_ditemukan) || '-');
+                    $('#detailSection').text(escapeHtml(data.nama_section) || '-');
+                    $('#detailDefect').text(escapeHtml(data.nama_defect) || '-');
+                    $('#detailPartNo').text(escapeHtml(data.partno) || '-');
+                    $('#detailCustomer').text(escapeHtml(data.nama_customer) || '-');
+                    $('#detailOperator').text(escapeHtml(data.nama_operator) || '-');
+                    $('#detailDeskripsi').text(escapeHtml(data.deskripsi_masalah) || '-');
+
+                    // Data editable
+                    $('#detailLotNo').text(escapeHtml(data.lotno) || '-');
+                    $('#detailGroup').text(escapeHtml(data.nama_group) || '-');
+                    $('#detailQty').text(data.qty || '0');
+
+                    // Format Aksi Claim Defect
+                    if (data.aksi_claim_defect) {
+                        let badgeClass = data.aksi_claim_defect === 'Repair' ? 'bg-primary' : 'bg-danger';
+                        let textClass = data.aksi_claim_defect === 'Repair' ? 'primary' : 'danger';
+                        $('#detailAksiClaim').html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(data.aksi_claim_defect)}</span>`);
+                    } else {
+                        $('#detailAksiClaim').text('-');
+                    }
+
+                    $('#detailOperatorPengambil').text(escapeHtml(data.nama_operator_pengambil) || '-');
+                    $('#detailTanggalPengambilan').text(formatDate(data.tanggal_pengambilan) || '-');
+                    $('#detailCreatedAt').text(formatDateTime(data.created_at) || '-');
+
+                    $('#detailContent').fadeIn();
+                } else {
+                    Swal.fire('Error', response.message || 'Gagal memuat detail data', 'error');
+                    $('#detailModal').modal('hide');
+                }
+            },
+            error: function(xhr) {
+                $('#detailLoading').hide();
+                Swal.fire('Error', 'Gagal memuat detail data', 'error');
+                $('#detailModal').modal('hide');
+            }
+        });
+    }
+
+    // ====================================
+    // DOUBLE-CLICK EDIT DI MODAL
+    // ====================================
+    $(document).on('dblclick', '.detail-editable', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let $this = $(this);
+        let field = $this.data('field');
+        let id = $this.data('id');
+
+        // Cek jika sedang dalam mode edit atau sedang menyimpan
+        if ($this.hasClass('editing') || isSaving) return;
+
+        let currentValue = $this.text().trim();
+
+        // Handle khusus untuk aksi_claim_defect yang punya badge
+        if (field === 'aksi_claim_defect') {
+            let badgeText = $this.find('.badge').text().trim();
+            if (badgeText) {
+                currentValue = badgeText;
+            }
+        }
+
+        // Handle khusus untuk tanggal
+        if (field === 'tanggal_pengambilan') {
+            currentValue = $this.text().trim();
+            if (currentValue !== '-' && currentValue !== '') {
+                // Konversi dari dd/mm/yyyy ke yyyy-mm-dd untuk input date
+                if (currentValue.includes('/')) {
+                    let parts = currentValue.split('/');
+                    if (parts.length === 3) {
+                        currentValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+            } else {
+                currentValue = '';
+            }
+        }
+
+        // Bersihkan nilai dari karakter khusus
+        currentValue = currentValue.replace('✎', '').trim();
+        if (currentValue === '-' || currentValue === '') currentValue = '';
+
+        // Buat input berdasarkan field
+        let inputHtml = '';
+
+        if (field === 'aksi_claim_defect') {
+            inputHtml = `<select class="detail-edit-select" data-field="${field}" data-id="${id}">
+            <option value="" ${currentValue === '' ? 'selected' : ''}>-- Pilih --</option>
+            <option value="Repair" ${currentValue === 'Repair' ? 'selected' : ''}>Repair</option>
+            <option value="Scrap" ${currentValue === 'Scrap' ? 'selected' : ''}>Scrap</option>
+        </select>`;
+        } else if (field === 'tanggal_pengambilan') {
+            inputHtml = `<input type="date" class="detail-edit-input" data-field="${field}" data-id="${id}" value="${currentValue}">`;
+        } else if (field === 'qty') {
+            inputHtml = `<input type="number" class="detail-edit-input" data-field="${field}" data-id="${id}" value="${currentValue}" min="0" step="1">`;
+        } else {
+            inputHtml = `<input type="text" class="detail-edit-input" data-field="${field}" data-id="${id}" value="${escapeHtml(currentValue)}" placeholder="Masukkan ${field}">`;
+        }
+
+        // Ganti konten dengan input
+        $this.addClass('editing').html(inputHtml);
+
+        // Focus ke input
+        setTimeout(function() {
+            $this.find('input, select').focus();
+        }, 100);
+    });
+
+
+    // ====================================
+    // SAVE EDIT DARI MODAL - VIA BLUR (DENGAN DELAY & VALIDASI)
+    // ====================================
+    $(document).on('blur', '.detail-edit-input, .detail-edit-select', function(e) {
+        let $this = $(this);
+        let $parent = $this.closest('.detail-editable');
+
+        // Jika parent sudah tidak dalam mode editing, abaikan
+        if (!$parent.hasClass('editing')) return;
+
+        let field = $this.data('field');
+        let id = $this.data('id');
+        let value = $this.val();
+
+        // Delay untuk memastikan tidak konflik dengan klik button atau Enter
+        setTimeout(function() {
+            // Cek lagi apakah masih dalam mode editing dan tidak sedang menyimpan
+            if ($parent.hasClass('editing') && !isSaving) {
+                saveDetailEdit(field, id, value, $parent);
+            }
+        }, 300);
+    });
+
+    $(document).on('keypress', '.detail-edit-input, .detail-edit-select', function(e) {
+        if (e.which === 13) { // Enter
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (isSaving) return;
+
+            let $this = $(this);
+            let $parent = $this.closest('.detail-editable');
+            let field = $this.data('field');
+            let id = $this.data('id');
+            let value = $this.val();
+
+            saveDetailEdit(field, id, value, $parent);
+        }
+    });
+
+    // ====================================
+    // CANCEL EDIT DARI MODAL - VIA ESCAPE
+    // ====================================
+    $(document).on('keydown', '.detail-edit-input, .detail-edit-select', function(e) {
+        if (e.which === 27) { // Escape
+            e.preventDefault();
+            e.stopPropagation();
+
+            let $this = $(this);
+            let $parent = $this.closest('.detail-editable');
+            let field = $this.data('field');
+            let id = $this.data('id');
+
+            cancelDetailEdit(field, id, $parent);
+        }
+    });
+
+    // ====================================
+    // FUNGSI SAVE EDIT DARI MODAL
+    // ====================================
+    function saveDetailEdit(field, id, value, $element) {
+        // Cegah double save
+        if (isSaving) return;
+        isSaving = true;
+
+        if (!$element || !$element.length) {
+            $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
+        }
+
+        // Validasi khusus per field
+        if (field === 'nama_operator_pengambil' && (!value || !value.trim())) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Nama operator pengambil tidak boleh kosong',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            cancelDetailEdit(field, id, $element);
+            isSaving = false;
+            return;
+        }
+
+        if (field === 'qty') {
+            if (value === '' || value === null || value === undefined) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'QTY harus diisi',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                cancelDetailEdit(field, id, $element);
+                isSaving = false;
+                return;
+            }
+
+            let qty = parseInt(value);
+            if (isNaN(qty) || qty < 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'QTY harus berupa angka positif',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                cancelDetailEdit(field, id, $element);
+                isSaving = false;
+                return;
+            }
+            value = qty;
+        }
+
+        // Validasi format tanggal
+        if (field === 'tanggal_pengambilan') {
+            if (value && value.trim() !== '') {
+                let datePattern = /^\d{4}-\d{2}-\d{2}$/;
+                if (!datePattern.test(value)) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Peringatan',
+                        text: 'Format tanggal harus YYYY-MM-DD',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    cancelDetailEdit(field, id, $element);
+                    isSaving = false;
+                    return;
+                }
+            } else {
+                value = null;
+            }
+        }
+
+        // Tampilkan loading di dalam modal (lebih halus)
+        $element.addClass('saving').append('<small class="saving-indicator">Menyimpan...</small>');
+
+        // Dapatkan data lain dari row yang sama
+        let table = $('#reportTable').DataTable();
+        let rowData = null;
+
+        table.rows().every(function() {
+            if (this.data().id == id) {
+                rowData = this.data();
+            }
+        });
+
+        if (!rowData) {
+            $element.removeClass('saving').find('.saving-indicator').remove();
+            Swal.fire('Error', 'Data tidak ditemukan', 'error');
+            cancelDetailEdit(field, id, $element);
+            isSaving = false;
+            return;
+        }
+
+        // Siapkan payload
+        let payload = {
+            id: id,
+            lotno: field === 'lotno' ? value : (rowData.lotno || ''),
+            aksi_claim_defect: field === 'aksi_claim_defect' ? value : (rowData.aksi_claim_defect || ''),
+            nama_group: field === 'nama_group' ? value : (rowData.nama_group || ''),
+            qty: field === 'qty' ? value : (rowData.qty || 0),
+            nama_operator_pengambil: field === 'nama_operator_pengambil' ? value : (rowData.nama_operator_pengambil || ''),
+            tanggal_pengambilan: field === 'tanggal_pengambilan' ? value : formatDateForServer(rowData.tanggal_pengambilan)
+        };
+
+        console.log('Sending payload:', payload);
+
+        $.ajax({
+            url: 'UpdateDefectReportController.php?action=update',
+            type: 'POST',
+            data: payload,
+            dataType: 'json',
+            timeout: 10000, // Timeout 10 detik
+            success: function(response) {
+                $element.removeClass('saving').find('.saving-indicator').remove();
+
+                if (response.status === 'success') {
+                    // Update tampilan di modal
+                    updateDetailDisplay(field, value, $element);
+
+                    // Update di tabel utama
+                    updateTableRow(id, field, value);
+
+                    // Beri feedback sukses (tanpa SweetAlert toast yang mengganggu)
+                    $element.addClass('save-success');
+                    setTimeout(function() {
+                        $element.removeClass('save-success');
+                    }, 1000);
+                } else {
+                    Swal.fire('Gagal', response.message || 'Gagal menyimpan', 'error');
+                    cancelDetailEdit(field, id, $element);
+                }
+
+                isSaving = false;
+            },
+            error: function(xhr, status, error) {
+                $element.removeClass('saving').find('.saving-indicator').remove();
+                console.error('Error response:', xhr.responseText);
+
+                let errorMsg = 'Gagal menyimpan data';
+                if (status === 'timeout') {
+                    errorMsg = 'Timeout, silakan coba lagi';
+                } else {
+                    try {
+                        let response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMsg = response.message;
+                        }
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                    }
+                }
+
+                Swal.fire('Error', errorMsg, 'error');
+                cancelDetailEdit(field, id, $element);
+                isSaving = false;
+            }
+        });
+    }
+
+    // ====================================
+    // FUNGSI FORMAT DATE UNTUK SERVER
+    // ====================================
+    function formatDateForServer(dateStr) {
+        if (!dateStr) return '';
+
+        // Jika sudah format YYYY-MM-DD
+        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+            return dateStr;
+        }
+
+        // Jika format dd/mm/yyyy
+        if (typeof dateStr === 'string' && dateStr.includes('/')) {
+            let parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+        }
+
         return dateStr;
     }
 
-    function formatDateTime(dateTimeStr) {
-        if (!dateTimeStr) return '-';
-        let parts = dateTimeStr.split(' ');
-        if (parts.length >= 2) {
-            return formatDate(parts[0]) + ' ' + parts[1].substring(0, 5);
+    // ====================================
+    // FUNGSI CANCEL EDIT DARI MODAL
+    // ====================================
+    function cancelDetailEdit(field, id, $element) {
+        if (!$element || !$element.length) {
+            $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
         }
-        return dateTimeStr;
-    }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    // Tooltip initialization
-    $(function() {
-        $('[data-bs-toggle="tooltip"]').tooltip();
-    });
-
-    // Tambahkan fungsi untuk handle double click
-    $(document).on('dblclick', '#reportTable tbody td', function(e) {
+        // Dapatkan nilai asli dari DataTable
         let table = $('#reportTable').DataTable();
-        let columnIndex = $(this).index();
-        let rowData = table.row($(this).closest('tr')).data();
+        let originalValue = null;
 
-        if (!rowData) return;
+        table.rows().every(function() {
+            let rowData = this.data();
+            if (rowData.id == id) {
+                originalValue = rowData[field];
+            }
+        });
 
-        // Cek apakah kolom yang di-double-click adalah nama_operator_pengambil (index 9) atau tanggal_pengambilan (index 10)
-        if (columnIndex === 9 || columnIndex === 10) {
-            // Nonaktifkan edit mode untuk semua row
-            table.rows().every(function() {
-                let rowData = this.data();
-                if (rowData._editing) {
-                    rowData._editing = false;
-                    this.data(rowData);
-                }
-            });
-
-            // Aktifkan edit mode untuk row yang dipilih
-            rowData._editing = true;
-            table.row($(this).closest('tr')).data(rowData).draw(false);
-
-            // Auto focus ke input yang sesuai
-            setTimeout(function() {
-                $(`input[data-id="${rowData.id}"]`).first().focus();
-            }, 100);
+        // Update tampilan
+        if (field === 'aksi_claim_defect' && originalValue) {
+            let badgeClass = originalValue === 'Repair' ? 'bg-primary' : 'bg-danger';
+            let textClass = originalValue === 'Repair' ? 'primary' : 'danger';
+            $element.html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(originalValue)}</span>`);
+        } else if (field === 'tanggal_pengambilan') {
+            $element.text(formatDate(originalValue) || '-');
+        } else {
+            $element.text(originalValue || '-');
         }
+
+        $element.removeClass('editing saving');
+        $element.find('.saving-indicator').remove();
+    }
+
+    // ====================================
+    // FUNGSI UPDATE DISPLAY DI MODAL
+    // ====================================
+    function updateDetailDisplay(field, value, $element) {
+        if (field === 'aksi_claim_defect' && value) {
+            let badgeClass = value === 'Repair' ? 'bg-primary' : 'bg-danger';
+            let textClass = value === 'Repair' ? 'primary' : 'danger';
+            $element.html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(value)}</span>`);
+        } else if (field === 'tanggal_pengambilan') {
+            $element.text(formatDate(value) || '-');
+        } else {
+            $element.text(value || '-');
+        }
+        $element.removeClass('editing');
+    }
+
+    // ====================================
+    // FUNGSI UPDATE TABLE ROW
+    // ====================================
+    function updateTableRow(id, field, value) {
+        let table = $('#reportTable').DataTable();
+
+        table.rows().every(function() {
+            let rowData = this.data();
+            if (rowData.id == id) {
+                rowData[field] = value;
+                this.data(rowData);
+            }
+        });
+
+        table.draw(false);
+    }
+
+    // Mencegah blur saat klik di dalam input
+    $(document).on('mousedown', '.detail-edit-input, .detail-edit-select', function(e) {
+        e.stopPropagation();
     });
 
-    // Update fungsi editInline untuk konsistensi
+    // ====================================
+    // FUNGSI EDIT INLINE
+    // ====================================
     function editInline(id) {
         let table = $('#reportTable').DataTable();
 
-        // Nonaktifkan edit mode untuk semua row
         table.rows().every(function() {
             let rowData = this.data();
             if (rowData._editing) {
@@ -922,7 +1648,6 @@ isLogin();
             }
         });
 
-        // Aktifkan edit mode untuk row yang dipilih
         table.rows().every(function() {
             let rowData = this.data();
             if (rowData.id == id) {
@@ -931,11 +1656,9 @@ isLogin();
             }
         });
 
-        // Redraw dengan mempertahankan sorting
         table.draw(false);
     }
 
-    // Update fungsi cancelInlineEdit untuk memastikan konsistensi
     function cancelInlineEdit(id) {
         let table = $('#reportTable').DataTable();
 
@@ -958,7 +1681,6 @@ isLogin();
         });
     }
 
-    // Modifikasi fungsi saveInlineEdit untuk handle kedua field
     function saveInlineEdit(id) {
         let operatorValue = $(`input[data-field="nama_operator_pengambil"][data-id="${id}"]`).val();
         let tanggalValue = $(`input[data-field="tanggal_pengambilan"][data-id="${id}"]`).val();
@@ -1001,7 +1723,6 @@ isLogin();
                 if (response.status === 'success') {
                     let table = $('#reportTable').DataTable();
 
-                    // Update data di row yang benar
                     table.rows().every(function() {
                         let rowData = this.data();
                         if (rowData.id == id) {
@@ -1012,7 +1733,6 @@ isLogin();
                         }
                     });
 
-                    // Redraw dengan mempertahankan sorting
                     table.draw(false);
 
                     Swal.fire({
@@ -1049,29 +1769,290 @@ isLogin();
         });
     }
 
-    // Handle Enter key untuk save
+    // ====================================
+    // FUNGSI EXPORT EXCEL
+    // ====================================
+    function exportExcel() {
+        let params = [];
+
+        // Cek filter yang aktif
+        if (filters.tanggal.aktif) {
+            if (filters.tanggal.tanggalAwal) {
+                params.push('tanggal_awal=' + encodeURIComponent(filters.tanggal.tanggalAwal));
+            }
+            if (filters.tanggal.tanggalAkhir) {
+                params.push('tanggal_akhir=' + encodeURIComponent(filters.tanggal.tanggalAkhir));
+            }
+        } else if (filters.lot.aktif) {
+            if (filters.lot.lotNos.length > 0) {
+                params.push('lot_nos=' + encodeURIComponent(filters.lot.lotNos.join(',')));
+            }
+        } else if (filters.customer.aktif) {
+            if (filters.customer.customers.length > 0) {
+                params.push('customers=' + encodeURIComponent(filters.customer.customers.join(',')));
+            }
+        }
+
+        if (params.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Filter diperlukan',
+                text: 'Silakan terapkan filter terlebih dahulu untuk export data'
+            });
+            return;
+        }
+
+        let dataCount = reportTable.rows().count();
+
+        if (dataCount === 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tidak Dapat Export',
+                text: 'Tidak ada data untuk diexport'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Menyiapkan Export',
+            html: `
+                <div class="mb-3">
+                    <i class="ti ti-file-spreadsheet" style="font-size: 3rem; color: #198754;"></i>
+                </div>
+                <p class="mb-1">Mohon tunggu sebentar...</p>
+                <p class="text-muted small">Mengexport ${dataCount} data laporan</p>
+            `,
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading(),
+            showConfirmButton: false
+        });
+
+        let url = 'ExportDefectReportController.php?' + params.join('&');
+        window.location.href = url;
+
+        setTimeout(() => {
+            Swal.close();
+            Swal.fire({
+                icon: 'success',
+                title: 'Export Berhasil',
+                text: `${dataCount} data laporan berhasil diexport`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }, 1500);
+    }
+
+    // ====================================
+    // UTILITY FUNCTIONS
+    // ====================================
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        let parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return '-';
+        let parts = dateTimeStr.split(' ');
+        if (parts.length >= 2) {
+            return formatDate(parts[0]) + ' ' + parts[1].substring(0, 5);
+        }
+        return dateTimeStr;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // ====================================
+    // EVENT HANDLERS - PER CELL EDIT
+    // ====================================
+
+    // Double-click cell untuk edit
+    $(document).on('dblclick', '#reportTable tbody td', function(e) {
+        let table = $('#reportTable').DataTable();
+        let colIdx = $(this).index();
+        let field = EDITABLE_COLS[colIdx];
+
+        if (!field) return; // kolom tidak bisa diedit
+
+        let row = table.row($(this).closest('tr'));
+        let rowData = row.data();
+        if (!rowData) return;
+
+        // Init _editingCells jika belum ada
+        if (!rowData._editingCells) rowData._editingCells = {};
+
+        // Kalau sudah dalam mode edit, abaikan
+        if (rowData._editingCells[field]) return;
+
+        rowData._editingCells[field] = true;
+        row.data(rowData).draw(false);
+
+        // Focus ke input/select setelah render
+        setTimeout(function() {
+            $(`[data-field="${field}"][data-id="${rowData.id}"]`).focus();
+        }, 80);
+    });
+
     $(document).on('keypress', '.inline-edit', function(e) {
-        if (e.which === 13) { // Enter key
+        if (e.which === 13) {
             e.preventDefault();
             let id = $(this).data('id');
             saveInlineEdit(id);
         }
     });
 
-    // Handle Escape key untuk cancel
+    // Enter = Simpan, Escape = Batal (untuk input)
     $(document).on('keydown', '.inline-edit', function(e) {
-        if (e.which === 27) { // Escape key
+        let field = $(this).data('field');
+        let id = $(this).data('id');
+
+        if (e.which === 13) {
             e.preventDefault();
-            let id = $(this).data('id');
-            cancelInlineEdit(id);
+            saveCellEdit(field, id, $(this).val());
+        }
+        if (e.which === 27) {
+            e.preventDefault();
+            cancelCellEdit(field, id);
         }
     });
+
+    // Blur = otomatis simpan
+    $(document).on('blur', '.inline-edit', function() {
+        let field = $(this).data('field');
+        let id = $(this).data('id');
+        let val = $(this).val();
+
+        // Delay kecil supaya Escape sempat dicegah duluan
+        setTimeout(function() {
+            let stillEditing = $(`[data-field="${field}"][data-id="${id}"]`).length > 0;
+            if (stillEditing) saveCellEdit(field, id, val);
+        }, 150);
+    });
+
+    // ====================================
+    // FUNGSI SAVE / CANCEL PER CELL
+    // ====================================
+
+    function saveCellEdit(field, id, value) {
+        let table = $('#reportTable').DataTable();
+        let rowRef = null;
+        let rowData = null;
+
+        table.rows().every(function() {
+            if (this.data().id == id) {
+                rowData = this.data();
+                rowRef = this;
+            }
+        });
+
+        if (!rowData || !rowRef) return;
+
+        // Susun semua nilai yang akan dikirim ke server
+        // Gunakan nilai terbaru untuk field yang diedit, sisanya pakai rowData
+        let payload = {
+            id: id,
+            lotno: field === 'lotno' ? value : (rowData.lotno || ''),
+            aksi_claim_defect: field === 'aksi_claim_defect' ? value : (rowData.aksi_claim_defect || ''),
+            nama_group: field === 'nama_group' ? value : (rowData.nama_group || ''),
+            qty: field === 'qty' ? value : (rowData.qty || ''),
+            nama_operator_pengambil: field === 'nama_operator_pengambil' ?
+                value : (rowData.nama_operator_pengambil || ''),
+            tanggal_pengambilan: field === 'tanggal_pengambilan' ?
+                value : (rowData.tanggal_pengambilan ?
+                    rowData.tanggal_pengambilan.split(' ')[0] :
+                    '')
+        };
+
+        $.ajax({
+            url: 'UpdateDefectReportController.php?action=update',
+            type: 'POST',
+            data: payload,
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Update nilai di rowData
+                    rowData[field] = value !== '' ? value : null;
+                    delete rowData._editingCells[field];
+                    rowRef.data(rowData).draw(false);
+
+                    // Toast kecil
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tersimpan',
+                        text: `Kolom berhasil diperbarui`,
+                        toast: true,
+                        position: 'bottom-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                } else {
+                    Swal.fire('Gagal', response.message || 'Gagal menyimpan', 'error');
+                    cancelCellEdit(field, id);
+                }
+            },
+            error: function() {
+                Swal.fire('Error', 'Gagal menyimpan data', 'error');
+                cancelCellEdit(field, id);
+            }
+        });
+    }
+
+    function cancelCellEdit(field, id) {
+        let table = $('#reportTable').DataTable();
+
+        table.rows().every(function() {
+            let d = this.data();
+            if (d.id == id && d._editingCells && d._editingCells[field]) {
+                delete d._editingCells[field];
+                this.data(d).draw(false);
+            }
+        });
+    }
 </script>
 
 <style>
+    /* Memastikan kolom button memiliki tinggi yang sama dengan kolom input */
+    .row.g-3>[class*="col-"] {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Container untuk button agar selalu rata bawah */
+    .d-flex.flex-column.h-100 {
+        height: 100% !important;
+    }
+
+    .justify-content-end {
+        justify-content: flex-end !important;
+    }
+
+    /* Memastikan label memiliki tinggi yang konsisten */
+    .form-label {
+        height: auto;
+        min-height: 24px;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+    }
+
+    /* Menyamakan tinggi button container dengan input */
+    .d-flex.flex-column.h-100 .d-flex.gap-2 {
+        margin-top: 0;
+    }
+
     .table-responsive {
         border-radius: 12px;
-        overflow: hidden;
     }
 
     #reportTable thead th {
@@ -1081,11 +2062,9 @@ isLogin();
         text-transform: uppercase;
         letter-spacing: .5px;
         border-bottom: 2px solid #e9ecef;
-        padding: 14px 12px;
     }
 
     #reportTable tbody td {
-        padding: 12px;
         font-size: 14px;
         vertical-align: middle;
     }
@@ -1102,7 +2081,6 @@ isLogin();
         border-radius: 8px !important;
     }
 
-    /* Simple Clean Design */
     .card {
         border-radius: 12px;
         transition: all 0.2s ease;
@@ -1116,14 +2094,16 @@ isLogin();
         margin-bottom: 0.5rem;
     }
 
-    .form-control {
+    .form-control,
+    .form-select {
         border-radius: 8px;
         border: 1px solid #e0e0e0;
         padding: 0.6rem 1rem;
         height: auto;
     }
 
-    .form-control:focus {
+    .form-control:focus,
+    .form-select:focus {
         border-color: #0d6efd;
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
     }
@@ -1139,7 +2119,6 @@ isLogin();
         color: white;
     }
 
-    /* Summary Cards */
     .rounded-circle {
         width: 48px;
         height: 48px;
@@ -1148,26 +2127,10 @@ isLogin();
         justify-content: center;
     }
 
-    /* Badge */
     .badge {
         font-weight: 500;
     }
 
-    /* Table */
-    #reportTable thead th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    #reportTable tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.05);
-    }
-
-    /* Alert */
     .alert-info {
         background-color: #e6f5fe;
         border: none;
@@ -1175,14 +2138,12 @@ isLogin();
         border-radius: 10px;
     }
 
-    /* Loading Spinner */
     #loadingSpinner {
         background: rgba(255, 255, 255, 0.9);
         border-radius: 12px;
         min-height: 200px;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .btn {
             width: 100%;
@@ -1208,7 +2169,6 @@ isLogin();
         }
     }
 
-    /* Animation */
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -1225,46 +2185,39 @@ isLogin();
         animation: fadeIn 0.3s ease;
     }
 
-    /* Empty State */
     .dataTables_empty td {
         padding: 3rem !important;
     }
 
-    /* Border Top */
     .border-top {
         border-top: 1px solid #e0e0e0 !important;
     }
 
-    /* Tambahkan di bagian style */
     .inline-edit {
         border: 2px solid #0d6efd !important;
         background-color: #fff !important;
         box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
-    }
-
-    tr.inline-editing-row {
-        background-color: #fff3cd !important;
-    }
-
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
+        transition: all 0.2s ease;
+        min-width: 90px;
+        /* ← tambahan: lebar minimum semua inline input */
+        width: 100%;
+        /* ← tambahan: isi lebar cell */
     }
 
     .inline-edit:focus {
         border-color: #0a58ca !important;
         box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+        outline: none;
     }
 
-    /* Indikasi bahwa kolom bisa di-double-click */
-    #reportTable tbody td:nth-child(10),
-    #reportTable tbody td:nth-child(11) {
+    #reportTable tbody td:nth-child(12),
+    #reportTable tbody td:nth-child(13) {
         cursor: pointer;
         position: relative;
     }
 
-    #reportTable tbody td:nth-child(10):hover::after,
-    #reportTable tbody td:nth-child(11):hover::after {
+    #reportTable tbody td:nth-child(12):hover::after,
+    #reportTable tbody td:nth-child(13):hover::after {
         content: "Double-click untuk edit";
         position: absolute;
         bottom: 100%;
@@ -1281,26 +2234,111 @@ isLogin();
         margin-bottom: 5px;
     }
 
-    /* Styling untuk row yang sedang diedit */
-    tr.inline-editing-row {
-        background-color: #fff3cd !important;
+    [data-dblclick="true"] {
+        cursor: pointer;
     }
 
-    .inline-edit {
-        border: 2px solid #0d6efd !important;
-        background-color: #fff !important;
+    /* Style untuk field yang bisa diedit di modal */
+    .detail-editable {
+        cursor: pointer;
+        position: relative;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .detail-editable:hover {
+        background-color: #f0f7ff;
+        border: 1px dashed #0d6efd;
+    }
+
+    .detail-editable:hover::after {
+        content: "✎";
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #0d6efd;
+        font-size: 14px;
+    }
+
+    /* Style saat sedang menyimpan */
+    .detail-editable.saving {
+        opacity: 0.7;
+        pointer-events: none;
+        background-color: #f8f9fa;
+        border: 1px solid #6c757d;
+    }
+
+    .detail-editable.saving::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        width: 16px;
+        height: 16px;
+        margin-top: -8px;
+        border: 2px solid #0d6efd;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spinner 0.6s linear infinite;
+    }
+
+    @keyframes spinner {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Style saat sukses */
+    .detail-editable.save-success {
+        background-color: #d4edda;
+        border: 1px solid #28a745;
+        transition: background-color 0.3s ease;
+    }
+
+    .saving-indicator {
+        position: absolute;
+        top: -20px;
+        right: 0;
+        font-size: 10px;
+        color: #0d6efd;
+        background: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .edit-hint {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 4px;
+        color: #6c757d;
+    }
+
+    /* Style untuk input edit di modal */
+    .detail-edit-input,
+    .detail-edit-select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 2px solid #0d6efd;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        background-color: white;
         box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
         transition: all 0.2s ease;
     }
 
-    .inline-edit:focus {
-        border-color: #0a58ca !important;
-        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+    .detail-edit-input:focus,
+    .detail-edit-select:focus {
         outline: none;
+        border-color: #0a58ca;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
     }
 
-    /* Tooltip untuk double-click */
-    [data-dblclick="true"] {
-        cursor: pointer;
+    .detail-edit-input:hover,
+    .detail-edit-select:hover {
+        border-color: #0a58ca;
     }
 </style>

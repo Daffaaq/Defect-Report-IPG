@@ -133,6 +133,9 @@ function insertClaim($connection)
     // Ambil data dari POST
     $nama_section = trim($_POST['nama_section'] ?? '');
     $nama_defect = trim($_POST['nama_defect'] ?? '');
+    $nama_group = trim($_POST['nama_group'] ?? '');
+    $qty = $_POST['qty'] ?? '';
+
     $lotno = trim($_POST['lotno'] ?? '');
     $partno = trim($_POST['partno'] ?? '');
     $tanggal_ditemukan = $_POST['tanggal_ditemukan'] ?? '';
@@ -150,6 +153,14 @@ function insertClaim($connection)
 
     if (empty($nama_defect)) {
         $errors[] = 'Nama Defect wajib diisi';
+    }
+
+    if (empty($nama_group)) {
+        $errors[] = 'Nama Group wajib diisi';
+    }
+
+    if ($qty === '' || !is_numeric($qty)) {
+        $errors[] = 'Qty wajib diisi dan harus berupa angka';
     }
 
     if (empty($lotno)) {
@@ -190,7 +201,7 @@ function insertClaim($connection)
         exit;
     }
 
-    // Validasi format tanggal ditemukan
+    // Validasi format tanggal
     $tanggal_obj = DateTime::createFromFormat('Y-m-d', $tanggal_ditemukan);
     if (!$tanggal_obj || $tanggal_obj->format('Y-m-d') !== $tanggal_ditemukan) {
         http_response_code(400);
@@ -201,36 +212,27 @@ function insertClaim($connection)
         exit;
     }
 
-    // Validasi tanggal repair (jika ada)
-    if (!empty($tanggal_repair)) {
-        $repair_obj = DateTime::createFromFormat('Y-m-d', $tanggal_repair);
-        if (!$repair_obj || $repair_obj->format('Y-m-d') !== $tanggal_repair) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Format tanggal repair tidak valid. Gunakan YYYY-MM-DD'
-            ]);
-            exit;
-        }
-    }
-
     // Query insert
     $sql = "INSERT INTO report_claim_defect (
-    nama_section,
-    nama_defect,
-    lotno,
-    partno,
-    tanggal_ditemukan,
-    nama_operator,
-    deskripsi_masalah,
-    nama_customer,
-    aksi_claim_defect,
-    created_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+        nama_section,
+        nama_defect,
+        nama_group,
+        qty,
+        lotno,
+        partno,
+        tanggal_ditemukan,
+        nama_operator,
+        deskripsi_masalah,
+        nama_customer,
+        aksi_claim_defect,
+        created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
 
     $params = [
         $nama_section,
         $nama_defect,
+        $nama_group,
+        $qty,
         $lotno,
         $partno,
         $tanggal_ditemukan,
@@ -243,28 +245,26 @@ function insertClaim($connection)
     $stmt = sqlsrv_prepare($connection, $sql, $params);
 
     if (!$stmt) {
-        $errors = sqlsrv_errors();
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
             'message' => 'Gagal menyiapkan query',
-            'detail' => $errors
+            'detail' => sqlsrv_errors()
         ]);
         exit;
     }
 
     if (!sqlsrv_execute($stmt)) {
-        $errors = sqlsrv_errors();
         http_response_code(500);
         echo json_encode([
             'status' => 'error',
             'message' => 'Gagal menyimpan data claim',
-            'detail' => $errors
+            'detail' => sqlsrv_errors()
         ]);
         exit;
     }
 
-    // Ambil ID yang baru saja diinsert
+    // Ambil ID terakhir
     $sql_get_id = "SELECT SCOPE_IDENTITY() AS id";
     $stmt_id = sqlsrv_query($connection, $sql_get_id);
     $row_id = sqlsrv_fetch_array($stmt_id, SQLSRV_FETCH_ASSOC);
@@ -278,6 +278,8 @@ function insertClaim($connection)
             'id' => $new_id,
             'nama_section' => $nama_section,
             'nama_defect' => $nama_defect,
+            'nama_group' => $nama_group,
+            'qty' => $qty,
             'lotno' => $lotno,
             'partno' => $partno,
             'tanggal_ditemukan' => $tanggal_ditemukan,
