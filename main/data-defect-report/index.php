@@ -34,6 +34,15 @@ isLogin();
     <!-- Filter Section dengan Tabs/Panel Terpisah -->
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-body">
+            <!-- Header with Import Button -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-semibold text-primary mb-0">
+                    <i class="ti ti-filter me-2"></i>Filter Laporan
+                </h5>
+                <button class="btn btn-success" id="btnImportData">
+                    <i class="ti ti-upload me-2"></i>Import Data
+                </button>
+            </div>
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs nav-fill mb-3" id="filterTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -488,6 +497,139 @@ isLogin();
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="ti ti-x me-1"></i>
                     Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Import Data -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-semibold" id="importModalLabel">
+                    <i class="ti ti-upload me-2"></i>Import Data Defect Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Info Section -->
+                <div class="alert alert-info border-0 mb-4">
+                    <i class="ti ti-info-circle fs-5 me-2"></i>
+                    <strong>Petunjuk:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>File harus berformat <strong>.xlsx, .xls, atau .csv</strong></li>
+                        <li>Maksimal ukuran file: <strong>10 MB</strong></li>
+                        <li>Pastikan struktur kolom sesuai dengan template yang telah disediakan</li>
+                    </ul>
+                </div>
+
+                <!-- Download Template Button -->
+                <div class="mb-4">
+                    <button class="btn btn-outline-secondary w-100" id="btnDownloadTemplate">
+                        <i class="ti ti-download me-2"></i>Download Template Excel
+                    </button>
+                    <small class="text-muted mt-1 d-block text-center">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Tersedia 2 template: dengan header dan tanpa header
+                    </small>
+                </div>
+
+                <!-- File Upload Form -->
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="ti ti-file-excel me-1 text-success"></i>Pilih File Excel
+                        </label>
+                        <input type="file" class="form-control" id="importFile"
+                            accept=".xlsx,.xls,.csv" required>
+                        <small class="text-muted mt-1 d-block">
+                            <i class="ti ti-alert-circle me-1"></i>
+                            Pilih file yang akan diimport
+                        </small>
+                    </div>
+
+                    <!-- Import Options -->
+                    <div class="mb-3">
+                        <div class="card bg-light border-0">
+                            <div class="card-body p-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="skipFirstRow" checked>
+                                    <label class="form-check-label fw-semibold" for="skipFirstRow">
+                                        Lewati baris pertama (header)
+                                    </label>
+                                </div>
+                                <div class="ms-4 mt-2">
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="ti ti-info-circle me-1"></i>
+                                        <strong>Centang jika:</strong> File Anda memiliki baris header (judul kolom) di baris pertama
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="ti ti-info-circle me-1"></i>
+                                        <strong>Tidak centang jika:</strong> File Anda langsung berisi data tanpa header (contoh: template tanpa header)
+                                    </small>
+                                    <div class="mt-2 p-2 bg-white rounded border">
+                                        <small class="text-primary d-block">
+                                            <i class="ti ti-file-excel me-1"></i>
+                                            <strong>Contoh penggunaan:</strong>
+                                        </small>
+                                        <small class="text-secondary d-block mt-1">
+                                            ✅ Centang → Menggunakan <strong>Template Dengan Header</strong><br>
+                                            ❌ Tidak centang → Menggunakan <strong>Template Tanpa Header</strong>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar (Hidden by default) -->
+                    <div id="importProgress" style="display: none;">
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                role="progressbar"
+                                style="width: 0%">
+                                0%
+                            </div>
+                        </div>
+                        <p class="text-muted small text-center" id="progressStatus">
+                            <i class="ti ti-loader me-1"></i>Memproses data...
+                        </p>
+                    </div>
+
+                    <!-- Preview Section (Hidden by default) -->
+                    <div id="previewSection" style="display: none;">
+                        <hr class="my-3">
+                        <h6 class="fw-semibold mb-2">
+                            <i class="ti ti-eye me-1"></i>Preview Data
+                        </h6>
+                        <div class="table-responsive" style="max-height: 300px;">
+                            <table class="table table-sm table-bordered" id="previewTable">
+                                <thead id="previewHeader">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Preview</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewBody">
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">
+                                            Belum ada data
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-success" id="btnImportSubmit" disabled>
+                    <i class="ti ti-upload me-1"></i>Import Data
                 </button>
             </div>
         </div>
@@ -2020,6 +2162,262 @@ isLogin();
             }
         });
     }
+
+    // ====================================
+    // IMPORT DATA FUNCTIONALITY
+    // ====================================
+
+    // Event handler untuk tombol import
+    $('#btnImportData').on('click', function() {
+        // Reset form
+        $('#importForm')[0].reset();
+        $('#skipFirstRow').prop('checked', true);
+        $('#importProgress').hide();
+        $('#previewSection').hide();
+        $('#btnImportSubmit').prop('disabled', true);
+
+        // Reset progress bar
+        $('.progress-bar').css('width', '0%').text('0%');
+
+        // Clear preview
+        $('#previewHeader').html('<tr><th>#</th><th>Preview</th></tr>');
+        $('#previewBody').html('<tr><td colspan="2" class="text-center text-muted">Belum ada data</td></tr>');
+
+        // Show modal
+        $('#importModal').modal('show');
+    });
+
+    // Download template
+    $('#btnDownloadTemplate').on('click', function() {
+        window.location.href = 'ImportDataDefectReportController.php?action=downloadTemplateWithHeader';
+
+        // Download template tanpa header (delay 1 detik)
+        setTimeout(function() {
+            window.location.href = 'ImportDataDefectReportController.php?action=downloadTemplateWithoutHeader';
+        }, 3000);
+    });
+
+    // Handle file selection
+    $('#importFile').on('change', function() {
+        const file = this.files[0];
+
+        if (!file) {
+            $('#btnImportSubmit').prop('disabled', true);
+            $('#previewSection').hide();
+            return;
+        }
+
+        // Validate file size (10 MB)
+        if (file.size > 10 * 1024 * 1024) {
+            Swal.fire({
+                icon: 'error',
+                title: 'File Terlalu Besar',
+                text: 'Maksimal ukuran file adalah 10 MB'
+            });
+            $(this).val('');
+            $('#btnImportSubmit').prop('disabled', true);
+            $('#previewSection').hide();
+            return;
+        }
+
+        // Validate file extension
+        const validExtensions = ['.xlsx', '.xls', '.csv'];
+        const fileName = file.name;
+        const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+
+        if (!validExtensions.includes(fileExt)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format File Tidak Valid',
+                text: 'Hanya file dengan format .xlsx, .xls, atau .csv yang diperbolehkan'
+            });
+            $(this).val('');
+            $('#btnImportSubmit').prop('disabled', true);
+            $('#previewSection').hide();
+            return;
+        }
+
+        // Enable import button
+        $('#btnImportSubmit').prop('disabled', false);
+
+        // Show preview (optional - can be implemented later)
+        // For now, just show a simple preview message
+        $('#previewSection').show();
+        $('#previewHeader').html('<tr><th>#</th><th>Informasi File</th></tr>');
+        $('#previewBody').html(`
+        <tr>
+            <td>1</td>
+            <td>
+                <strong>Nama File:</strong> ${escapeHtml(fileName)}<br>
+                <strong>Ukuran:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
+                <strong>Status:</strong> <span class="text-success">Siap diimport</span>
+            </td>
+        </tr>
+    `);
+    });
+
+    // Handle import submit
+    $('#btnImportSubmit').on('click', function() {
+        const file = $('#importFile')[0].files[0];
+
+        if (!file) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Silakan pilih file terlebih dahulu'
+            });
+            return;
+        }
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('skip_first_row', $('#skipFirstRow').is(':checked') ? '1' : '0');
+
+        // Show progress bar
+        $('#importProgress').show();
+        $('#btnImportSubmit').prop('disabled', true);
+        $('#importFile').prop('disabled', true);
+        $('#skipFirstRow').prop('disabled', true);
+        $('#btnDownloadTemplate').prop('disabled', true);
+
+        // Update progress status
+        let progressInterval = setInterval(function() {
+            let currentWidth = parseInt($('.progress-bar').css('width'));
+            if (currentWidth < 90) {
+                let newWidth = currentWidth + 10;
+                $('.progress-bar').css('width', newWidth + '%').text(newWidth + '%');
+            }
+        }, 500);
+
+        // Send AJAX request
+        $.ajax({
+            url: 'ImportDataDefectReportController.php?action=import',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            timeout: 300000, // 5 minutes timeout for large files
+            success: function(response) {
+                clearInterval(progressInterval);
+                $('.progress-bar').css('width', '100%').text('100%');
+
+                setTimeout(function() {
+                    $('#importProgress').hide();
+
+                    if (response.status === 'success') {
+                        let message = response.message || 'Data berhasil diimport';
+
+                        // Show detailed results if available
+                        if (response.data) {
+                            let details = `
+                            <div class="text-start mt-2">
+                                <strong>Detail Import:</strong><br>
+                                Total data: ${response.data.total || 0}<br>
+                                Berhasil: ${response.data.success || 0}<br>
+                                Gagal: ${response.data.failed || 0}
+                            </div>
+                        `;
+                            message += details;
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Import Berhasil',
+                            html: message,
+                            timer: 3000,
+                            showConfirmButton: true
+                        }).then(() => {
+                            // Close modal
+                            $('#importModal').modal('hide');
+
+                            // Reset filters and reload data based on active tab
+                            if (activeTab === 'tanggal' && filters.tanggal.aktif) {
+                                loadReportsByTab('tanggal');
+                            } else if (activeTab === 'lot' && filters.lot.aktif) {
+                                loadReportsByTab('lot');
+                            } else if (activeTab === 'customer' && filters.customer.aktif) {
+                                loadReportsByTab('customer');
+                            } else {
+                                showEmptyInitialState();
+                            }
+                        });
+                    } else {
+                        let errorMsg = response.message || 'Gagal mengimport data';
+
+                        // Show error details if available
+                        if (response.errors && response.errors.length > 0) {
+                            errorMsg += '<br><br><strong>Detail Error:</strong><br>';
+                            response.errors.forEach(err => {
+                                errorMsg += `- ${escapeHtml(err)}<br>`;
+                            });
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Import Gagal',
+                            html: errorMsg,
+                            confirmButtonText: 'Tutup'
+                        });
+                    }
+
+                    // Reset form
+                    resetImportForm();
+                }, 1000);
+            },
+            error: function(xhr, status, error) {
+                clearInterval(progressInterval);
+                $('#importProgress').hide();
+
+                let errorMsg = 'Gagal mengimport data';
+
+                if (status === 'timeout') {
+                    errorMsg = 'Import timeout. File terlalu besar atau koneksi lambat.';
+                } else if (xhr.responseText) {
+                    try {
+                        let response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMsg = response.message;
+                        }
+                    } catch (e) {
+                        errorMsg = xhr.responseText;
+                    }
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Import Gagal',
+                    text: errorMsg,
+                    confirmButtonText: 'Tutup'
+                });
+
+                resetImportForm();
+            }
+        });
+    });
+
+    // Reset import form
+    function resetImportForm() {
+        $('#importForm')[0].reset();
+        $('#skipFirstRow').prop('checked', true);
+        $('#importProgress').hide();
+        $('#previewSection').hide();
+        $('#btnImportSubmit').prop('disabled', true);
+        $('#importFile').prop('disabled', false);
+        $('#skipFirstRow').prop('disabled', false);
+        $('#btnDownloadTemplate').prop('disabled', false);
+        $('.progress-bar').css('width', '0%').text('0%');
+
+        // Clear preview
+        $('#previewHeader').html('<tr><th>#</th><th>Preview</th></tr>');
+        $('#previewBody').html('<tr><td colspan="2" class="text-center text-muted">Belum ada data</td></tr>');
+    }
+
+    // Clear form when modal is closed
+    $('#importModal').on('hidden.bs.modal', function() {
+        resetImportForm();
+    });
 </script>
 
 <style>
@@ -2340,5 +2738,40 @@ isLogin();
     .detail-edit-input:hover,
     .detail-edit-select:hover {
         border-color: #0a58ca;
+    }
+
+    /* Import Modal Styles */
+    #importProgress .progress {
+        border-radius: 8px;
+        background-color: #f0f0f0;
+    }
+
+    #importProgress .progress-bar {
+        transition: width 0.3s ease;
+        background-color: #28a745;
+    }
+
+    #previewSection .table {
+        font-size: 12px;
+    }
+
+    #previewSection .table th {
+        background-color: #f8f9fa;
+        position: sticky;
+        top: 0;
+        font-weight: 600;
+    }
+
+    #previewSection {
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .modal-header.bg-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
     }
 </style>
