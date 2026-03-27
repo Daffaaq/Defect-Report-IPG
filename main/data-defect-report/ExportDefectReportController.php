@@ -18,22 +18,48 @@ if ($connection === false) {
     die('Database Connection Failed');
 }
 
-// Ambil parameter filter
+// ============================================
+// AMBIL SEMUA PARAMETER FILTER
+// ============================================
 $tanggal_awal = $_GET['tanggal_awal'] ?? '';
 $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
+$lot_nos = $_GET['lot_nos'] ?? '';
+$customers = $_GET['customers'] ?? '';
 
-// Validasi: minimal salah satu tanggal terisi
-if (empty($tanggal_awal) && empty($tanggal_akhir)) {
-    http_response_code(400);
-    die('Filter tanggal wajib untuk export data');
+// ============================================
+// VALIDASI: Minimal satu filter terisi
+// ============================================
+$hasFilter = false;
+$filterTypes = [];
+
+if (!empty($tanggal_awal) || !empty($tanggal_akhir)) {
+    $hasFilter = true;
+    $filterTypes[] = 'tanggal';
 }
 
-// Validasi format tanggal
+if (!empty($lot_nos)) {
+    $hasFilter = true;
+    $filterTypes[] = 'lot';
+}
+
+if (!empty($customers)) {
+    $hasFilter = true;
+    $filterTypes[] = 'customer';
+}
+
+if (!$hasFilter) {
+    http_response_code(400);
+    die('Minimal satu filter (tanggal, lot no, atau customer) wajib untuk export data');
+}
+
+// Validasi format tanggal jika ada
 $validateDate = function ($date) {
     return DateTime::createFromFormat('Y-m-d', $date) !== false;
 };
 
-// Build query dengan kolom baru
+// ============================================
+// BUILD QUERY DENGAN SEMUA FILTER
+// ============================================
 $params = [];
 $sql = "SELECT 
             id, 
@@ -52,11 +78,12 @@ $sql = "SELECT
         FROM report_claim_defect";
 
 $whereConditions = [];
-$filter_text = "SEMUA DATA";
+$filter_text_parts = [];
 
-// Filter berdasarkan tanggal
+// ============================================
+// 1. FILTER TANGGAL
+// ============================================
 if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
-
     if (!$validateDate($tanggal_awal) || !$validateDate($tanggal_akhir)) {
         http_response_code(400);
         die('Format tanggal tidak valid');
@@ -71,12 +98,8 @@ if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
     $params[] = $tanggal_awal;
     $params[] = $tanggal_akhir;
 
-    $filter_text = "PERIODE "
-        . date('d/m/Y', strtotime($tanggal_awal))
-        . " - "
-        . date('d/m/Y', strtotime($tanggal_akhir));
+    $filter_text_parts[] = "Tanggal: " . date('d/m/Y', strtotime($tanggal_awal)) . " - " . date('d/m/Y', strtotime($tanggal_akhir));
 } elseif (!empty($tanggal_awal)) {
-
     if (!$validateDate($tanggal_awal)) {
         http_response_code(400);
         die('Format tanggal awal tidak valid');
@@ -85,9 +108,8 @@ if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
     $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
     $params[] = $tanggal_awal;
 
-    $filter_text = "DARI " . date('d/m/Y', strtotime($tanggal_awal)) . " SAMPAI SEKARANG";
+    $filter_text_parts[] = "Tanggal: >= " . date('d/m/Y', strtotime($tanggal_awal));
 } elseif (!empty($tanggal_akhir)) {
-
     if (!$validateDate($tanggal_akhir)) {
         http_response_code(400);
         die('Format tanggal akhir tidak valid');
@@ -96,16 +118,79 @@ if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
     $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
     $params[] = $tanggal_akhir;
 
-    $filter_text = "SAMPAI " . date('d/m/Y', strtotime($tanggal_akhir));
+    $filter_text_parts[] = "Tanggal: <= " . date('d/m/Y', strtotime($tanggal_akhir));
 }
 
+// ============================================
+// 2. FILTER LOT NO (MULTIPLE)
+// ============================================
+if (!empty($lot_nos)) {
+    $lotArray = explode(',', $lot_nos);
+    $lotPlaceholders = [];
+    $lotValues = [];
+
+    foreach ($lotArray as $lot) {
+        $lot = trim($lot);
+        if (!empty($lot)) {
+            $lotPlaceholders[] = "?";
+            $params[] = $lot;
+            $lotValues[] = $lot;
+        }
+    }
+
+    if (!empty($lotPlaceholders)) {
+        $whereConditions[] = "lotno IN (" . implode(',', $lotPlaceholders) . ")";
+        $lotCount = count($lotValues);
+        // Tampilkan nilai asli
+        if ($lotCount > 3) {
+            $filter_text_parts[] = "Lot No: " . $lotCount . " lot terpilih";
+        } else {
+            $filter_text_parts[] = "Lot No: " . implode(', ', $lotValues);
+        }
+    }
+}
+
+// ============================================
+// 3. FILTER CUSTOMER (MULTIPLE)
+// ============================================
+if (!empty($customers)) {
+    $customerArray = explode(',', $customers);
+    $customerPlaceholders = [];
+    $customerValues = [];
+
+    foreach ($customerArray as $customer) {
+        $customer = trim($customer);
+        if (!empty($customer)) {
+            $customerPlaceholders[] = "?";
+            $params[] = $customer;
+            $customerValues[] = $customer;
+        }
+    }
+
+    if (!empty($customerPlaceholders)) {
+        $whereConditions[] = "nama_customer IN (" . implode(',', $customerPlaceholders) . ")";
+        $customerCount = count($customerValues);
+        // Tampilkan nilai asli
+        if ($customerCount > 3) {
+            $filter_text_parts[] = "Customer: " . $customerCount . " customer terpilih";
+        } else {
+            $filter_text_parts[] = "Customer: " . implode(', ', $customerValues);
+        }
+    }
+}
+
+// ============================================
+// GABUNGKAN WHERE CONDITIONS
+// ============================================
 if (!empty($whereConditions)) {
     $sql .= " WHERE " . implode(" AND ", $whereConditions);
 }
 
 $sql .= " ORDER BY tanggal_ditemukan DESC, id DESC";
 
-// Eksekusi query
+// ============================================
+// EKSEKUSI QUERY
+// ============================================
 $stmt = sqlsrv_prepare($connection, $sql, $params);
 if (!$stmt) {
     $errors = sqlsrv_errors();
@@ -131,12 +216,17 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
     $rows[] = $formattedRow;
 }
 
-// Buat spreadsheet
+// ============================================
+// BUAT SPREADSHEET
+// ============================================
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
 
-// Set judul dan header
+// Set judul
 $sheet->setCellValue('A1', 'LAPORAN CLAIM DEFECT');
+
+// Set filter text (gabungkan semua filter)
+$filter_text = empty($filter_text_parts) ? "SEMUA DATA" : implode(" | ", $filter_text_parts);
 $sheet->setCellValue('A2', $filter_text);
 
 // Ambil waktu server
@@ -151,7 +241,10 @@ if ($queryTime) {
 }
 $sheet->setCellValue('A3', 'Tanggal Export: ' . $dbTime);
 
-// Header kolom (SEKARANG 12 KOLOM)
+// Tambahkan info jumlah data
+$sheet->setCellValue('A4', 'Jumlah Data: ' . count($rows) . ' record');
+
+// Header kolom
 $headers = [
     'A' => 'No',
     'B' => 'Tanggal Ditemukan',
@@ -168,11 +261,11 @@ $headers = [
 ];
 
 foreach ($headers as $column => $header) {
-    $sheet->setCellValue($column . '5', $header);
+    $sheet->setCellValue($column . '6', $header);
 }
 
 // Style header
-$sheet->getStyle('A5:L5')->applyFromArray([
+$sheet->getStyle('A6:L6')->applyFromArray([
     'font' => [
         'bold' => true,
         'color' => ['rgb' => 'FFFFFF'],
@@ -210,7 +303,7 @@ $sheet->mergeCells('A2:L2');
 $sheet->getStyle('A2')->applyFromArray([
     'font' => [
         'bold' => true,
-        'size' => 12,
+        'size' => 11,
         'color' => ['rgb' => '0D6EFD']
     ],
     'alignment' => [
@@ -229,8 +322,20 @@ $sheet->getStyle('A3')->applyFromArray([
     ]
 ]);
 
-// Isi data
-$rowNumber = 6;
+$sheet->mergeCells('A4:L4');
+$sheet->getStyle('A4')->applyFromArray([
+    'font' => [
+        'bold' => true,
+        'size' => 10,
+        'color' => ['rgb' => '28A745']
+    ],
+    'alignment' => [
+        'horizontal' => Alignment::HORIZONTAL_RIGHT
+    ]
+]);
+
+// Isi data (mulai dari baris 7)
+$rowNumber = 7;
 $no = 1;
 
 if (empty($rows)) {
@@ -277,8 +382,8 @@ if (empty($rows)) {
 
 // Style data
 $lastRow = $rowNumber - 1;
-if ($lastRow >= 6) {
-    $sheet->getStyle('A6:L' . $lastRow)->applyFromArray([
+if ($lastRow >= 7) {
+    $sheet->getStyle('A7:L' . $lastRow)->applyFromArray([
         'borders' => [
             'allBorders' => [
                 'borderStyle' => Border::BORDER_THIN,
@@ -291,17 +396,17 @@ if ($lastRow >= 6) {
     ]);
 
     // Wrap text untuk kolom deskripsi
-    $sheet->getStyle('I6:I' . $lastRow)->getAlignment()->setWrapText(true);
+    $sheet->getStyle('I7:I' . $lastRow)->getAlignment()->setWrapText(true);
 
     // Style khusus untuk kolom aksi claim defect
-    $sheet->getStyle('J6:J' . $lastRow)->applyFromArray([
+    $sheet->getStyle('J7:J' . $lastRow)->applyFromArray([
         'font' => [
             'bold' => true
         ]
     ]);
 }
 
-// Set lebar kolom (sesuaikan)
+// Set lebar kolom
 $sheet->getColumnDimension('A')->setWidth(5);   // No
 $sheet->getColumnDimension('B')->setWidth(15);  // Tanggal Ditemukan
 $sheet->getColumnDimension('C')->setWidth(25);  // Customer
@@ -315,22 +420,42 @@ $sheet->getColumnDimension('J')->setWidth(18);  // Aksi Claim Defect
 $sheet->getColumnDimension('K')->setWidth(20);  // Operator Pengambil
 $sheet->getColumnDimension('L')->setWidth(18);  // Tanggal Pengambilan
 
-// Freeze pane
-$sheet->freezePane('A6');
+// Freeze pane (freeze baris 7, kolom A)
+$sheet->freezePane('A7');
 
-// Buat nama file
-$filename = 'Laporan_Claim_Defect_' . date('Ymd_His') . '.xlsx';
+// ============================================
+// BUAT NAMA FILE (sesuai filter yang digunakan)
+// ============================================
+$filename = 'Laporan_Claim_Defect_';
+$filenameParts = [];
+
 if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
     if ($tanggal_awal == $tanggal_akhir) {
-        $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '.xlsx';
+        $filenameParts[] = $tanggal_awal;
     } else {
-        $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '_to_' . $tanggal_akhir . '.xlsx';
+        $filenameParts[] = $tanggal_awal . '_to_' . $tanggal_akhir;
     }
 } elseif (!empty($tanggal_awal)) {
-    $filename = 'Laporan_Claim_Defect_' . $tanggal_awal . '.xlsx';
+    $filenameParts[] = 'from_' . $tanggal_awal;
 } elseif (!empty($tanggal_akhir)) {
-    $filename = 'Laporan_Claim_Defect_' . $tanggal_akhir . '.xlsx';
+    $filenameParts[] = 'until_' . $tanggal_akhir;
 }
+
+if (!empty($lot_nos)) {
+    $lotCount = count(explode(',', $lot_nos));
+    $filenameParts[] = 'lot_' . $lotCount . 'items';
+}
+
+if (!empty($customers)) {
+    $customerCount = count(explode(',', $customers));
+    $filenameParts[] = 'cust_' . $customerCount . 'items';
+}
+
+if (empty($filenameParts)) {
+    $filenameParts[] = date('Ymd_His');
+}
+
+$filename .= implode('_', $filenameParts) . '.xlsx';
 
 // Bersihkan output buffer sebelum mengirim header
 if (ob_get_level()) {

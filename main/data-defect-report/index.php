@@ -39,9 +39,15 @@ isLogin();
                 <h5 class="fw-semibold text-primary mb-0">
                     <i class="ti ti-filter me-2"></i>Filter Laporan
                 </h5>
-                <button class="btn btn-success" id="btnImportData">
-                    <i class="ti ti-upload me-2"></i>Import Data
-                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn" id="btnImportData" style="background-color: #FF5722; color: white;">
+                        <i class="ti ti-upload me-2"></i>Import Data
+                    </button>
+
+                    <button class="btn" id="btnExportExcel" style="background-color: #4CAF50; color: white;">
+                        <i class="ti ti-download me-2"></i>Export Excel
+                    </button>
+                </div>
             </div>
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs nav-fill mb-3" id="filterTabs" role="tablist">
@@ -505,7 +511,7 @@ isLogin();
 
 <!-- Modal Import Data -->
 <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title fw-semibold" id="importModalLabel">
@@ -1914,6 +1920,10 @@ isLogin();
     // ====================================
     // FUNGSI EXPORT EXCEL
     // ====================================
+    $('#btnExportExcel').on('click', function() {
+        exportExcel();
+    });
+
     function exportExcel() {
         let params = [];
 
