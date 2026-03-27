@@ -224,10 +224,7 @@ $sheet = $spreadsheet->getActiveSheet();
 
 // Set judul
 $sheet->setCellValue('A1', 'LAPORAN CLAIM DEFECT');
-
-// Set filter text (gabungkan semua filter)
-$filter_text = empty($filter_text_parts) ? "SEMUA DATA" : implode(" | ", $filter_text_parts);
-$sheet->setCellValue('A2', $filter_text);
+$sheet->setCellValue('A2', 'DATA CLAIM DEFECT');
 
 // Ambil waktu server
 $queryTime = sqlsrv_query($connection, "SELECT GETDATE() as server_time");
@@ -443,12 +440,12 @@ if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
 
 if (!empty($lot_nos)) {
     $lotCount = count(explode(',', $lot_nos));
-    $filenameParts[] = 'lot_' . $lotCount . 'items';
+    $filenameParts[] = $lotCount . 'lot';
 }
 
 if (!empty($customers)) {
     $customerCount = count(explode(',', $customers));
-    $filenameParts[] = 'cust_' . $customerCount . 'items';
+    $filenameParts[] = $customerCount . 'cust';
 }
 
 if (empty($filenameParts)) {
