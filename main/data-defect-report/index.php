@@ -528,6 +528,7 @@ isLogin();
                         <li>File harus berformat <strong>.xlsx, .xls, atau .csv</strong></li>
                         <li>Maksimal ukuran file: <strong>10 MB</strong></li>
                         <li>Pastikan struktur kolom sesuai dengan template yang telah disediakan</li>
+                        <li><strong class="text-danger">Baris pertama akan diabaikan (header), pastikan file memiliki header</strong></li>
                     </ul>
                 </div>
 
@@ -538,7 +539,7 @@ isLogin();
                     </button>
                     <small class="text-muted mt-1 d-block text-center">
                         <i class="ti ti-info-circle me-1"></i>
-                        Tersedia 2 template: dengan header dan tanpa header
+                        Template dengan header (baris pertama adalah judul kolom)
                     </small>
                 </div>
 
@@ -552,42 +553,8 @@ isLogin();
                             accept=".xlsx,.xls,.csv" required>
                         <small class="text-muted mt-1 d-block">
                             <i class="ti ti-alert-circle me-1"></i>
-                            Pilih file yang akan diimport
+                            Pilih file yang akan diimport (pastikan format sesuai template)
                         </small>
-                    </div>
-
-                    <!-- Import Options -->
-                    <div class="mb-3">
-                        <div class="card bg-light border-0">
-                            <div class="card-body p-3">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="skipFirstRow" checked>
-                                    <label class="form-check-label fw-semibold" for="skipFirstRow">
-                                        Lewati baris pertama (header)
-                                    </label>
-                                </div>
-                                <div class="ms-4 mt-2">
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="ti ti-info-circle me-1"></i>
-                                        <strong>Centang jika:</strong> File Anda memiliki baris header (judul kolom) di baris pertama
-                                    </small>
-                                    <small class="text-muted d-block">
-                                        <i class="ti ti-info-circle me-1"></i>
-                                        <strong>Tidak centang jika:</strong> File Anda langsung berisi data tanpa header (contoh: template tanpa header)
-                                    </small>
-                                    <div class="mt-2 p-2 bg-white rounded border">
-                                        <small class="text-primary d-block">
-                                            <i class="ti ti-file-excel me-1"></i>
-                                            <strong>Contoh penggunaan:</strong>
-                                        </small>
-                                        <small class="text-secondary d-block mt-1">
-                                            ✅ Centang → Menggunakan <strong>Template Dengan Header</strong><br>
-                                            ❌ Tidak centang → Menggunakan <strong>Template Tanpa Header</strong>
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Progress Bar (Hidden by default) -->
@@ -2181,7 +2148,6 @@ isLogin();
     $('#btnImportData').on('click', function() {
         // Reset form
         $('#importForm')[0].reset();
-        $('#skipFirstRow').prop('checked', true);
         $('#importProgress').hide();
         $('#previewSection').hide();
         $('#btnImportSubmit').prop('disabled', true);
@@ -2197,14 +2163,9 @@ isLogin();
         $('#importModal').modal('show');
     });
 
-    // Download template
+    // Download template - hanya 1 template
     $('#btnDownloadTemplate').on('click', function() {
-        window.location.href = 'ImportDataDefectReportController.php?action=downloadTemplateWithHeader';
-
-        // Download template tanpa header (delay 1 detik)
-        setTimeout(function() {
-            window.location.href = 'ImportDataDefectReportController.php?action=downloadTemplateWithoutHeader';
-        }, 3000);
+        window.location.href = 'ImportDataDefectReportController.php?action=downloadTemplate';
     });
 
     // Handle file selection
@@ -2250,8 +2211,7 @@ isLogin();
         // Enable import button
         $('#btnImportSubmit').prop('disabled', false);
 
-        // Show preview (optional - can be implemented later)
-        // For now, just show a simple preview message
+        // Show preview
         $('#previewSection').show();
         $('#previewHeader').html('<tr><th>#</th><th>Informasi File</th></tr>');
         $('#previewBody').html(`
@@ -2260,7 +2220,8 @@ isLogin();
             <td>
                 <strong>Nama File:</strong> ${escapeHtml(fileName)}<br>
                 <strong>Ukuran:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
-                <strong>Status:</strong> <span class="text-success">Siap diimport</span>
+                <strong>Status:</strong> <span class="text-success">Siap diimport</span><br>
+                <small class="text-muted">Baris pertama akan diabaikan (header)</small>
             </td>
         </tr>
     `);
@@ -2279,16 +2240,15 @@ isLogin();
             return;
         }
 
-        // Prepare form data
+        // Prepare form data - selalu skip baris pertama (header)
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('skip_first_row', $('#skipFirstRow').is(':checked') ? '1' : '0');
+        formData.append('skip_first_row', '1'); // Selalu skip header
 
         // Show progress bar
         $('#importProgress').show();
         $('#btnImportSubmit').prop('disabled', true);
         $('#importFile').prop('disabled', true);
-        $('#skipFirstRow').prop('disabled', true);
         $('#btnDownloadTemplate').prop('disabled', true);
 
         // Update progress status
@@ -2308,7 +2268,7 @@ isLogin();
             processData: false,
             contentType: false,
             dataType: 'json',
-            timeout: 300000, // 5 minutes timeout for large files
+            timeout: 300000,
             success: function(response) {
                 clearInterval(progressInterval);
                 $('.progress-bar').css('width', '100%').text('100%');
@@ -2319,16 +2279,15 @@ isLogin();
                     if (response.status === 'success') {
                         let message = response.message || 'Data berhasil diimport';
 
-                        // Show detailed results if available
                         if (response.data) {
                             let details = `
-                            <div class="text-start mt-2">
-                                <strong>Detail Import:</strong><br>
-                                Total data: ${response.data.total || 0}<br>
-                                Berhasil: ${response.data.success || 0}<br>
-                                Gagal: ${response.data.failed || 0}
-                            </div>
-                        `;
+                        <div class="text-start mt-2">
+                            <strong>Detail Import:</strong><br>
+                            Total data: ${response.data.total || 0}<br>
+                            Berhasil: ${response.data.success || 0}<br>
+                            Gagal: ${response.data.failed || 0}
+                        </div>
+                    `;
                             message += details;
                         }
 
@@ -2339,10 +2298,9 @@ isLogin();
                             timer: 3000,
                             showConfirmButton: true
                         }).then(() => {
-                            // Close modal
                             $('#importModal').modal('hide');
 
-                            // Reset filters and reload data based on active tab
+                            // Reload data berdasarkan tab aktif
                             if (activeTab === 'tanggal' && filters.tanggal.aktif) {
                                 loadReportsByTab('tanggal');
                             } else if (activeTab === 'lot' && filters.lot.aktif) {
@@ -2356,7 +2314,6 @@ isLogin();
                     } else {
                         let errorMsg = response.message || 'Gagal mengimport data';
 
-                        // Show error details if available
                         if (response.errors && response.errors.length > 0) {
                             errorMsg += '<br><br><strong>Detail Error:</strong><br>';
                             response.errors.forEach(err => {
@@ -2372,7 +2329,6 @@ isLogin();
                         });
                     }
 
-                    // Reset form
                     resetImportForm();
                 }, 1000);
             },
@@ -2410,12 +2366,10 @@ isLogin();
     // Reset import form
     function resetImportForm() {
         $('#importForm')[0].reset();
-        $('#skipFirstRow').prop('checked', true);
         $('#importProgress').hide();
         $('#previewSection').hide();
         $('#btnImportSubmit').prop('disabled', true);
         $('#importFile').prop('disabled', false);
-        $('#skipFirstRow').prop('disabled', false);
         $('#btnDownloadTemplate').prop('disabled', false);
         $('.progress-bar').css('width', '0%').text('0%');
 

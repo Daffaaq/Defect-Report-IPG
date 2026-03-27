@@ -25,14 +25,9 @@ if ($connection === false) {
 // Ambil action
 $action = $_GET['action'] ?? '';
 
-// Handle download template
-if ($action === 'downloadTemplateWithHeader') {
-    downloadTemplateWithHeader();
-    exit;
-}
-
-if ($action === 'downloadTemplateWithoutHeader') {
-    downloadTemplateWithoutHeader();
+// Handle download template (hanya 1 template dengan header)
+if ($action === 'downloadTemplate') {
+    downloadTemplate();
     exit;
 }
 
@@ -51,20 +46,15 @@ exit;
 
 /**
  * Download template Excel untuk import data
- * Setiap download akan mengacak dummy data
+ * Hanya 1 template dengan header (baris pertama)
  */
-/**
- * Download template dengan header
- */
-function downloadTemplateWithHeader()
+function downloadTemplate()
 {
-    global $connection;
-
     try {
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Header kolom
+        // Header kolom (13 kolom)
         $headers = [
             'A' => 'Tanggal Ditemukan* (YYYY-MM-DD)',
             'B' => 'Customer*',
@@ -74,7 +64,7 @@ function downloadTemplateWithHeader()
             'F' => 'Defect*',
             'G' => 'Operator*',
             'H' => 'Deskripsi Masalah',
-            'I' => 'Aksi Claim Defect*',
+            'I' => 'Aksi Claim Defect* (Repair/Scrap)',
             'J' => 'Nama Operator Pengambil*',
             'K' => 'Tanggal Pengambilan* (YYYY-MM-DD)',
             'L' => 'Group*',
@@ -103,12 +93,12 @@ function downloadTemplateWithHeader()
             ]]
         ]);
 
-        // Generate data random
+        // Generate contoh data (5 baris)
         $customers = ['PT ABC', 'PT XYZ', 'PT DEF', 'PT GHI'];
         $sections = ['Assembly', 'Painting', 'Welding', 'QC'];
         $defects = ['Crack', 'Scratch', 'Dent', 'Broken'];
         $operators = ['John Doe', 'Mike', 'Andi', 'Budi', 'Siti'];
-        $actions = ['Repair', 'Scrap', 'Rework'];
+        $actions = ['Repair', 'Scrap'];
         $groups = ['Group A', 'Group B', 'Group C'];
         $descriptions = [
             'Crack' => 'Retak pada produk',
@@ -149,7 +139,7 @@ function downloadTemplateWithHeader()
             ];
         }
 
-        // Set data
+        // Set contoh data (mulai baris 2)
         $startRow = 2;
         foreach ($exampleData as $index => $data) {
             $currentRow = $startRow + $index;
@@ -159,7 +149,7 @@ function downloadTemplateWithHeader()
             }
         }
 
-        // Style data
+        // Style data contoh
         $sheet->getStyle('A2:M' . ($startRow + $jumlahData - 1))->applyFromArray([
             'borders' => ['allBorders' => [
                 'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -167,8 +157,8 @@ function downloadTemplateWithHeader()
             ]]
         ]);
 
-        // Set column width
-        $columnWidths = [20, 25, 20, 20, 20, 30, 20, 40, 20, 25, 20, 15, 10];
+        // Set lebar kolom
+        $columnWidths = [20, 25, 20, 20, 20, 30, 20, 40, 25, 25, 20, 15, 10];
         foreach ($columnWidths as $i => $width) {
             $column = chr(65 + $i);
             $sheet->getColumnDimension($column)->setWidth($width);
@@ -181,110 +171,7 @@ function downloadTemplateWithHeader()
             ob_end_clean();
         }
 
-        $filename = 'Template_Import_With_Header.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
-    } catch (Exception $e) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Gagal membuat template: ' . $e->getMessage()
-        ]);
-        exit;
-    }
-}
-
-/**
- * Download template tanpa header (langsung data)
- */
-function downloadTemplateWithoutHeader()
-{
-    global $connection;
-
-    try {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Generate data random
-        $customers = ['PT ABC', 'PT XYZ', 'PT DEF', 'PT GHI'];
-        $sections = ['Assembly', 'Painting', 'Welding', 'QC'];
-        $defects = ['Crack', 'Scratch', 'Dent', 'Broken'];
-        $operators = ['John Doe', 'Mike', 'Andi', 'Budi', 'Siti'];
-        $actions = ['Repair', 'Scrap', 'Rework'];
-        $groups = ['Group A', 'Group B', 'Group C'];
-        $descriptions = [
-            'Crack' => 'Retak pada produk',
-            'Scratch' => 'Goresan pada permukaan',
-            'Dent' => 'Penyok pada body',
-            'Broken' => 'Produk rusak'
-        ];
-
-        function randomDate($start = '2026-01-01', $end = '2026-12-31')
-        {
-            $min = strtotime($start);
-            $max = strtotime($end);
-            return date('Y-m-d', rand($min, $max));
-        }
-
-        $exampleData = [];
-        $jumlahData = 5;
-
-        for ($i = 0; $i < $jumlahData; $i++) {
-            $tanggalDitemukan = randomDate();
-            $tanggalPengambilan = randomDate($tanggalDitemukan, '2026-12-31');
-            $defect = $defects[array_rand($defects)];
-
-            $exampleData[] = [
-                $tanggalDitemukan,
-                $customers[array_rand($customers)],
-                'LOT-' . rand(100, 999),
-                'PART-' . rand(100, 999),
-                $sections[array_rand($sections)],
-                $defect,
-                $operators[array_rand($operators)],
-                $descriptions[$defect],
-                $actions[array_rand($actions)],
-                $operators[array_rand($operators)],
-                $tanggalPengambilan,
-                $groups[array_rand($groups)],
-                rand(1, 500)
-            ];
-        }
-
-        // Langsung set data tanpa header (mulai baris 1)
-        foreach ($exampleData as $index => $data) {
-            $currentRow = $index + 1;
-            foreach ($data as $colIndex => $value) {
-                $column = chr(65 + $colIndex);
-                $sheet->setCellValue($column . $currentRow, $value);
-            }
-        }
-
-        // Style data
-        $sheet->getStyle('A1:M' . $jumlahData)->applyFromArray([
-            'borders' => ['allBorders' => [
-                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                'color' => ['rgb' => 'CCCCCC']
-            ]]
-        ]);
-
-        // Set column width
-        $columnWidths = [20, 25, 20, 20, 20, 30, 20, 40, 20, 25, 20, 15, 10];
-        foreach ($columnWidths as $i => $width) {
-            $column = chr(65 + $i);
-            $sheet->getColumnDimension($column)->setWidth($width);
-        }
-
-        // Output file
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        $filename = 'Template_Import_Without_Header.xlsx';
+        $filename = 'Template_Import_Defect_Report.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
@@ -303,6 +190,7 @@ function downloadTemplateWithoutHeader()
 
 /**
  * Import data dari file Excel
+ * Selalu skip baris pertama (header)
  */
 function importData($connection)
 {
@@ -317,7 +205,6 @@ function importData($connection)
         }
 
         $file = $_FILES['file'];
-        $skipFirstRow = isset($_POST['skip_first_row']) && $_POST['skip_first_row'] == '1';
 
         // Validasi tipe file
         $allowedExtensions = ['xlsx', 'xls', 'csv'];
@@ -344,34 +231,33 @@ function importData($connection)
             exit;
         }
 
-        // Validasi minimal data
-        if (count($rows) < ($skipFirstRow ? 2 : 1)) {
+        // Validasi minimal data (minimal harus ada header + 1 data)
+        if (count($rows) < 2) {
             echo json_encode([
                 'status' => 'error',
-                'message' => 'File tidak mengandung data yang valid'
+                'message' => 'File tidak mengandung data yang valid. Minimal harus ada header dan 1 baris data.'
             ]);
             exit;
         }
 
-        // Skip header jika diperlukan
-        $startRow = $skipFirstRow ? 1 : 0;
-        $dataRows = array_slice($rows, $startRow);
+        // Skip baris pertama (header)
+        $dataRows = array_slice($rows, 1);
 
-        // Mapping kolom (sesuai dengan template - sudah termasuk QTY di kolom M / index 12)
+        // Mapping kolom (sesuai template)
         $columnMapping = [
-            'tanggal_ditemukan' => 0,  // Kolom A
-            'nama_customer' => 1,      // Kolom B
-            'lotno' => 2,              // Kolom C
-            'partno' => 3,             // Kolom D
-            'nama_section' => 4,       // Kolom E
-            'nama_defect' => 5,        // Kolom F
-            'nama_operator' => 6,      // Kolom G
-            'deskripsi_masalah' => 7,  // Kolom H
-            'aksi_claim_defect' => 8,  // Kolom I
+            'tanggal_ditemukan' => 0,      // Kolom A
+            'nama_customer' => 1,          // Kolom B
+            'lotno' => 2,                  // Kolom C
+            'partno' => 3,                 // Kolom D
+            'nama_section' => 4,           // Kolom E
+            'nama_defect' => 5,            // Kolom F
+            'nama_operator' => 6,          // Kolom G
+            'deskripsi_masalah' => 7,      // Kolom H
+            'aksi_claim_defect' => 8,      // Kolom I
             'nama_operator_pengambil' => 9, // Kolom J
             'tanggal_pengambilan' => 10,    // Kolom K
-            'nama_group' => 11,        // Kolom L
-            'qty' => 12                // Kolom M (QTY)
+            'nama_group' => 11,             // Kolom L
+            'qty' => 12                     // Kolom M
         ];
 
         $successCount = 0;
@@ -383,71 +269,37 @@ function importData($connection)
         sqlsrv_begin_transaction($connection);
 
         foreach ($dataRows as $rowIndex => $rowData) {
-            $rowNumber = $startRow + $rowIndex + 1;
+            $rowNumber = $rowIndex + 2; // +2 karena baris 1 adalah header
 
-            // Ambil nilai per kolom (tambah qty)
-            $tanggalDitemukan = trim($rowData[$columnMapping['tanggal_ditemukan']] ?? '');
-            $namaCustomer = trim($rowData[$columnMapping['nama_customer']] ?? '');
-            $lotno = trim($rowData[$columnMapping['lotno']] ?? '');
-            $partno = trim($rowData[$columnMapping['partno']] ?? '');
-            $namaSection = trim($rowData[$columnMapping['nama_section']] ?? '');
-            $namaDefect = trim($rowData[$columnMapping['nama_defect']] ?? '');
-            $namaOperator = trim($rowData[$columnMapping['nama_operator']] ?? '');
-            $deskripsiMasalah = trim($rowData[$columnMapping['deskripsi_masalah']] ?? '');
-            $aksiClaimDefect = trim($rowData[$columnMapping['aksi_claim_defect']] ?? '');
-            $namaOperatorPengambil = trim($rowData[$columnMapping['nama_operator_pengambil']] ?? '');
-            $tanggalPengambilan = trim($rowData[$columnMapping['tanggal_pengambilan']] ?? '');
-            $namaGroup = trim($rowData[$columnMapping['nama_group']] ?? '');
-            $qty = trim($rowData[$columnMapping['qty']] ?? '');
+            // Ambil nilai per kolom
+            $tanggalDitemukan = isset($rowData[$columnMapping['tanggal_ditemukan']]) ? trim($rowData[$columnMapping['tanggal_ditemukan']]) : '';
+            $namaCustomer = isset($rowData[$columnMapping['nama_customer']]) ? trim($rowData[$columnMapping['nama_customer']]) : '';
+            $lotno = isset($rowData[$columnMapping['lotno']]) ? trim($rowData[$columnMapping['lotno']]) : '';
+            $partno = isset($rowData[$columnMapping['partno']]) ? trim($rowData[$columnMapping['partno']]) : '';
+            $namaSection = isset($rowData[$columnMapping['nama_section']]) ? trim($rowData[$columnMapping['nama_section']]) : '';
+            $namaDefect = isset($rowData[$columnMapping['nama_defect']]) ? trim($rowData[$columnMapping['nama_defect']]) : '';
+            $namaOperator = isset($rowData[$columnMapping['nama_operator']]) ? trim($rowData[$columnMapping['nama_operator']]) : '';
+            $deskripsiMasalah = isset($rowData[$columnMapping['deskripsi_masalah']]) ? trim($rowData[$columnMapping['deskripsi_masalah']]) : '';
+            $aksiClaimDefect = isset($rowData[$columnMapping['aksi_claim_defect']]) ? trim($rowData[$columnMapping['aksi_claim_defect']]) : '';
+            $namaOperatorPengambil = isset($rowData[$columnMapping['nama_operator_pengambil']]) ? trim($rowData[$columnMapping['nama_operator_pengambil']]) : '';
+            $tanggalPengambilan = isset($rowData[$columnMapping['tanggal_pengambilan']]) ? trim($rowData[$columnMapping['tanggal_pengambilan']]) : '';
+            $namaGroup = isset($rowData[$columnMapping['nama_group']]) ? trim($rowData[$columnMapping['nama_group']]) : '';
+            $qty = isset($rowData[$columnMapping['qty']]) ? trim($rowData[$columnMapping['qty']]) : '';
 
-            // Validasi kolom wajib (tambah qty)
+            // Validasi kolom wajib
             $validationErrors = [];
 
-            if (empty($tanggalDitemukan)) {
-                $validationErrors[] = 'Tanggal Ditemukan tidak boleh kosong';
-            }
-
-            if (empty($namaCustomer)) {
-                $validationErrors[] = 'Customer tidak boleh kosong';
-            }
-
-            if (empty($lotno)) {
-                $validationErrors[] = 'Lot No tidak boleh kosong';
-            }
-
-            if (empty($partno)) {
-                $validationErrors[] = 'Part No tidak boleh kosong';
-            }
-
-            if (empty($namaSection)) {
-                $validationErrors[] = 'Section tidak boleh kosong';
-            }
-
-            if (empty($namaDefect)) {
-                $validationErrors[] = 'Defect tidak boleh kosong';
-            }
-
-            if (empty($namaOperator)) {
-                $validationErrors[] = 'Operator tidak boleh kosong';
-            }
-
-            if (empty($namaOperatorPengambil)) {
-                $validationErrors[] = 'Nama Operator Pengambil tidak boleh kosong';
-            }
-
-            if (empty($tanggalPengambilan)) {
-                $validationErrors[] = 'Tanggal Pengambilan tidak boleh kosong';
-            }
-
-            if (empty($namaGroup)) {
-                $validationErrors[] = 'Nama Group tidak boleh kosong';
-            }
-
-            if (empty($aksiClaimDefect)) {
-                $validationErrors[] = 'Aksi Claim Defect tidak boleh kosong';
-            }
-
-            // Validasi QTY
+            if (empty($tanggalDitemukan)) $validationErrors[] = 'Tanggal Ditemukan tidak boleh kosong';
+            if (empty($namaCustomer)) $validationErrors[] = 'Customer tidak boleh kosong';
+            if (empty($lotno)) $validationErrors[] = 'Lot No tidak boleh kosong';
+            if (empty($partno)) $validationErrors[] = 'Part No tidak boleh kosong';
+            if (empty($namaSection)) $validationErrors[] = 'Section tidak boleh kosong';
+            if (empty($namaDefect)) $validationErrors[] = 'Defect tidak boleh kosong';
+            if (empty($namaOperator)) $validationErrors[] = 'Operator tidak boleh kosong';
+            if (empty($namaOperatorPengambil)) $validationErrors[] = 'Nama Operator Pengambil tidak boleh kosong';
+            if (empty($tanggalPengambilan)) $validationErrors[] = 'Tanggal Pengambilan tidak boleh kosong';
+            if (empty($namaGroup)) $validationErrors[] = 'Nama Group tidak boleh kosong';
+            if (empty($aksiClaimDefect)) $validationErrors[] = 'Aksi Claim Defect tidak boleh kosong';
             if (empty($qty)) {
                 $validationErrors[] = 'QTY tidak boleh kosong';
             } else if (!is_numeric($qty) || $qty < 0) {
@@ -460,7 +312,7 @@ function importData($connection)
                 continue;
             }
 
-            // Format tanggal (menggunakan format YYYY-MM-DD)
+            // Format tanggal
             $formattedTanggalDitemukan = formatDateForDatabase($tanggalDitemukan);
             if ($formattedTanggalDitemukan === false) {
                 $failedCount++;
@@ -468,14 +320,11 @@ function importData($connection)
                 continue;
             }
 
-            $formattedTanggalPengambilan = null;
-            if (!empty($tanggalPengambilan)) {
-                $formattedTanggalPengambilan = formatDateForDatabase($tanggalPengambilan);
-                if ($formattedTanggalPengambilan === false) {
-                    $failedCount++;
-                    $errors[] = "Baris {$rowNumber}: Format tanggal pengambilan tidak valid (gunakan format YYYY-MM-DD)";
-                    continue;
-                }
+            $formattedTanggalPengambilan = formatDateForDatabase($tanggalPengambilan);
+            if ($formattedTanggalPengambilan === false) {
+                $failedCount++;
+                $errors[] = "Baris {$rowNumber}: Format tanggal pengambilan tidak valid (gunakan format YYYY-MM-DD)";
+                continue;
             }
 
             // Validasi aksi claim defect
@@ -485,7 +334,7 @@ function importData($connection)
                 continue;
             }
 
-            // Insert data (tambah qty)
+            // Insert data
             $sql = "INSERT INTO report_claim_defect (
                         tanggal_ditemukan,
                         nama_customer,
@@ -511,12 +360,12 @@ function importData($connection)
                 $namaSection,
                 $namaDefect,
                 $namaOperator,
-                $deskripsiMasalah ?: null,
+                !empty($deskripsiMasalah) ? $deskripsiMasalah : null,
                 $aksiClaimDefect,
                 $namaOperatorPengambil,
                 $formattedTanggalPengambilan,
                 $namaGroup,
-                $qty  // QTY sebagai integer
+                intval($qty)
             ];
 
             $stmt = sqlsrv_prepare($connection, $sql, $params);
@@ -552,8 +401,8 @@ function importData($connection)
                 'message' => "Import dibatalkan karena ada {$failedCount} data gagal. Tidak ada data yang disimpan.",
                 'data' => [
                     'total' => $successCount + $failedCount,
-                    'valid' => $successCount,
-                    'invalid' => $failedCount
+                    'success' => $successCount,
+                    'failed' => $failedCount
                 ],
                 'errors' => array_slice($errors, 0, 20)
             ]);
@@ -585,7 +434,7 @@ function importData($connection)
 
 /**
  * Format tanggal untuk database SQL Server
- * Mendukung format: YYYY-MM-DD (utama), dan dd/mm/yyyy (alternatif)
+ * Support format: YYYY-MM-DD (utama) dan dd/mm/yyyy (alternatif)
  */
 function formatDateForDatabase($dateStr)
 {
@@ -595,31 +444,26 @@ function formatDateForDatabase($dateStr)
 
     $dateStr = trim($dateStr);
 
-    // Coba format yyyy-mm-dd (format utama)
+    // Format yyyy-mm-dd
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStr)) {
         $parts = explode('-', $dateStr);
         if (count($parts) === 3) {
             $year = $parts[0];
             $month = $parts[1];
             $day = $parts[2];
-
-            // Validasi tanggal
             if (checkdate($month, $day, $year)) {
                 return $dateStr;
             }
         }
     }
 
-    // Coba format dd/mm/yyyy atau d/m/yyyy (alternatif untuk kompatibilitas)
+    // Format dd/mm/yyyy
     if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $dateStr)) {
         $parts = explode('/', $dateStr);
         if (count($parts) === 3) {
-            // Pastikan formatnya hari/bulan/tahun
             $day = str_pad($parts[0], 2, '0', STR_PAD_LEFT);
             $month = str_pad($parts[1], 2, '0', STR_PAD_LEFT);
             $year = $parts[2];
-
-            // Validasi tanggal
             if (checkdate($month, $day, $year)) {
                 return "{$year}-{$month}-{$day}";
             }
