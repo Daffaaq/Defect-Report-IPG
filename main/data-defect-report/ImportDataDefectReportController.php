@@ -54,21 +54,22 @@ function downloadTemplate()
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Header kolom (13 kolom)
+        // Di function downloadTemplate(), update header menjadi 14 kolom (tambah shift)
         $headers = [
             'A' => 'Tanggal Ditemukan* (YYYY-MM-DD)',
             'B' => 'Customer*',
             'C' => 'Lot No*',
             'D' => 'Part No*',
             'E' => 'Section*',
-            'F' => 'Defect*',
-            'G' => 'Operator*',
-            'H' => 'Deskripsi Masalah',
-            'I' => 'Aksi Claim Defect* (Repair/Scrap)',
-            'J' => 'Nama Operator Pengambil*',
-            'K' => 'Tanggal Pengambilan* (YYYY-MM-DD)',
-            'L' => 'Group*',
-            'M' => 'QTY*'
+            'F' => 'Shift*',  // TAMBAHKAN INI
+            'G' => 'Defect*',
+            'H' => 'Operator*',
+            'I' => 'Deskripsi Masalah',
+            'J' => 'Aksi Claim Defect* (Repair/Scrap)',
+            'K' => 'Nama Operator Pengambil*',
+            'L' => 'Tanggal Pengambilan* (YYYY-MM-DD)',
+            'M' => 'Group*',
+            'N' => 'QTY*'
         ];
 
         $row = 1;
@@ -77,7 +78,7 @@ function downloadTemplate()
         }
 
         // Style header
-        $sheet->getStyle('A1:M1')->applyFromArray([
+        $sheet->getStyle('A1:N1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -107,6 +108,8 @@ function downloadTemplate()
             'Broken' => 'Produk rusak'
         ];
 
+        $shifts = [1, 2, 3];
+
         function randomDate($start = '2026-01-01', $end = '2026-12-31')
         {
             $min = strtotime($start);
@@ -128,6 +131,7 @@ function downloadTemplate()
                 'LOT-' . rand(100, 999),
                 'PART-' . rand(100, 999),
                 $sections[array_rand($sections)],
+                $shifts[array_rand($shifts)],
                 $defect,
                 $operators[array_rand($operators)],
                 $descriptions[$defect],
@@ -150,15 +154,16 @@ function downloadTemplate()
         }
 
         // Style data contoh
-        $sheet->getStyle('A2:M' . ($startRow + $jumlahData - 1))->applyFromArray([
+        $sheet->getStyle('A2:N' . ($startRow + $jumlahData - 1))->applyFromArray([
             'borders' => ['allBorders' => [
                 'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
                 'color' => ['rgb' => 'CCCCCC']
             ]]
         ]);
 
-        // Set lebar kolom
-        $columnWidths = [20, 25, 20, 20, 20, 30, 20, 40, 25, 25, 20, 15, 10];
+        // Set lebar kolom - tambah 1 kolom untuk shift
+        $columnWidths = [20, 25, 20, 20, 20, 15, 30, 20, 40, 25, 25, 20, 15, 10];
+        //                     A    B   C   D   E   F   G   H   I    J   K   L   M   N
         foreach ($columnWidths as $i => $width) {
             $column = chr(65 + $i);
             $sheet->getColumnDimension($column)->setWidth($width);
@@ -244,20 +249,22 @@ function importData($connection)
         $dataRows = array_slice($rows, 1);
 
         // Mapping kolom (sesuai template)
+        // Mapping kolom (sesuai template dengan shift)
         $columnMapping = [
             'tanggal_ditemukan' => 0,      // Kolom A
             'nama_customer' => 1,          // Kolom B
             'lotno' => 2,                  // Kolom C
             'partno' => 3,                 // Kolom D
             'nama_section' => 4,           // Kolom E
-            'nama_defect' => 5,            // Kolom F
-            'nama_operator' => 6,          // Kolom G
-            'deskripsi_masalah' => 7,      // Kolom H
-            'aksi_claim_defect' => 8,      // Kolom I
-            'nama_operator_pengambil' => 9, // Kolom J
-            'tanggal_pengambilan' => 10,    // Kolom K
-            'nama_group' => 11,             // Kolom L
-            'qty' => 12                     // Kolom M
+            'shift' => 5,                  // Kolom F - TAMBAHKAN INI
+            'nama_defect' => 6,            // Kolom G
+            'nama_operator' => 7,          // Kolom H
+            'deskripsi_masalah' => 8,      // Kolom I
+            'aksi_claim_defect' => 9,      // Kolom J
+            'nama_operator_pengambil' => 10, // Kolom K
+            'tanggal_pengambilan' => 11,    // Kolom L
+            'nama_group' => 12,             // Kolom M
+            'qty' => 13                     // Kolom N
         ];
 
         $successCount = 0;
@@ -277,6 +284,7 @@ function importData($connection)
             $lotno = isset($rowData[$columnMapping['lotno']]) ? trim($rowData[$columnMapping['lotno']]) : '';
             $partno = isset($rowData[$columnMapping['partno']]) ? trim($rowData[$columnMapping['partno']]) : '';
             $namaSection = isset($rowData[$columnMapping['nama_section']]) ? trim($rowData[$columnMapping['nama_section']]) : '';
+            $shift = isset($rowData[$columnMapping['shift']]) ? trim($rowData[$columnMapping['shift']]) : '';
             $namaDefect = isset($rowData[$columnMapping['nama_defect']]) ? trim($rowData[$columnMapping['nama_defect']]) : '';
             $namaOperator = isset($rowData[$columnMapping['nama_operator']]) ? trim($rowData[$columnMapping['nama_operator']]) : '';
             $deskripsiMasalah = isset($rowData[$columnMapping['deskripsi_masalah']]) ? trim($rowData[$columnMapping['deskripsi_masalah']]) : '';
@@ -341,6 +349,7 @@ function importData($connection)
                         lotno,
                         partno,
                         nama_section,
+                        shift,
                         nama_defect,
                         nama_operator,
                         deskripsi_masalah,
@@ -349,8 +358,9 @@ function importData($connection)
                         tanggal_pengambilan,
                         nama_group,
                         qty,
+                        status,
                         created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0 , GETDATE())";
 
             $params = [
                 $formattedTanggalDitemukan,
@@ -358,6 +368,7 @@ function importData($connection)
                 $lotno,
                 $partno,
                 $namaSection,
+                $shift,
                 $namaDefect,
                 $namaOperator,
                 !empty($deskripsiMasalah) ? $deskripsiMasalah : null,
@@ -382,6 +393,7 @@ function importData($connection)
                     'row' => $rowNumber,
                     'lotno' => $lotno,
                     'customer' => $namaCustomer,
+                    'shift' => $shift,
                     'qty' => $qty
                 ];
             } else {

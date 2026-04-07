@@ -76,14 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <link rel="icon" href="dist/images/iconn.png" type="image/x-icon">
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/local-login/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/local-login/all.min.css">
     <!-- Animate.css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/assets/local-login/animate.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="/assets/local-login/font.css" rel="stylesheet">
+    <script src="/assets/local-login/jquery.js"></script>
 
     <style>
         * {
@@ -717,13 +717,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <p>Silakan login dengan akun Anda</p>
                         </div>
 
-                        <?php if (!empty($_SESSION['error_message']) || !empty($_SESSION['message'])): ?>
-                            <div class="alert-modern <?= !empty($_SESSION['error_message']) ? 'alert-danger' : 'alert-success'; ?>">
-                                <i class="fas <?= !empty($_SESSION['error_message']) ? 'fa-exclamation-circle' : 'fa-check-circle'; ?>"></i>
-                                <?= htmlspecialchars(!empty($_SESSION['error_message']) ? $_SESSION['error_message'] : $_SESSION['message']); ?>
-                            </div>
-                            <?php unset($_SESSION['error_message'], $_SESSION['message']); ?>
-                        <?php endif; ?>
 
                         <form id="loginForm" action="login.php" method="POST">
                             <div class="form-group-modern">
@@ -758,7 +751,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
 
                         <div class="version-info">
-                            <i class="fas fa-database"></i> HC System v2.0 · Internal Use
+                            <i class="fas fa-database"></i> PRIMA GO AI · Internal Use
                         </div>
                     </div>
                 </div>

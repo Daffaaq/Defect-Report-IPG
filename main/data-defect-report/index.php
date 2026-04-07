@@ -43,19 +43,19 @@ isLogin();
                     <button class="btn" id="btnImportData" style="background-color: #FF5722; color: white;">
                         <i class="ti ti-upload me-2"></i>Import Data
                     </button>
-
                     <button class="btn" id="btnExportExcel" style="background-color: #4CAF50; color: white;">
                         <i class="ti ti-download me-2"></i>Export Excel
                     </button>
                 </div>
             </div>
-            <!-- Tab Navigation -->
+
+            <!-- Tab Navigation - 4 TABS -->
             <ul class="nav nav-tabs nav-fill mb-3" id="filterTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="filter-tanggal-tab" data-bs-toggle="tab"
                         data-bs-target="#filter-tanggal" type="button" role="tab"
                         aria-controls="filter-tanggal" aria-selected="true">
-                        <i class="ti ti-calendar me-2"></i>Filter by Tanggal
+                        <i class="ti ti-calendar me-2"></i>Tanggal + Part No
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -69,62 +69,63 @@ isLogin();
                     <button class="nav-link" id="filter-customer-tab" data-bs-toggle="tab"
                         data-bs-target="#filter-customer" type="button" role="tab"
                         aria-controls="filter-customer" aria-selected="false">
-                        <i class="ti ti-users me-2"></i>Filter by Customer
+                        <i class="ti ti-users me-2"></i>Customer + Range Tanggal
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="filter-partno-tab" data-bs-toggle="tab"
+                        data-bs-target="#filter-partno" type="button" role="tab"
+                        aria-controls="filter-partno" aria-selected="false">
+                        <i class="ti ti-package me-2"></i>Part No + Range Tanggal
                     </button>
                 </li>
             </ul>
 
             <!-- Tab Content -->
             <div class="tab-content" id="filterTabsContent">
-                <!-- Tab 1: Filter Tanggal -->
+                <!-- TAB 1: Tanggal (Single) + Part No -->
                 <div class="tab-pane fade show active" id="filter-tanggal" role="tabpanel" tabindex="0">
                     <div class="row g-3">
                         <div class="col-lg-4 col-md-6">
                             <label class="form-label fw-semibold text-primary">
-                                <i class="ti ti-calendar me-1"></i>Tanggal Awal
+                                <i class="ti ti-calendar me-1"></i>Tanggal
                             </label>
-                            <input type="date" class="form-control" id="tanggalAwal" value="">
+                            <input type="date" class="form-control" id="filterTanggal" value="">
+                            <small class="text-muted mt-1 d-block">
+                                <i class="ti ti-info-circle me-1"></i>Pilih tanggal (1 hari)
+                            </small>
                         </div>
-                        <div class="col-lg-4 col-md-6">
+                        <div class="col-lg-6 col-md-6">
                             <label class="form-label fw-semibold text-primary">
-                                <i class="ti ti-calendar me-1"></i>Tanggal Akhir
+                                <i class="ti ti-package me-1"></i>Part No
                             </label>
-                            <input type="date" class="form-control" id="tanggalAkhir" value="">
+                            <select class="form-select" id="filterPartNoByTanggal" multiple="multiple" style="width: 100%;" disabled>
+                                <option value="">Pilih tanggal terlebih dahulu</option>
+                            </select>
+                            <small class="text-muted mt-1 d-block">
+                                <i class="ti ti-info-circle me-1"></i>Pilih part no (bisa multiple) - muncul setelah pilih tanggal
+                            </small>
                         </div>
-                        <div class="col-lg-4 col-md-12">
-                            <div class="d-flex flex-column h-100 justify-content-end">
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-primary flex-grow-1" onclick="applyDateFilter()">
-                                        <i class="ti ti-filter me-2"></i>Terapkan
-                                    </button>
-                                    <button class="btn btn-outline-secondary" onclick="resetAllFilters()"
-                                        data-bs-toggle="tooltip" title="Reset semua filter">
-                                        <i class="ti ti-refresh"></i>
-                                    </button>
-                                </div>
+                        <div class="col-lg-2 col-md-12">
+                            <label class="form-label fw-semibold text-primary invisible">Aksi</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary flex-grow-1" id="btnApplyTanggalPartNo" disabled>
+                                    <i class="ti ti-filter me-2"></i>Terapkan
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="resetAllFilters()">
+                                    <i class="ti ti-refresh"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Quick Filter untuk Tanggal -->
                     <div class="d-flex flex-wrap gap-2 align-items-center pt-3 mt-3 border-top">
                         <span class="text-muted me-2"><i class="ti ti-bolt"></i> Quick Filter:</span>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="setQuickFilter('today')">
-                            Hari Ini
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="setQuickFilter('yesterday')">
-                            Kemarin
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="setQuickFilter('week')">
-                            7 Hari Terakhir
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="setQuickFilter('month')">
-                            Bulan Ini
-                        </button>
+                        <button class="btn btn-sm btn-primary rounded-pill px-3 quick-filter-btn" onclick="setSingleQuickFilter('today')">Hari Ini</button>
+                        <button class="btn btn-sm btn-primary rounded-pill px-3 quick-filter-btn" onclick="setSingleQuickFilter('yesterday')">Kemarin</button>
                     </div>
                 </div>
 
-                <!-- Tab 2: Filter Lot No (INPUT MANUAL) -->
+                <!-- TAB 2: Filter Lot No (INPUT MANUAL + SCAN) -->
                 <div class="tab-pane fade" id="filter-lot" role="tabpanel" tabindex="0">
                     <div class="row g-3">
                         <div class="col-lg-8 col-md-8">
@@ -132,16 +133,13 @@ isLogin();
                                 <i class="ti ti-barcode me-1"></i>Lot Number
                             </label>
                             <input type="text" class="form-control" id="filterLotNo"
-                                placeholder="Ketik nomor lot (pisahkan dengan koma untuk multiple)">
+                                placeholder="Scan atau ketik nomor lot (pisahkan dengan koma untuk multiple)">
                             <small class="text-muted mt-1 d-block">
-                                <i class="ti ti-info-circle me-1"></i>Contoh: LOT-001, LOT-002, LOT-003
+                                <i class="ti ti-info-circle me-1"></i>Scan langsung terapkan, atau ketik manual lalu tekan Terapkan
                             </small>
                         </div>
                         <div class="col-lg-4 col-md-4">
-                            <!-- Label tersembunyi untuk menjaga tinggi -->
-                            <label class="form-label fw-semibold text-primary invisible">
-                                <i class="ti ti-filter me-1"></i>Aksi
-                            </label>
+                            <label class="form-label fw-semibold text-primary invisible">Aksi</label>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-primary flex-grow-1" onclick="applyLotFilter()">
                                     <i class="ti ti-filter me-2"></i>Terapkan
@@ -150,41 +148,107 @@ isLogin();
                                     <i class="ti ti-x"></i>
                                 </button>
                             </div>
-                            <!-- Helper text tersembunyi untuk menjaga tinggi -->
-                            <small class="text-muted mt-1 d-block invisible">Placeholder</small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tab 3: Filter Customer (DROPDOWN MULTIPLE dengan Select2) -->
+                <!-- TAB 3: Customer + Range Tanggal -->
                 <div class="tab-pane fade" id="filter-customer" role="tabpanel" tabindex="0">
                     <div class="row g-3">
-                        <div class="col-lg-8 col-md-8">
+                        <div class="col-12">
                             <label class="form-label fw-semibold text-primary">
                                 <i class="ti ti-users me-1"></i>Customer
                             </label>
                             <select class="form-select" id="filterCustomer" multiple="multiple" style="width: 100%;">
                                 <option value="">Memuat data...</option>
                             </select>
-                            <small class="text-muted mt-1 d-block">
-                                <i class="ti ti-info-circle me-1"></i>Pilih customer (bisa search dan multiple)
-                            </small>
                         </div>
-                        <div class="col-lg-4 col-md-4">
-                            <!-- Label tersembunyi untuk menjaga tinggi -->
-                            <label class="form-label fw-semibold text-primary invisible">
-                                <i class="ti ti-filter me-1"></i>Aksi
+                    </div>
+                    <div class="row g-3 mt-3">
+                        <div class="col-lg-5 col-md-6">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-calendar me-1"></i>Tanggal Awal (Opsional)
                             </label>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary flex-grow-1" onclick="applyCustomerFilter()">
-                                    <i class="ti ti-filter me-2"></i>Terapkan
-                                </button>
+                            <input type="date" class="form-control" id="customerTanggalAwal">
+                        </div>
+                        <div class="col-lg-5 col-md-6">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-calendar me-1"></i>Tanggal Akhir (Opsional)
+                            </label>
+                            <input type="date" class="form-control" id="customerTanggalAkhir">
+                        </div>
+                        <div class="col-lg-2 col-md-12">
+                            <label class="form-label fw-semibold text-primary invisible">Aksi</label>
+                            <button class="btn btn-outline-secondary w-100" id="btnClearCustomerRange">
+                                <i class="ti ti-trash me-1"></i>Clear Range
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Tombol aksi di bawah -->
+                    <div class="row g-3 mt-3 pt-3 border-top">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
                                 <button class="btn btn-outline-secondary" onclick="clearCustomerFilter()">
-                                    <i class="ti ti-x"></i>
+                                    <i class="ti ti-x me-1"></i>Reset
+                                </button>
+                                <button class="btn btn-primary" onclick="applyCustomerFilter()">
+                                    <i class="ti ti-filter me-2"></i>Terapkan Filter
                                 </button>
                             </div>
-                            <!-- Helper text tersembunyi untuk menjaga tinggi -->
-                            <small class="text-muted mt-1 d-block invisible">Placeholder</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Part No + Range Tanggal -->
+                <div class="tab-pane fade" id="filter-partno" role="tabpanel" tabindex="0">
+                    <!-- Pilih Part Number -->
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-package me-1"></i>Part Number <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="filterPartNo" multiple="multiple" style="width: 100%;">
+                                <option value="">Memuat data...</option>
+                            </select>
+                            <small class="text-muted mt-1 d-block">
+                                <i class="ti ti-info-circle me-1"></i>Pilih minimal 1 part number (bisa multiple & search)
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Range Tanggal (Opsional) - Langsung aktif -->
+                    <div class="row g-3 mt-3">
+                        <div class="col-lg-5 col-md-6">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-calendar me-1"></i>Tanggal Awal (Opsional)
+                            </label>
+                            <input type="date" class="form-control" id="partNoTanggalAwal">
+                        </div>
+                        <div class="col-lg-5 col-md-6">
+                            <label class="form-label fw-semibold text-primary">
+                                <i class="ti ti-calendar me-1"></i>Tanggal Akhir (Opsional)
+                            </label>
+                            <input type="date" class="form-control" id="partNoTanggalAkhir">
+                        </div>
+                        <div class="col-lg-2 col-md-12">
+                            <label class="form-label fw-semibold text-primary invisible">Aksi</label>
+                            <button class="btn btn-outline-secondary w-100" id="btnClearPartNoRange">
+                                <i class="ti ti-trash me-1"></i>Clear Range
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Aksi di Bawah Semua Filter -->
+                    <div class="row g-3 mt-4 pt-3 border-top">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button class="btn btn-outline-danger" onclick="clearPartNoFilter()">
+                                    <i class="ti ti-refresh me-1"></i>Reset
+                                </button>
+                                <button class="btn btn-primary px-4" onclick="applyPartNoFilter()">
+                                    <i class="ti ti-filter me-2"></i>Terapkan Filter
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -211,70 +275,6 @@ isLogin();
         <p class="mt-2 text-muted">Memuat data...</p>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4" id="summaryCards" style="display: none;">
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                            <i class="ti ti-file-text text-primary" style="font-size: 1.5rem;"></i>
-                        </div>
-                        <div>
-                            <span class="text-muted text-uppercase small fw-semibold">Total Laporan</span>
-                            <h3 class="mb-0 fw-bold" id="totalLaporan">0</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                            <i class="ti ti-users text-success" style="font-size: 1.5rem;"></i>
-                        </div>
-                        <div>
-                            <span class="text-muted text-uppercase small fw-semibold">Total Customer</span>
-                            <h3 class="mb-0 fw-bold" id="totalCustomer">0</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                            <i class="ti ti-layout-grid text-info" style="font-size: 1.5rem;"></i>
-                        </div>
-                        <div>
-                            <span class="text-muted text-uppercase small fw-semibold">Total Section</span>
-                            <h3 class="mb-0 fw-bold" id="totalSection">0</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                            <i class="ti ti-alert-triangle text-warning" style="font-size: 1.5rem;"></i>
-                        </div>
-                        <div>
-                            <span class="text-muted text-uppercase small fw-semibold">Total Defect</span>
-                            <h3 class="mb-0 fw-bold" id="totalDefect">0</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Info Filter -->
     <div class="alert alert-info border-0 align-items-center mb-4" style="display:none;" id="filterInfo">
         <i class="ti ti-info-circle fs-5 me-2"></i>
@@ -291,23 +291,18 @@ isLogin();
                         <tr>
                             <th>No</th>
                             <th>Tanggal</th>
-                            <th>Customer</th>
-                            <th>Lot No</th>
                             <th>Part No</th>
-                            <th>Section</th>
-                            <th>Defect</th>
-                            <th>Operator</th>
-                            <th>group</th>
+                            <th>Lot No</th>
+                            <th>Group</th>
                             <th>QTY</th>
                             <th>Aksi Claim Defect</th>
+                            <th>Status</th>
                             <th>Nama Operator Pengambil</th>
                             <th>Tanggal Pengambilan</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="reportTableBody">
-                        <!-- Akan diisi oleh DataTables -->
-                    </tbody>
+                    <tbody id="reportTableBody"></tbody>
                 </table>
             </div>
         </div>
@@ -332,9 +327,7 @@ isLogin();
                     </div>
                     <p class="mt-2 text-muted">Memuat detail data...</p>
                 </div>
-
                 <div id="detailContent" style="display: none;">
-                    <!-- Info Card (Tidak Bisa Diedit) -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <div class="bg-light rounded-3 p-3">
@@ -349,8 +342,6 @@ isLogin();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Grid Details - Baris 1 (Tidak Bisa Diedit) -->
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -371,8 +362,6 @@ isLogin();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Grid Details - Baris 2 (Tidak Bisa Diedit) -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -394,8 +383,6 @@ isLogin();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Grid Details - Baris 3 (Tidak Bisa Diedit) -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -416,8 +403,6 @@ isLogin();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Grid Details - Baris 4 (DATA TAMBAHAN - BISA DIEDIT) -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -440,8 +425,6 @@ isLogin();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Grid Details - Baris 5 (DATA TAMBAHAN - BISA DIEDIT) -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -464,8 +447,6 @@ isLogin();
                             </div>
                         </div>
                     </div>
-
-                    <!-- Grid Details - Baris 6 (DATA TAMBAHAN - BISA DIEDIT) -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3">
@@ -477,9 +458,36 @@ isLogin();
                                 <small class="text-muted edit-hint">Double-click untuk edit</small>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-clock text-info me-2"></i>
+                                    <span class="text-muted small">Shift</span>
+                                </div>
+                                <h6 class="fw-semibold mb-0" id="detailShift">-</h6>
+                            </div>
+                        </div>
                     </div>
-
-                    <!-- Deskripsi Masalah (Tidak Bisa Diedit) -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-check-circle text-success me-2"></i>
+                                    <span class="text-muted small">Status</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" class="form-check-input status-toggle-modal" id="detailStatusToggle" style="width: 50px; height: 24px; cursor: pointer;">
+                                        <label class="form-check-label ms-2" id="detailStatusLabel">
+                                            <span class="badge" id="detailStatusBadge">-</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted edit-hint">Toggle untuk mengubah status (OK/NG)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6"></div>
+                    </div>
                     <div class="mt-4">
                         <div class="border rounded-3 p-3">
                             <div class="d-flex align-items-center mb-2">
@@ -489,8 +497,6 @@ isLogin();
                             <p class="mb-0" id="detailDeskripsi" style="white-space: pre-wrap;">-</p>
                         </div>
                     </div>
-
-                    <!-- Footer Info -->
                     <div class="mt-3 text-end">
                         <small class="text-muted">
                             <i class="ti ti-clock me-1"></i>
@@ -501,8 +507,7 @@ isLogin();
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="ti ti-x me-1"></i>
-                    Tutup
+                    <i class="ti ti-x me-1"></i>Tutup
                 </button>
             </div>
         </div>
@@ -520,7 +525,6 @@ isLogin();
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <!-- Info Section -->
                 <div class="alert alert-info border-0 mb-4">
                     <i class="ti ti-info-circle fs-5 me-2"></i>
                     <strong>Petunjuk:</strong>
@@ -531,52 +535,35 @@ isLogin();
                         <li><strong class="text-danger">Baris pertama akan diabaikan (header), pastikan file memiliki header</strong></li>
                     </ul>
                 </div>
-
-                <!-- Download Template Button -->
                 <div class="mb-4">
                     <button class="btn btn-outline-secondary w-100" id="btnDownloadTemplate">
                         <i class="ti ti-download me-2"></i>Download Template Excel
                     </button>
                     <small class="text-muted mt-1 d-block text-center">
-                        <i class="ti ti-info-circle me-1"></i>
-                        Template dengan header (baris pertama adalah judul kolom)
+                        <i class="ti ti-info-circle me-1"></i>Template dengan header (baris pertama adalah judul kolom)
                     </small>
                 </div>
-
-                <!-- File Upload Form -->
                 <form id="importForm" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
                             <i class="ti ti-file-excel me-1 text-success"></i>Pilih File Excel
                         </label>
-                        <input type="file" class="form-control" id="importFile"
-                            accept=".xlsx,.xls,.csv" required>
+                        <input type="file" class="form-control" id="importFile" accept=".xlsx,.xls,.csv" required>
                         <small class="text-muted mt-1 d-block">
-                            <i class="ti ti-alert-circle me-1"></i>
-                            Pilih file yang akan diimport (pastikan format sesuai template)
+                            <i class="ti ti-alert-circle me-1"></i>Pilih file yang akan diimport (pastikan format sesuai template)
                         </small>
                     </div>
-
-                    <!-- Progress Bar (Hidden by default) -->
                     <div id="importProgress" style="display: none;">
                         <div class="progress mb-3" style="height: 25px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                role="progressbar"
-                                style="width: 0%">
-                                0%
-                            </div>
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
                         </div>
                         <p class="text-muted small text-center" id="progressStatus">
                             <i class="ti ti-loader me-1"></i>Memproses data...
                         </p>
                     </div>
-
-                    <!-- Preview Section (Hidden by default) -->
                     <div id="previewSection" style="display: none;">
                         <hr class="my-3">
-                        <h6 class="fw-semibold mb-2">
-                            <i class="ti ti-eye me-1"></i>Preview Data
-                        </h6>
+                        <h6 class="fw-semibold mb-2"><i class="ti ti-eye me-1"></i>Preview Data</h6>
                         <div class="table-responsive" style="max-height: 300px;">
                             <table class="table table-sm table-bordered" id="previewTable">
                                 <thead id="previewHeader">
@@ -587,9 +574,7 @@ isLogin();
                                 </thead>
                                 <tbody id="previewBody">
                                     <tr>
-                                        <td colspan="2" class="text-center text-muted">
-                                            Belum ada data
-                                        </td>
+                                        <td colspan="2" class="text-center text-muted">Belum ada data</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -598,12 +583,8 @@ isLogin();
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="ti ti-x me-1"></i>Batal
-                </button>
-                <button type="button" class="btn btn-success" id="btnImportSubmit" disabled>
-                    <i class="ti ti-upload me-1"></i>Import Data
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="ti ti-x me-1"></i>Batal</button>
+                <button type="button" class="btn btn-success" id="btnImportSubmit" disabled><i class="ti ti-upload me-1"></i>Import Data</button>
             </div>
         </div>
     </div>
@@ -617,37 +598,31 @@ isLogin();
 <script src="../../assets/local/dataTables.bootstrap5.min.js"></script>
 <script src="../../assets/local/dataTables.responsive.min.js"></script>
 <script src="../../assets/local/responsive.bootstrap5.min.js"></script>
-
-<!-- Moment.js -->
 <script src="../../assets/local/moment.min.js"></script>
-<!-- Select2 JS -->
 <script src="../../assets/local/select2.min.js"></script>
+<!-- FixedColumns DataTables -->
+<script src="../../assets/local/dataTables.fixedColumns.min.js"></script>
+<link rel="stylesheet" href="../../assets/local/fixedColumns.bootstrap5.min.css">
 
 <script>
     let reportTable;
-    let isSaving = false;
     let baseUrl = 'DataDefectReportController.php';
 
-    // ====================================
-    // KOLOM YANG BISA DI-EDIT PER CELL
-    // ====================================
     const EDITABLE_COLS = {
         3: 'lotno',
-        8: 'nama_group',
-        9: 'qty',
-        10: 'aksi_claim_defect',
-        11: 'nama_operator_pengambil',
-        12: 'tanggal_pengambilan'
+        4: 'nama_group',
+        5: 'qty',
+        6: 'aksi_claim_defect',
+        8: 'nama_operator_pengambil',
+        9: 'tanggal_pengambilan'
     };
 
-    // ====================================
     // VARIABEL FILTER PER TAB
-    // ====================================
     let filters = {
-        tanggal: {
+        tanggalPartNo: {
             aktif: false,
-            tanggalAwal: null,
-            tanggalAkhir: null
+            tanggal: null,
+            partnos: []
         },
         lot: {
             aktif: false,
@@ -655,61 +630,186 @@ isLogin();
         },
         customer: {
             aktif: false,
-            customers: []
+            customers: [],
+            tanggalAwal: null,
+            tanggalAkhir: null
+        },
+        partNoRange: {
+            aktif: false,
+            partnos: [],
+            tanggalAwal: null,
+            tanggalAkhir: null
         }
     };
 
-    // Tab aktif saat ini
-    let activeTab = 'tanggal';
+    let activeTab = 'tanggalPartNo';
+
+    // CEK apakah sedang ada input/edit yang aktif di tabel
+    function isAnyEditActive() {
+        return $('#reportTable .inline-edit').length > 0;
+    }
+
+    // SIMPAN semua edit yang aktif (panggil sebelum edit baru)
+    function saveCurrentEditIfAny() {
+        let $activeInput = $('#reportTable .inline-edit');
+        if ($activeInput.length === 0) return false;
+
+        let $input = $activeInput.first();
+        let field = $input.data('field');
+        let id = $input.data('id');
+        let newValue = $input.val();
+        let $cell = $input.closest('td');
+        let row = reportTable.row($cell.closest('tr'));
+        let rowData = row.data();
+
+        if (!rowData) return false;
+
+        // Validasi
+        if (field === 'nama_operator_pengambil' && (!newValue || !newValue.trim())) {
+            showToast('Peringatan', 'Nama operator pengambil tidak boleh kosong', 'warning', 1500);
+            return false;
+        }
+
+        if (field === 'qty') {
+            let qty = parseInt(newValue);
+            if (isNaN(qty) || qty < 0) {
+                showToast('Peringatan', 'QTY harus berupa angka positif', 'warning', 1500);
+                return false;
+            }
+            newValue = qty;
+        }
+
+        // Siapkan payload
+        let payload = {
+            id: id,
+            lotno: field === 'lotno' ? newValue : (rowData.lotno || ''),
+            aksi_claim_defect: field === 'aksi_claim_defect' ? newValue : (rowData.aksi_claim_defect || ''),
+            nama_group: field === 'nama_group' ? newValue : (rowData.nama_group || ''),
+            qty: field === 'qty' ? newValue : (rowData.qty || ''),
+            nama_operator_pengambil: field === 'nama_operator_pengambil' ? newValue : (rowData.nama_operator_pengambil || ''),
+            tanggal_pengambilan: field === 'tanggal_pengambilan' ? newValue : (rowData.tanggal_pengambilan ? rowData.tanggal_pengambilan.split(' ')[0] : '')
+        };
+
+        // Simpan via AJAX (synchronous biar aman)
+        let saved = false;
+        $.ajax({
+            url: 'UpdateDefectReportController.php?action=update',
+            type: 'POST',
+            data: payload,
+            dataType: 'json',
+            async: false,
+            timeout: 10000,
+            success: function(response) {
+                if (response.status === 'success') {
+                    let scrollTop = $(window).scrollTop(); // ← simpan posisi
+                    rowData[field] = newValue !== '' ? newValue : null;
+                    delete rowData._editingCells[field];
+                    row.data(rowData).draw(false);
+                    $(window).scrollTop(scrollTop); // ← restore posisi
+                    showToast('Tersimpan', 'Nilai berhasil disimpan', 'success', 1000);
+                    saved = true;
+                } else {
+                    showToast('Gagal', response.message || 'Gagal menyimpan', 'error', 1500);
+                }
+            },
+            error: function() {
+                showToast('Error', 'Gagal menyimpan data', 'error', 1500);
+            }
+        });
+
+        return saved;
+    }
 
     $(document).ready(function() {
         initializeTable();
-        loadCustomerOptions();
         showEmptyInitialState();
 
-        // Event listeners
         $('#closeFilterInfo').on('click', function() {
             $('#filterInfo').fadeOut();
         });
 
-        // Tooltip initialization
-        $('[data-bs-toggle="tooltip"]').tooltip();
+        // TAB 1
+        $('#filterTanggal').on('change', function() {
+            let tanggal = $(this).val();
+            if (tanggal) loadPartNoByTanggal(tanggal);
+            else {
+                $('#filterPartNoByTanggal').html('<option value="">Pilih tanggal terlebih dahulu</option>').prop('disabled', true);
+                $('#btnApplyTanggalPartNo').prop('disabled', true);
+            }
+        });
+        $('#filterPartNoByTanggal').on('change', function() {
+            $('#btnApplyTanggalPartNo').prop('disabled', !$('#filterTanggal').val());
+        });
+        $('#btnApplyTanggalPartNo').on('click', function() {
+            applyTanggalPartNoFilter();
+        });
 
-        // Event listener untuk pindah tab - RESET SEMUA
+        // TAB 2
+        $('#filterLotNo').on('change', function() {
+            if ($(this).val().trim() !== '') applyLotFilter();
+        });
+
+        // TAB 3
+        $('#filterCustomer').on('change', function() {
+            let selected = $(this).val();
+            if (selected && selected.length > 0) {
+                $('#customerTanggalAwal, #customerTanggalAkhir, #btnClearCustomerRange').prop('disabled', false);
+            } else {
+                $('#customerTanggalAwal, #customerTanggalAkhir, #btnClearCustomerRange').prop('disabled', true);
+                $('#customerTanggalAwal, #customerTanggalAkhir').val('');
+            }
+        });
+        $('#btnClearCustomerRange').on('click', function() {
+            $('#customerTanggalAwal, #customerTanggalAkhir').val('');
+            showToast('Range Dihapus', 'Filter range tanggal customer dihapus', 'info', 1500);
+        });
+
+        // TAB 4
+        $('#filterPartNo').on('change', function() {
+            let selected = $(this).val();
+            if (selected && selected.length > 0) {
+                $('#partNoTanggalAwal, #partNoTanggalAkhir, #btnClearPartNoRange').prop('disabled', false);
+            } else {
+                $('#partNoTanggalAwal, #partNoTanggalAkhir, #btnClearPartNoRange').prop('disabled', true);
+                $('#partNoTanggalAwal, #partNoTanggalAkhir').val('');
+            }
+        });
+        $('#btnClearPartNoRange').on('click', function() {
+            $('#partNoTanggalAwal, #partNoTanggalAkhir').val('');
+            showToast('Range Dihapus', 'Filter range tanggal part no dihapus', 'info', 1500);
+        });
+
+        // TAB SWITCH
         $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
             let targetId = $(e.target).attr('id');
-
-            // RESET SEMUA FILTER DAN INPUT
             resetAllFiltersSilent();
-
-            // Set tab aktif
             switch (targetId) {
                 case 'filter-tanggal-tab':
-                    activeTab = 'tanggal';
+                    activeTab = 'tanggalPartNo';
                     break;
                 case 'filter-lot-tab':
                     activeTab = 'lot';
                     break;
                 case 'filter-customer-tab':
                     activeTab = 'customer';
+                    loadCustomerOptions();
+                    break;
+                case 'filter-partno-tab':
+                    activeTab = 'partNoRange';
+                    loadPartNoOptions();
                     break;
             }
-
-            // Tampilkan state kosong
             showEmptyInitialState();
         });
     });
 
-    // ====================================
-    // FUNGSI INISIALISASI
-    // ====================================
     function initializeTable() {
         reportTable = $('#reportTable').DataTable({
             columns: [{
                     data: null,
                     width: '5px',
                     className: 'text-center',
-                    render: function(data, type, row, meta) {
+                    render: function() {
                         return '';
                     }
                 },
@@ -717,26 +817,7 @@ isLogin();
                     data: 'tanggal_ditemukan',
                     className: 'text-nowrap',
                     render: function(data) {
-                        if (!data) return '-';
-                        return formatDate(data);
-                    }
-                },
-                {
-                    data: 'nama_customer',
-                    render: function(data) {
-                        return escapeHtml(data);
-                    }
-                },
-                {
-                    data: 'lotno',
-                    render: function(data, type, row) {
-                        if (type === 'display' && row._editingCells && row._editingCells['lotno']) {
-                            return `<input type="text" class="form-control form-control-sm inline-edit"
-                       value="${escapeHtml(data || '')}"
-                       data-field="lotno" data-id="${row.id}"
-                       placeholder="Lot No">`;
-                        }
-                        return escapeHtml(data) || '-';
+                        return data ? formatDate(data) : '-';
                     }
                 },
                 {
@@ -746,20 +827,11 @@ isLogin();
                     }
                 },
                 {
-                    data: 'nama_section',
-                    render: function(data) {
-                        return `<span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">${escapeHtml(data)}</span>`;
-                    }
-                },
-                {
-                    data: 'nama_defect',
-                    render: function(data) {
-                        return escapeHtml(data);
-                    }
-                },
-                {
-                    data: 'nama_operator',
-                    render: function(data) {
+                    data: 'lotno',
+                    render: function(data, type, row) {
+                        if (type === 'display' && row._editingCells && row._editingCells['lotno']) {
+                            return `<input type="text" class="form-control form-control-sm inline-edit" value="${escapeHtml(data || '')}" data-field="lotno" data-id="${row.id}" placeholder="Lot No">`;
+                        }
                         return escapeHtml(data) || '-';
                     }
                 },
@@ -767,41 +839,30 @@ isLogin();
                     data: 'nama_group',
                     render: function(data, type, row) {
                         if (type === 'display' && row._editingCells && row._editingCells['nama_group']) {
-                            return `<input type="text" class="form-control form-control-sm inline-edit"
-                       value="${escapeHtml(data || '')}"
-                       data-field="nama_group" data-id="${row.id}"
-                       placeholder="Nama Group">`;
+                            return `<input type="text" class="form-control form-control-sm inline-edit" value="${escapeHtml(data || '')}" data-field="nama_group" data-id="${row.id}" placeholder="Nama Group">`;
                         }
                         return escapeHtml(data) || '-';
                     }
                 },
-
-                // Col index 9 - QTY
                 {
                     data: 'qty',
                     className: 'text-end',
                     render: function(data, type, row) {
                         if (type === 'display' && row._editingCells && row._editingCells['qty']) {
-                            return `<input type="number" class="form-control form-control-sm inline-edit text-end"
-                       value="${data || ''}"
-                       data-field="qty" data-id="${row.id}"
-                       min="0" placeholder="0">`;
+                            return `<input type="number" class="form-control form-control-sm inline-edit text-end" value="${data || ''}" data-field="qty" data-id="${row.id}" min="0" placeholder="0">`;
                         }
                         return data !== null ? data : '-';
                     }
                 },
-
-                // Col index 10 - Aksi Claim Defect
                 {
                     data: 'aksi_claim_defect',
                     render: function(data, type, row) {
                         if (type === 'display' && row._editingCells && row._editingCells['aksi_claim_defect']) {
-                            return `<select class="form-select form-select-sm inline-edit"
-                        data-field="aksi_claim_defect" data-id="${row.id}">
-                        <option value="">-- Pilih --</option>
-                        <option value="Repair" ${data === 'Repair' ? 'selected' : ''}>Repair</option>
-                        <option value="Scrap"  ${data === 'Scrap'  ? 'selected' : ''}>Scrap</option>
-                    </select>`;
+                            return `<select class="form-select form-select-sm inline-edit" data-field="aksi_claim_defect" data-id="${row.id}">
+                            <option value="">-- Pilih --</option>
+                            <option value="Repair" ${data === 'Repair' ? 'selected' : ''}>Repair</option>
+                            <option value="Scrap" ${data === 'Scrap' ? 'selected' : ''}>Scrap</option>
+                        </select>`;
                         }
                         if (!data) return '-';
                         if (data === 'Repair') return `<span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Repair</span>`;
@@ -809,24 +870,36 @@ isLogin();
                         return escapeHtml(data);
                     }
                 },
-
-                // Col index 11 - Nama Operator Pengambil
+                {
+                    data: 'status',
+                    width: '100px',
+                    className: 'text-center',
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            let isChecked = (data == 1 || data === true || data === '1');
+                            let statusText = isChecked ? 'OK' : 'NG';
+                            let statusClass = isChecked ? 'success' : 'danger';
+                            return `<div class="d-flex align-items-center justify-content-center gap-2">
+                            <div class="form-check form-switch m-0">
+                                <input type="checkbox" class="form-check-input status-toggle" data-id="${row.id}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 44px; height: 22px; margin: 0;">
+                            </div>
+                            <span class="badge bg-${statusClass} bg-opacity-10 text-${statusClass} px-2 py-1 rounded-pill" style="min-width: 45px;">${statusText}</span>
+                        </div>`;
+                        }
+                        return data;
+                    }
+                },
                 {
                     data: 'nama_operator_pengambil',
                     width: '150px',
                     className: 'text-nowrap',
                     render: function(data, type, row) {
                         if (type === 'display' && row._editingCells && row._editingCells['nama_operator_pengambil']) {
-                            return `<input type="text" class="form-control form-control-sm inline-edit"
-                       value="${escapeHtml(data || '')}"
-                       data-field="nama_operator_pengambil" data-id="${row.id}"
-                       placeholder="Nama operator">`;
+                            return `<input type="text" class="form-control form-control-sm inline-edit" value="${escapeHtml(data || '')}" data-field="nama_operator_pengambil" data-id="${row.id}" placeholder="Nama operator">`;
                         }
                         return data ? escapeHtml(data) : '-';
                     }
                 },
-
-                // Col index 12 - Tanggal Pengambilan
                 {
                     data: 'tanggal_pengambilan',
                     width: '120px',
@@ -834,25 +907,18 @@ isLogin();
                     render: function(data, type, row) {
                         if (type === 'display' && row._editingCells && row._editingCells['tanggal_pengambilan']) {
                             let dateValue = data ? data.split(' ')[0] : '';
-                            return `<input type="date" class="form-control form-control-sm inline-edit"
-                       value="${dateValue}"
-                       data-field="tanggal_pengambilan" data-id="${row.id}">`;
+                            return `<input type="date" class="form-control form-control-sm inline-edit" value="${dateValue}" data-field="tanggal_pengambilan" data-id="${row.id}">`;
                         }
                         return data ? formatDate(data) : '-';
                     }
                 },
-                // Col index 13 - Aksi
                 {
                     data: null,
                     width: '80px',
                     className: 'text-center',
                     orderable: false,
                     render: function(data, type, row) {
-                        return `
-            <button class="btn btn-sm btn-info" onclick="showDetail(${row.id})" title="Lihat Detail">
-                <i class="ti ti-eye"></i>
-            </button>
-        `;
+                        return `<button class="btn btn-sm btn-info" onclick="showDetail(${row.id})" title="Lihat Detail"><i class="ti ti-eye"></i></button>`;
                     }
                 }
             ],
@@ -865,7 +931,13 @@ isLogin();
             },
             autoWidth: false,
             scrollX: true,
+            scrollY: '60vh', // ← tambahkan ini (header sticky)
+            scrollCollapse: true, // ← tambahkan ini
+            fixedHeader: true, // ← tambahkan ini (sticky header)
             responsive: false,
+            fixedColumns: { // ← frozen 4 kolom kiri (No, Tanggal, Part No, Lot No)
+                left: 4
+            },
             pageLength: 10,
             lengthMenu: [
                 [10, 25, 50, 100, -1],
@@ -877,49 +949,112 @@ isLogin();
             },
             drawCallback: function() {
                 let data = reportTable.rows().data().toArray();
-                if (data.length > 0) {
-                    updateSummary(data);
-                }
+                if (data.length > 0) updateSummary(data);
             }
         });
     }
 
-    // Tampilkan state awal (table kosong)
+    // ==================== INLINE EDITING ====================
+
+    // Double klik - mulai edit, TAPI cek dulu apakah sedang ada edit aktif
+    $(document).on('dblclick', '#reportTable tbody td', function(e) {
+        e.preventDefault(); // ← tambahkan ini
+        e.stopPropagation(); // ← tambahkan ini
+
+        if (isAnyEditActive()) {
+            showToast('Peringatan', 'Selesaikan edit sebelumnya dulu', 'warning', 1500);
+            return;
+        }
+
+        let $td = $(this);
+        let colIdx = $td.index();
+        let field = EDITABLE_COLS[colIdx];
+        if (!field) return;
+
+        let row = reportTable.row($td.closest('tr'));
+        let rowData = row.data();
+        if (!rowData) return;
+
+        // Simpan posisi scroll sebelum draw
+        let scrollTop = $(window).scrollTop(); // ← tambahkan ini
+
+        if (!rowData._editingCells) rowData._editingCells = {};
+        if (rowData._editingCells[field]) return;
+
+        rowData._editingCells[field] = true;
+        row.data(rowData).draw(false);
+
+        // Restore scroll position setelah draw
+        $(window).scrollTop(scrollTop); // ← tambahkan ini
+
+        setTimeout(function() {
+            let $input = $(`[data-field="${field}"][data-id="${rowData.id}"]`);
+            if ($input.length) {
+                // Gunakan preventScroll agar focus tidak scroll otomatis
+                $input[0].focus({
+                    preventScroll: true
+                }); // ← ubah ini
+                if ($input.is('input[type="text"], input[type="number"]')) $input.select();
+            }
+        }, 50);
+    });
+
+    // Enter = simpan
+    $(document).on('keydown', '.inline-edit', function(e) {
+        if (e.which === 13) { // Enter
+            e.preventDefault();
+            e.stopPropagation();
+            saveCurrentEditIfAny();
+        }
+        if (e.which === 27) { // ESC = batal
+            e.preventDefault();
+            e.stopPropagation();
+            let $input = $(this);
+            let field = $input.data('field');
+            let id = $input.data('id');
+            let table = $('#reportTable').DataTable();
+            table.rows().every(function() {
+                let d = this.data();
+                if (d.id == id && d._editingCells && d._editingCells[field]) {
+                    delete d._editingCells[field];
+                    this.data(d).draw(false);
+                }
+            });
+        }
+    });
+
+    // Blur = simpan
+    $(document).on('blur', '.inline-edit', function() {
+        setTimeout(function() {
+            saveCurrentEditIfAny();
+        }, 200);
+    });
+
+    // ==================== END INLINE EDITING ====================
+
     function showEmptyInitialState() {
         $('#loadingSpinner').fadeOut();
-        $('#summaryCards').hide();
         $('#filterInfo').hide();
-
-        if (reportTable) {
-            reportTable.clear().draw();
-        }
+        if (reportTable) reportTable.clear().draw();
 
         let message = '';
         switch (activeTab) {
-            case 'tanggal':
-                message = 'Silakan pilih rentang tanggal dan klik Terapkan Filter Tanggal';
+            case 'tanggalPartNo':
+                message = 'Silakan pilih tanggal dan part number, lalu klik Terapkan';
                 break;
             case 'lot':
-                message = 'Silakan masukkan nomor lot dan klik Terapkan Filter Lot';
+                message = 'Silakan scan atau ketik nomor lot (scan langsung terapkan)';
                 break;
             case 'customer':
-                message = 'Silakan pilih customer dan klik Terapkan Filter Customer';
+                message = 'Silakan pilih customer (bisa pilih range tanggal opsional)';
+                break;
+            case 'partNoRange':
+                message = 'Silakan pilih part number (bisa pilih range tanggal opsional)';
                 break;
         }
-
-        $('#reportTable tbody').html(`
-            <tr>
-                <td colspan="12" class="text-center py-5">
-                    <i class="ti ti-filter" style="font-size: 3rem; color: #dee2e6;"></i>
-                    <p class="mt-3 text-muted">${message}</p>
-                </td>
-            </tr>
-        `);
+        $('#reportTable tbody').html(`<tr><td colspan="9" class="text-center py-5"><i class="ti ti-filter" style="font-size: 3rem; color: #dee2e6;"></i><p class="mt-3 text-muted">${message}</p></td></tr>`);
     }
 
-    // ====================================
-    // LOAD DATA CUSTOMER (DROPDOWN dengan Select2)
-    // ====================================
     function loadCustomerOptions() {
         $.ajax({
             url: baseUrl + '?action=getCustomerOptions',
@@ -933,13 +1068,9 @@ isLogin();
                     let options = '';
                     response.data.forEach(customer => {
                         let customerName = customer.nama_customer || customer.customer || '';
-                        if (customerName && customerName.trim() !== '') {
-                            options += `<option value="${escapeHtml(customerName)}">${escapeHtml(customerName)}</option>`;
-                        }
+                        if (customerName && customerName.trim() !== '') options += `<option value="${escapeHtml(customerName)}">${escapeHtml(customerName)}</option>`;
                     });
                     $('#filterCustomer').html(options);
-
-                    // Inisialisasi Select2 setelah data dimuat
                     $('#filterCustomer').select2({
                         theme: 'bootstrap-5',
                         placeholder: 'Pilih customer...',
@@ -969,76 +1100,115 @@ isLogin();
         });
     }
 
-    // ====================================
-    // FUNGSI FILTER TANGGAL
-    // ====================================
-    function applyDateFilter() {
-        let tanggalAwal = $('#tanggalAwal').val();
-        let tanggalAkhir = $('#tanggalAkhir').val();
+    function loadPartNoOptions() {
+        $.ajax({
+            url: baseUrl + '?action=getPartNoOptions',
+            type: 'GET',
+            dataType: 'json',
+            beforeSend: function() {
+                $('#filterPartNo').html('<option value="">Memuat data...</option>');
+            },
+            success: function(response) {
+                if (response.status === 'success' && response.data && response.data.length > 0) {
+                    let options = '';
+                    response.data.forEach(item => {
+                        let partno = item.partno || '';
+                        if (partno && partno.trim() !== '') options += `<option value="${escapeHtml(partno)}">${escapeHtml(partno)}</option>`;
+                    });
+                    $('#filterPartNo').html(options);
+                    $('#filterPartNo').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Pilih part number...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                } else {
+                    $('#filterPartNo').html('<option value="">Tidak ada data part number</option>');
+                    $('#filterPartNo').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Tidak ada data',
+                        disabled: true,
+                        width: '100%'
+                    });
+                }
+            },
+            error: function(xhr) {
+                console.error('Gagal load part no options:', xhr);
+                $('#filterPartNo').html('<option value="">Gagal memuat data</option>');
+                $('#filterPartNo').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Gagal memuat data',
+                    disabled: true,
+                    width: '100%'
+                });
+            }
+        });
+    }
 
-        if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
-            });
-            return;
-        }
+    function loadPartNoByTanggal(tanggal) {
+        $.ajax({
+            url: baseUrl + '?action=getPartNoByTanggal&tanggal=' + tanggal,
+            type: 'GET',
+            dataType: 'json',
+            beforeSend: function() {
+                $('#filterPartNoByTanggal').html('<option value="">Memuat data...</option>').prop('disabled', true);
+            },
+            success: function(response) {
+                if (response.status === 'success' && response.data && response.data.length > 0) {
+                    let options = '';
+                    response.data.forEach(item => {
+                        let partno = item.partno || '';
+                        if (partno && partno.trim() !== '') options += `<option value="${escapeHtml(partno)}">${escapeHtml(partno)}</option>`;
+                    });
+                    $('#filterPartNoByTanggal').html(options).prop('disabled', false);
+                    $('#filterPartNoByTanggal').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Pilih part number...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    $('#btnApplyTanggalPartNo').prop('disabled', false);
+                } else {
+                    $('#filterPartNoByTanggal').html('<option value="">Tidak ada part number untuk tanggal ini</option>').prop('disabled', true);
+                    $('#filterPartNoByTanggal').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Tidak ada data',
+                        disabled: true,
+                        width: '100%'
+                    });
+                    $('#btnApplyTanggalPartNo').prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                console.error('Gagal load part no by tanggal:', xhr);
+                $('#filterPartNoByTanggal').html('<option value="">Gagal memuat data</option>').prop('disabled', true);
+            }
+        });
+    }
 
-        if (!tanggalAwal && !tanggalAkhir) {
+    function applyTanggalPartNoFilter() {
+        let tanggal = $('#filterTanggal').val();
+        let partnos = $('#filterPartNoByTanggal').val() || [];
+        if (!tanggal) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Pilih Tanggal',
-                text: 'Silakan pilih minimal 1 tanggal'
+                title: 'Peringatan',
+                text: 'Silakan pilih tanggal terlebih dahulu'
             });
             return;
         }
-
-        // Set filter tanggal
-        filters.tanggal.aktif = true;
-        filters.tanggal.tanggalAwal = tanggalAwal || null;
-        filters.tanggal.tanggalAkhir = tanggalAkhir || null;
-
-        // Load data
-        loadReportsByTab('tanggal');
+        if (partnos.length === 0) showToast('Info', 'Filter hanya berdasarkan tanggal (semua part number)', 'info', 2000);
+        filters.tanggalPartNo = {
+            aktif: true,
+            tanggal: tanggal,
+            partnos: partnos
+        };
+        showToast('Filter Diterapkan', `Tanggal: ${formatDate(tanggal)} | ${partnos.length} part no dipilih`, 'info', 2000);
+        loadReportsByTab('tanggalPartNo');
     }
 
-    function setQuickFilter(type) {
-        let today = moment();
-        let tanggalAwal, tanggalAkhir;
-
-        switch (type) {
-            case 'today':
-                tanggalAwal = today.format('YYYY-MM-DD');
-                tanggalAkhir = today.format('YYYY-MM-DD');
-                break;
-            case 'yesterday':
-                tanggalAwal = today.subtract(1, 'days').format('YYYY-MM-DD');
-                tanggalAkhir = tanggalAwal;
-                break;
-            case 'week':
-                tanggalAwal = today.subtract(7, 'days').format('YYYY-MM-DD');
-                tanggalAkhir = moment().format('YYYY-MM-DD');
-                break;
-            case 'month':
-                tanggalAwal = today.startOf('month').format('YYYY-MM-DD');
-                tanggalAkhir = today.endOf('month').format('YYYY-MM-DD');
-                break;
-        }
-
-        $('#tanggalAwal').val(tanggalAwal);
-        $('#tanggalAkhir').val(tanggalAkhir);
-
-        // Langsung terapkan filter
-        applyDateFilter();
-    }
-
-    // ====================================
-    // FUNGSI FILTER LOT (INPUT MANUAL)
-    // ====================================
     function applyLotFilter() {
         let lotInput = $('#filterLotNo').val().trim();
-
         if (lotInput === '') {
             Swal.fire({
                 icon: 'warning',
@@ -1047,24 +1217,20 @@ isLogin();
             });
             return;
         }
-
-        // Set filter lot
-        filters.lot.aktif = true;
-        filters.lot.lotNos = lotInput.split(',').map(item => item.trim()).filter(item => item !== '');
-
-        // Load data
+        filters.lot = {
+            aktif: true,
+            lotNos: lotInput.split(',').map(item => item.trim()).filter(item => item !== '')
+        };
         loadReportsByTab('lot');
     }
 
     function clearLotFilter() {
-        filters.lot.aktif = false;
-        filters.lot.lotNos = [];
+        filters.lot = {
+            aktif: false,
+            lotNos: []
+        };
         $('#filterLotNo').val('');
-
-        if (activeTab === 'lot') {
-            showEmptyInitialState();
-        }
-
+        if (activeTab === 'lot') showEmptyInitialState();
         Swal.fire({
             icon: 'info',
             title: 'Filter Lot Dihapus',
@@ -1074,13 +1240,10 @@ isLogin();
         });
     }
 
-    // ====================================
-    // FUNGSI FILTER CUSTOMER (DROPDOWN) - TANPA SEARCH
-    // ====================================
     function applyCustomerFilter() {
-        // Ambil nilai dari Select2
         let selectedCustomers = $('#filterCustomer').val() || [];
-
+        let tanggalAwal = $('#customerTanggalAwal').val();
+        let tanggalAkhir = $('#customerTanggalAkhir').val();
         if (selectedCustomers.length === 0) {
             Swal.fire({
                 icon: 'warning',
@@ -1089,26 +1252,39 @@ isLogin();
             });
             return;
         }
-
-        // Set filter customer
-        filters.customer.aktif = true;
-        filters.customer.customers = selectedCustomers;
-
-        // Load data
+        if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            });
+            return;
+        }
+        filters.customer = {
+            aktif: true,
+            customers: selectedCustomers,
+            tanggalAwal: tanggalAwal || null,
+            tanggalAkhir: tanggalAkhir || null
+        };
+        let msg = `${selectedCustomers.length} customer dipilih`;
+        if (tanggalAwal && tanggalAkhir) msg += ` | Range: ${formatDate(tanggalAwal)} - ${formatDate(tanggalAkhir)}`;
+        else if (tanggalAwal) msg += ` | Mulai: ${formatDate(tanggalAwal)}`;
+        else if (tanggalAkhir) msg += ` | Sampai: ${formatDate(tanggalAkhir)}`;
+        showToast('Filter Diterapkan', msg, 'info', 2000);
         loadReportsByTab('customer');
     }
 
     function clearCustomerFilter() {
-        filters.customer.aktif = false;
-        filters.customer.customers = [];
-
-        // Reset Select2
+        filters.customer = {
+            aktif: false,
+            customers: [],
+            tanggalAwal: null,
+            tanggalAkhir: null
+        };
         $('#filterCustomer').val([]).trigger('change');
-
-        if (activeTab === 'customer') {
-            showEmptyInitialState();
-        }
-
+        $('#customerTanggalAwal, #customerTanggalAkhir').val('').prop('disabled', true);
+        $('#btnClearCustomerRange').prop('disabled', true);
+        if (activeTab === 'customer') showEmptyInitialState();
         Swal.fire({
             icon: 'info',
             title: 'Filter Customer Dihapus',
@@ -1118,69 +1294,121 @@ isLogin();
         });
     }
 
-    // ====================================
-    // FUNGSI LOAD REPORTS PER TAB
-    // ====================================
+    function applyPartNoFilter() {
+        let selectedPartNos = $('#filterPartNo').val() || [];
+        let tanggalAwal = $('#partNoTanggalAwal').val();
+        let tanggalAkhir = $('#partNoTanggalAkhir').val();
+        if (selectedPartNos.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pilih Part Number',
+                text: 'Silakan pilih minimal 1 part number'
+            });
+            return;
+        }
+        if (tanggalAwal && tanggalAkhir && tanggalAwal > tanggalAkhir) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            });
+            return;
+        }
+        filters.partNoRange = {
+            aktif: true,
+            partnos: selectedPartNos,
+            tanggalAwal: tanggalAwal || null,
+            tanggalAkhir: tanggalAkhir || null
+        };
+        let msg = `${selectedPartNos.length} part no dipilih`;
+        if (tanggalAwal && tanggalAkhir) msg += ` | Range: ${formatDate(tanggalAwal)} - ${formatDate(tanggalAkhir)}`;
+        else if (tanggalAwal) msg += ` | Mulai: ${formatDate(tanggalAwal)}`;
+        else if (tanggalAkhir) msg += ` | Sampai: ${formatDate(tanggalAkhir)}`;
+        showToast('Filter Diterapkan', msg, 'info', 2000);
+        loadReportsByTab('partNoRange');
+    }
+
+    function clearPartNoFilter() {
+        filters.partNoRange = {
+            aktif: false,
+            partnos: [],
+            tanggalAwal: null,
+            tanggalAkhir: null
+        };
+        $('#filterPartNo').val([]).trigger('change');
+        $('#partNoTanggalAwal, #partNoTanggalAkhir').val('').prop('disabled', true);
+        $('#btnClearPartNoRange').prop('disabled', true);
+        if (activeTab === 'partNoRange') showEmptyInitialState();
+        Swal.fire({
+            icon: 'info',
+            title: 'Filter Part No Dihapus',
+            text: 'Filter part number telah dihapus',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+
+    function setSingleQuickFilter(type) {
+        let today = moment();
+        let tanggal;
+        switch (type) {
+            case 'today':
+                tanggal = today.format('YYYY-MM-DD');
+                break;
+            case 'yesterday':
+                tanggal = today.subtract(1, 'days').format('YYYY-MM-DD');
+                break;
+        }
+        $('#filterTanggal').val(tanggal).trigger('change');
+        showToast('Quick Filter', `Tanggal: ${formatDate(tanggal)}`, 'info', 1500);
+    }
+
     function loadReportsByTab(tab) {
         $('#loadingSpinner').fadeIn();
-        $('#summaryCards').hide();
-        $('#filterInfo').hide();
-
         let url = baseUrl + '?action=getReports';
         let params = [];
-
         switch (tab) {
-            case 'tanggal':
-                if (filters.tanggal.aktif) {
-                    if (filters.tanggal.tanggalAwal) {
-                        params.push('tanggal_awal=' + filters.tanggal.tanggalAwal);
-                    }
-                    if (filters.tanggal.tanggalAkhir) {
-                        params.push('tanggal_akhir=' + filters.tanggal.tanggalAkhir);
-                    }
+            case 'tanggalPartNo':
+                if (filters.tanggalPartNo.aktif && filters.tanggalPartNo.tanggal) {
+                    params.push('tanggal=' + filters.tanggalPartNo.tanggal);
+                    if (filters.tanggalPartNo.partnos.length > 0) params.push('partno=' + encodeURIComponent(filters.tanggalPartNo.partnos.join(',')));
                 }
                 break;
-
             case 'lot':
-                if (filters.lot.aktif && filters.lot.lotNos.length > 0) {
-                    params.push('lot_nos=' + encodeURIComponent(filters.lot.lotNos.join(',')));
-                }
+                if (filters.lot.aktif && filters.lot.lotNos.length > 0) params.push('lot_nos=' + encodeURIComponent(filters.lot.lotNos.join(',')));
                 break;
-
             case 'customer':
                 if (filters.customer.aktif && filters.customer.customers.length > 0) {
                     params.push('customers=' + encodeURIComponent(filters.customer.customers.join(',')));
+                    if (filters.customer.tanggalAwal) params.push('tanggal_awal=' + filters.customer.tanggalAwal);
+                    if (filters.customer.tanggalAkhir) params.push('tanggal_akhir=' + filters.customer.tanggalAkhir);
+                }
+                break;
+            case 'partNoRange':
+                if (filters.partNoRange.aktif && filters.partNoRange.partnos.length > 0) {
+                    params.push('partnos=' + encodeURIComponent(filters.partNoRange.partnos.join(',')));
+                    if (filters.partNoRange.tanggalAwal) params.push('tanggal_awal_part=' + filters.partNoRange.tanggalAwal);
+                    if (filters.partNoRange.tanggalAkhir) params.push('tanggal_akhir_part=' + filters.partNoRange.tanggalAkhir);
                 }
                 break;
         }
-
         if (params.length === 0) {
             $('#loadingSpinner').fadeOut();
             showEmptyInitialState();
             return;
         }
-
         url += '&' + params.join('&');
-
         $.ajax({
             url: url,
             type: 'GET',
             dataType: 'json',
             success: function(response) {
                 $('#loadingSpinner').fadeOut();
-
                 if (response.status === 'success') {
                     reportTable.clear();
                     reportTable.rows.add(response.data);
                     reportTable.draw();
-
-                    if (response.data.length > 0) {
-                        updateSummaryCards(response);
-                        $('#summaryCards').fadeIn();
-                    } else {
-                        $('#summaryCards').hide();
-                        showEmptyResult(response, tab);
-                    }
+                    if (response.data.length === 0) showEmptyResult(response, tab);
                 } else {
                     Swal.fire('Error', response.message, 'error');
                     reportTable.clear().draw();
@@ -1194,38 +1422,46 @@ isLogin();
         });
     }
 
-    // ====================================
-    // FUNGSI RESET ALL FILTERS (SILENT - TANPA SWEETALERT)
-    // ====================================
     function resetAllFiltersSilent() {
-        // Reset semua filter
-        filters.tanggal.aktif = false;
-        filters.tanggal.tanggalAwal = null;
-        filters.tanggal.tanggalAkhir = null;
-
-        filters.lot.aktif = false;
-        filters.lot.lotNos = [];
-
-        filters.customer.aktif = false;
-        filters.customer.customers = [];
-
-        // Reset semua input
-        $('#tanggalAwal').val('');
-        $('#tanggalAkhir').val('');
+        filters = {
+            tanggalPartNo: {
+                aktif: false,
+                tanggal: null,
+                partnos: []
+            },
+            lot: {
+                aktif: false,
+                lotNos: []
+            },
+            customer: {
+                aktif: false,
+                customers: [],
+                tanggalAwal: null,
+                tanggalAkhir: null
+            },
+            partNoRange: {
+                aktif: false,
+                partnos: [],
+                tanggalAwal: null,
+                tanggalAkhir: null
+            }
+        };
+        $('#filterTanggal').val('');
+        $('#filterPartNoByTanggal').html('<option value="">Pilih tanggal terlebih dahulu</option>').prop('disabled', true);
+        if ($('#filterPartNoByTanggal').hasClass('select2-hidden-accessible')) $('#filterPartNoByTanggal').select2('destroy');
+        $('#btnApplyTanggalPartNo').prop('disabled', true);
         $('#filterLotNo').val('');
-
-        // Reset Select2
         $('#filterCustomer').val([]).trigger('change');
+        $('#customerTanggalAwal, #customerTanggalAkhir').val('').prop('disabled', true);
+        $('#btnClearCustomerRange').prop('disabled', true);
+        $('#filterPartNo').val([]).trigger('change');
+        $('#partNoTanggalAwal, #partNoTanggalAkhir').val('').prop('disabled', true);
+        $('#btnClearPartNoRange').prop('disabled', true);
     }
-    // ====================================
-    // FUNGSI RESET ALL FILTERS (DENGAN SWEETALERT)
-    // ====================================
+
     function resetAllFilters() {
         resetAllFiltersSilent();
-
-        // Tampilkan state kosong
         showEmptyInitialState();
-
         Swal.fire({
             icon: 'success',
             title: 'Semua Filter Direset',
@@ -1235,78 +1471,30 @@ isLogin();
         });
     }
 
-    // ====================================
-    // FUNGSI UPDATE TAMPILAN
-    // ====================================
-    function updateSummaryCards(response) {
-        let data = response.data;
-        let totalLaporan = response.filter.total_data || data.length;
-
-        $('#totalLaporan').text(totalLaporan.toLocaleString());
-
-        let uniqueCustomers = [...new Set(data.map(item => item.nama_customer))];
-        let uniqueSections = [...new Set(data.map(item => item.nama_section))];
-        let uniqueDefects = [...new Set(data.map(item => item.nama_defect))];
-
-        $('#totalCustomer').text(uniqueCustomers.length.toLocaleString());
-        $('#totalSection').text(uniqueSections.length.toLocaleString());
-        $('#totalDefect').text(uniqueDefects.length.toLocaleString());
-    }
-
-    function updateSummary(data) {
-        if (!data || data.length === 0) return;
-
-        let uniqueCustomers = [...new Set(data.map(item => item.nama_customer))];
-        let uniqueSections = [...new Set(data.map(item => item.nama_section))];
-        let uniqueDefects = [...new Set(data.map(item => item.nama_defect))];
-
-        $('#totalCustomer').text(uniqueCustomers.length.toLocaleString());
-        $('#totalSection').text(uniqueSections.length.toLocaleString());
-        $('#totalDefect').text(uniqueDefects.length.toLocaleString());
-    }
-
     function showEmptyResult(response, tab) {
         let message = 'Tidak ada data untuk ditampilkan';
-
         switch (tab) {
-            case 'tanggal':
-                if (response.filter && response.filter.tanggal_awal && response.filter.tanggal_akhir) {
-                    message = `Tidak ada laporan untuk rentang ${formatDate(response.filter.tanggal_awal)} - ${formatDate(response.filter.tanggal_akhir)}`;
-                }
+            case 'tanggalPartNo':
+                if (response.filter && response.filter.tanggal) message = `Tidak ada laporan untuk tanggal ${formatDate(response.filter.tanggal)} dengan part no yang dipilih`;
                 break;
             case 'lot':
-                message = `Tidak ada laporan untuk lot yang dipilih`;
+                message = 'Tidak ada laporan untuk lot yang dipilih';
                 break;
             case 'customer':
-                message = `Tidak ada laporan untuk customer yang dipilih`;
+                message = 'Tidak ada laporan untuk customer yang dipilih';
+                break;
+            case 'partNoRange':
+                message = 'Tidak ada laporan untuk part number yang dipilih';
                 break;
         }
-
-        $('#reportTable tbody').html(`
-            <tr>
-                <td colspan="14" class="text-center py-5">
-                    <i class="ti ti-database-off" style="font-size: 3rem; color: #dee2e6;"></i>
-                    <p class="mt-3 text-muted">${message}</p>
-                </td>
-            </tr>
-        `);
+        $('#reportTable tbody').html(`<tr><td colspan="9" class="text-center py-5"><i class="ti ti-database-off" style="font-size: 3rem; color: #dee2e6;"></i><p class="mt-3 text-muted">${message}</p></td></tr>`);
     }
 
-    // ====================================
-    // FUNGSI DETAIL LAPORAN
-    // ====================================
     function showDetail(id) {
         $('#detailLoading').show();
         $('#detailContent').hide();
-
-        // Reset semua field editable dan hapus class editing
-        $('.detail-editable')
-            .removeClass('editing saving save-success')
-            .removeAttr('style')
-            .html('-');
-
+        $('.detail-editable').removeClass('editing saving save-success').removeAttr('style').html('-');
         $('#detailModal').modal('show');
-
         $.ajax({
             url: baseUrl + '?action=show&id=' + id,
             type: 'GET',
@@ -1314,41 +1502,41 @@ isLogin();
             timeout: 10000,
             success: function(response) {
                 $('#detailLoading').hide();
-
                 if (response.status === 'success' && response.data) {
                     let data = response.data;
-
-                    // Set data-id untuk semua field editable
                     $('.detail-editable').attr('data-id', data.id);
-
-                    // Data existing (tidak bisa diedit)
                     $('#detailId').text(data.id || '-');
                     $('#detailTanggal').text(formatDate(data.tanggal_ditemukan) || '-');
                     $('#detailSection').text(escapeHtml(data.nama_section) || '-');
-                    $('#detailDefect').text(escapeHtml(data.nama_defect) || '-');
+                    $('#detailShift').text(escapeHtml(data.shift) || '-');
+                    $('#detailDefect').text(data.nama_defect || '-');
                     $('#detailPartNo').text(escapeHtml(data.partno) || '-');
                     $('#detailCustomer').text(escapeHtml(data.nama_customer) || '-');
                     $('#detailOperator').text(escapeHtml(data.nama_operator) || '-');
                     $('#detailDeskripsi').text(escapeHtml(data.deskripsi_masalah) || '-');
-
-                    // Data editable
                     $('#detailLotNo').text(escapeHtml(data.lotno) || '-');
                     $('#detailGroup').text(escapeHtml(data.nama_group) || '-');
                     $('#detailQty').text(data.qty || '0');
-
-                    // Format Aksi Claim Defect
                     if (data.aksi_claim_defect) {
                         let badgeClass = data.aksi_claim_defect === 'Repair' ? 'bg-primary' : 'bg-danger';
                         let textClass = data.aksi_claim_defect === 'Repair' ? 'primary' : 'danger';
                         $('#detailAksiClaim').html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(data.aksi_claim_defect)}</span>`);
-                    } else {
-                        $('#detailAksiClaim').text('-');
-                    }
-
+                    } else $('#detailAksiClaim').text('-');
                     $('#detailOperatorPengambil').text(escapeHtml(data.nama_operator_pengambil) || '-');
                     $('#detailTanggalPengambilan').text(formatDate(data.tanggal_pengambilan) || '-');
                     $('#detailCreatedAt').text(formatDateTime(data.created_at) || '-');
-
+                    let statusValue = data.status == 1 || data.status === true || data.status === '1';
+                    let $statusToggle = $('#detailStatusToggle');
+                    let $statusBadge = $('#detailStatusBadge');
+                    $statusToggle.prop('checked', statusValue);
+                    updateStatusBadge($statusBadge, statusValue);
+                    $statusToggle.data('id', data.id);
+                    $statusToggle.off('change').on('change', function() {
+                        let isChecked = $(this).is(':checked');
+                        let id = $(this).data('id');
+                        updateStatusBadge($statusBadge, isChecked);
+                        saveStatusEdit(id, isChecked ? 1 : 0);
+                    });
                     $('#detailContent').fadeIn();
                 } else {
                     Swal.fire('Error', response.message || 'Gagal memuat detail data', 'error');
@@ -1363,59 +1551,35 @@ isLogin();
         });
     }
 
-    // ====================================
-    // DOUBLE-CLICK EDIT DI MODAL
-    // ====================================
+    // Detail modal edit handlers
     $(document).on('dblclick', '.detail-editable', function(e) {
         e.preventDefault();
         e.stopPropagation();
-
         let $this = $(this);
         let field = $this.data('field');
         let id = $this.data('id');
-
-        // Cek jika sedang dalam mode edit atau sedang menyimpan
         if ($this.hasClass('editing') || isSaving) return;
-
         let currentValue = $this.text().trim();
-
-        // Handle khusus untuk aksi_claim_defect yang punya badge
         if (field === 'aksi_claim_defect') {
             let badgeText = $this.find('.badge').text().trim();
-            if (badgeText) {
-                currentValue = badgeText;
-            }
+            if (badgeText) currentValue = badgeText;
         }
-
-        // Handle khusus untuk tanggal
         if (field === 'tanggal_pengambilan') {
             currentValue = $this.text().trim();
-            if (currentValue !== '-' && currentValue !== '') {
-                // Konversi dari dd/mm/yyyy ke yyyy-mm-dd untuk input date
-                if (currentValue.includes('/')) {
-                    let parts = currentValue.split('/');
-                    if (parts.length === 3) {
-                        currentValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    }
-                }
-            } else {
-                currentValue = '';
-            }
+            if (currentValue !== '-' && currentValue !== '' && currentValue.includes('/')) {
+                let parts = currentValue.split('/');
+                if (parts.length === 3) currentValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            } else currentValue = '';
         }
-
-        // Bersihkan nilai dari karakter khusus
         currentValue = currentValue.replace('✎', '').trim();
         if (currentValue === '-' || currentValue === '') currentValue = '';
-
-        // Buat input berdasarkan field
         let inputHtml = '';
-
         if (field === 'aksi_claim_defect') {
             inputHtml = `<select class="detail-edit-select" data-field="${field}" data-id="${id}">
-            <option value="" ${currentValue === '' ? 'selected' : ''}>-- Pilih --</option>
-            <option value="Repair" ${currentValue === 'Repair' ? 'selected' : ''}>Repair</option>
-            <option value="Scrap" ${currentValue === 'Scrap' ? 'selected' : ''}>Scrap</option>
-        </select>`;
+                <option value="" ${currentValue === '' ? 'selected' : ''}>-- Pilih --</option>
+                <option value="Repair" ${currentValue === 'Repair' ? 'selected' : ''}>Repair</option>
+                <option value="Scrap" ${currentValue === 'Scrap' ? 'selected' : ''}>Scrap</option>
+            </select>`;
         } else if (field === 'tanggal_pengambilan') {
             inputHtml = `<input type="date" class="detail-edit-input" data-field="${field}" data-id="${id}" value="${currentValue}">`;
         } else if (field === 'qty') {
@@ -1423,87 +1587,55 @@ isLogin();
         } else {
             inputHtml = `<input type="text" class="detail-edit-input" data-field="${field}" data-id="${id}" value="${escapeHtml(currentValue)}" placeholder="Masukkan ${field}">`;
         }
-
-        // Ganti konten dengan input
         $this.addClass('editing').html(inputHtml);
-
-        // Focus ke input
         setTimeout(function() {
             $this.find('input, select').focus();
         }, 100);
     });
 
-
-    // ====================================
-    // SAVE EDIT DARI MODAL - VIA BLUR (DENGAN DELAY & VALIDASI)
-    // ====================================
+    let isSaving = false;
     $(document).on('blur', '.detail-edit-input, .detail-edit-select', function(e) {
         let $this = $(this);
         let $parent = $this.closest('.detail-editable');
-
-        // Jika parent sudah tidak dalam mode editing, abaikan
         if (!$parent.hasClass('editing')) return;
-
         let field = $this.data('field');
         let id = $this.data('id');
         let value = $this.val();
-
-        // Delay untuk memastikan tidak konflik dengan klik button atau Enter
         setTimeout(function() {
-            // Cek lagi apakah masih dalam mode editing dan tidak sedang menyimpan
-            if ($parent.hasClass('editing') && !isSaving) {
-                saveDetailEdit(field, id, value, $parent);
-            }
+            if ($parent.hasClass('editing') && !isSaving) saveDetailEdit(field, id, value, $parent);
         }, 300);
     });
 
     $(document).on('keypress', '.detail-edit-input, .detail-edit-select', function(e) {
-        if (e.which === 13) { // Enter
+        if (e.which === 13) {
             e.preventDefault();
             e.stopPropagation();
-
             if (isSaving) return;
-
             let $this = $(this);
             let $parent = $this.closest('.detail-editable');
             let field = $this.data('field');
             let id = $this.data('id');
             let value = $this.val();
-
             saveDetailEdit(field, id, value, $parent);
         }
     });
 
-    // ====================================
-    // CANCEL EDIT DARI MODAL - VIA ESCAPE
-    // ====================================
     $(document).on('keydown', '.detail-edit-input, .detail-edit-select', function(e) {
-        if (e.which === 27) { // Escape
+        if (e.which === 27) {
             e.preventDefault();
             e.stopPropagation();
-
             let $this = $(this);
             let $parent = $this.closest('.detail-editable');
             let field = $this.data('field');
             let id = $this.data('id');
-
             cancelDetailEdit(field, id, $parent);
         }
     });
 
-    // ====================================
-    // FUNGSI SAVE EDIT DARI MODAL
-    // ====================================
     function saveDetailEdit(field, id, value, $element) {
-        // Cegah double save
         if (isSaving) return;
         isSaving = true;
-
-        if (!$element || !$element.length) {
-            $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
-        }
-
-        // Validasi khusus per field
+        if (!$element || !$element.length) $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
         if (field === 'nama_operator_pengambil' && (!value || !value.trim())) {
             Swal.fire({
                 icon: 'warning',
@@ -1516,7 +1648,6 @@ isLogin();
             isSaving = false;
             return;
         }
-
         if (field === 'qty') {
             if (value === '' || value === null || value === undefined) {
                 Swal.fire({
@@ -1530,7 +1661,6 @@ isLogin();
                 isSaving = false;
                 return;
             }
-
             let qty = parseInt(value);
             if (isNaN(qty) || qty < 0) {
                 Swal.fire({
@@ -1546,12 +1676,9 @@ isLogin();
             }
             value = qty;
         }
-
-        // Validasi format tanggal
         if (field === 'tanggal_pengambilan') {
             if (value && value.trim() !== '') {
-                let datePattern = /^\d{4}-\d{2}-\d{2}$/;
-                if (!datePattern.test(value)) {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Peringatan',
@@ -1563,24 +1690,14 @@ isLogin();
                     isSaving = false;
                     return;
                 }
-            } else {
-                value = null;
-            }
+            } else value = null;
         }
-
-        // Tampilkan loading di dalam modal (lebih halus)
         $element.addClass('saving').append('<small class="saving-indicator">Menyimpan...</small>');
-
-        // Dapatkan data lain dari row yang sama
         let table = $('#reportTable').DataTable();
         let rowData = null;
-
         table.rows().every(function() {
-            if (this.data().id == id) {
-                rowData = this.data();
-            }
+            if (this.data().id == id) rowData = this.data();
         });
-
         if (!rowData) {
             $element.removeClass('saving').find('.saving-indicator').remove();
             Swal.fire('Error', 'Data tidak ditemukan', 'error');
@@ -1588,8 +1705,6 @@ isLogin();
             isSaving = false;
             return;
         }
-
-        // Siapkan payload
         let payload = {
             id: id,
             lotno: field === 'lotno' ? value : (rowData.lotno || ''),
@@ -1599,26 +1714,17 @@ isLogin();
             nama_operator_pengambil: field === 'nama_operator_pengambil' ? value : (rowData.nama_operator_pengambil || ''),
             tanggal_pengambilan: field === 'tanggal_pengambilan' ? value : formatDateForServer(rowData.tanggal_pengambilan)
         };
-
-        console.log('Sending payload:', payload);
-
         $.ajax({
             url: 'UpdateDefectReportController.php?action=update',
             type: 'POST',
             data: payload,
             dataType: 'json',
-            timeout: 10000, // Timeout 10 detik
+            timeout: 10000,
             success: function(response) {
                 $element.removeClass('saving').find('.saving-indicator').remove();
-
                 if (response.status === 'success') {
-                    // Update tampilan di modal
                     updateDetailDisplay(field, value, $element);
-
-                    // Update di tabel utama
                     updateTableRow(id, field, value);
-
-                    // Beri feedback sukses (tanpa SweetAlert toast yang mengganggu)
                     $element.addClass('save-success');
                     setTimeout(function() {
                         $element.removeClass('save-success');
@@ -1627,27 +1733,18 @@ isLogin();
                     Swal.fire('Gagal', response.message || 'Gagal menyimpan', 'error');
                     cancelDetailEdit(field, id, $element);
                 }
-
                 isSaving = false;
             },
             error: function(xhr, status, error) {
                 $element.removeClass('saving').find('.saving-indicator').remove();
-                console.error('Error response:', xhr.responseText);
-
                 let errorMsg = 'Gagal menyimpan data';
-                if (status === 'timeout') {
-                    errorMsg = 'Timeout, silakan coba lagi';
-                } else {
+                if (status === 'timeout') errorMsg = 'Timeout, silakan coba lagi';
+                else if (xhr.responseText) {
                     try {
-                        let response = JSON.parse(xhr.responseText);
-                        if (response.message) {
-                            errorMsg = response.message;
-                        }
-                    } catch (e) {
-                        console.error('Parse error:', e);
-                    }
+                        let resp = JSON.parse(xhr.responseText);
+                        if (resp.message) errorMsg = resp.message;
+                    } catch (e) {}
                 }
-
                 Swal.fire('Error', errorMsg, 'error');
                 cancelDetailEdit(field, id, $element);
                 isSaving = false;
@@ -1655,84 +1752,47 @@ isLogin();
         });
     }
 
-    // ====================================
-    // FUNGSI FORMAT DATE UNTUK SERVER
-    // ====================================
     function formatDateForServer(dateStr) {
         if (!dateStr) return '';
-
-        // Jika sudah format YYYY-MM-DD
-        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
-            return dateStr;
-        }
-
-        // Jika format dd/mm/yyyy
+        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}/)) return dateStr;
         if (typeof dateStr === 'string' && dateStr.includes('/')) {
             let parts = dateStr.split('/');
-            if (parts.length === 3) {
-                return `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
+            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
-
         return dateStr;
     }
 
-    // ====================================
-    // FUNGSI CANCEL EDIT DARI MODAL
-    // ====================================
     function cancelDetailEdit(field, id, $element) {
-        if (!$element || !$element.length) {
-            $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
-        }
-
-        // Dapatkan nilai asli dari DataTable
+        if (!$element || !$element.length) $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
         let table = $('#reportTable').DataTable();
         let originalValue = null;
-
         table.rows().every(function() {
-            let rowData = this.data();
-            if (rowData.id == id) {
-                originalValue = rowData[field];
-            }
+            if (this.data().id == id) originalValue = this.data()[field];
         });
-
-        // Update tampilan
         if (field === 'aksi_claim_defect' && originalValue) {
             let badgeClass = originalValue === 'Repair' ? 'bg-primary' : 'bg-danger';
             let textClass = originalValue === 'Repair' ? 'primary' : 'danger';
             $element.html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(originalValue)}</span>`);
         } else if (field === 'tanggal_pengambilan') {
             $element.text(formatDate(originalValue) || '-');
-        } else {
-            $element.text(originalValue || '-');
-        }
-
+        } else $element.text(originalValue || '-');
         $element.removeClass('editing saving');
         $element.find('.saving-indicator').remove();
     }
 
-    // ====================================
-    // FUNGSI UPDATE DISPLAY DI MODAL
-    // ====================================
     function updateDetailDisplay(field, value, $element) {
         if (field === 'aksi_claim_defect' && value) {
             let badgeClass = value === 'Repair' ? 'bg-primary' : 'bg-danger';
             let textClass = value === 'Repair' ? 'primary' : 'danger';
             $element.html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(value)}</span>`);
-        } else if (field === 'tanggal_pengambilan') {
-            $element.text(formatDate(value) || '-');
-        } else {
-            $element.text(value || '-');
-        }
+        } else if (field === 'tanggal_pengambilan') $element.text(formatDate(value) || '-');
+        else $element.text(value || '-');
         $element.removeClass('editing');
     }
 
-    // ====================================
-    // FUNGSI UPDATE TABLE ROW
-    // ====================================
     function updateTableRow(id, field, value) {
+        let scrollTop = $(window).scrollTop();
         let table = $('#reportTable').DataTable();
-
         table.rows().every(function() {
             let rowData = this.data();
             if (rowData.id == id) {
@@ -1740,178 +1800,113 @@ isLogin();
                 this.data(rowData);
             }
         });
-
         table.draw(false);
     }
 
-    // Mencegah blur saat klik di dalam input
     $(document).on('mousedown', '.detail-edit-input, .detail-edit-select', function(e) {
         e.stopPropagation();
     });
 
-    // ====================================
-    // FUNGSI EDIT INLINE
-    // ====================================
-    function editInline(id) {
-        let table = $('#reportTable').DataTable();
-
-        table.rows().every(function() {
-            let rowData = this.data();
-            if (rowData._editing) {
-                rowData._editing = false;
-                this.data(rowData);
-            }
-        });
-
-        table.rows().every(function() {
-            let rowData = this.data();
-            if (rowData.id == id) {
-                rowData._editing = true;
-                this.data(rowData);
-            }
-        });
-
-        table.draw(false);
+    function updateStatusBadge($badge, isOk) {
+        if (isOk) $badge.removeClass('bg-danger bg-opacity-10 text-danger').addClass('bg-success bg-opacity-10 text-success').html('<i class="ti ti-check-circle me-1"></i>OK');
+        else $badge.removeClass('bg-success bg-opacity-10 text-success').addClass('bg-danger bg-opacity-10 text-danger').html('<i class="ti ti-x-circle me-1"></i>NG');
     }
 
-    function cancelInlineEdit(id) {
-        let table = $('#reportTable').DataTable();
-
-        table.rows().every(function() {
-            let rowData = this.data();
-            if (rowData.id == id) {
-                rowData._editing = false;
-                this.data(rowData);
-            }
-        });
-
-        table.draw(false);
-
-        Swal.fire({
-            icon: 'info',
-            title: 'Dibatalkan',
-            text: 'Perubahan dibatalkan',
-            timer: 1000,
-            showConfirmButton: false
-        });
-    }
-
-    function saveInlineEdit(id) {
-        let operatorValue = $(`input[data-field="nama_operator_pengambil"][data-id="${id}"]`).val();
-        let tanggalValue = $(`input[data-field="tanggal_pengambilan"][data-id="${id}"]`).val();
-
-        if (!operatorValue || operatorValue.trim() === '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Peringatan',
-                text: 'Nama operator pengambil tidak boleh kosong'
-            });
-            return;
-        }
-
-        if (!tanggalValue || tanggalValue.trim() === '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Peringatan',
-                text: 'Tanggal pengambilan tidak boleh kosong'
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: 'Menyimpan...',
-            text: 'Harap tunggu',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
+    function saveStatusEdit(id, status) {
         $.ajax({
-            url: 'UpdateDefectReportController.php?action=update',
+            url: 'UpdateDefectReportController.php?action=updateStatus',
             type: 'POST',
             data: {
                 id: id,
-                nama_operator_pengambil: operatorValue.trim(),
-                tanggal_pengambilan: tanggalValue || ''
+                status: status
             },
             dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
-                    let table = $('#reportTable').DataTable();
-
-                    table.rows().every(function() {
-                        let rowData = this.data();
-                        if (rowData.id == id) {
-                            rowData.nama_operator_pengambil = operatorValue.trim();
-                            rowData.tanggal_pengambilan = tanggalValue || null;
-                            rowData._editing = false;
-                            this.data(rowData);
-                        }
-                    });
-
-                    table.draw(false);
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: 'Data berhasil diupdate',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
+                    updateTableRow(id, 'status', status);
+                    showToast('Status Updated', `Status changed to ${status == 1 ? 'OK' : 'NG'}`, 'success', 1500);
                 } else {
-                    throw new Error(response.message || 'Gagal mengupdate data');
+                    Swal.fire('Error', response.message || 'Gagal update status', 'error');
+                    let $toggle = $('#detailStatusToggle');
+                    $toggle.prop('checked', status != 1);
+                    updateStatusBadge($('#detailStatusBadge'), status != 1);
                 }
             },
-            error: function(xhr) {
-                console.error('Error:', xhr.responseText);
-
-                let table = $('#reportTable').DataTable();
-                table.rows().every(function() {
-                    let rowData = this.data();
-                    if (rowData.id == id) {
-                        rowData._editing = false;
-                        this.data(rowData);
-                    }
-                });
-
-                table.draw(false);
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Gagal mengupdate data'
-                });
+            error: function() {
+                Swal.fire('Error', 'Gagal update status', 'error');
+                let $toggle = $('#detailStatusToggle');
+                $toggle.prop('checked', status != 1);
+                updateStatusBadge($('#detailStatusBadge'), status != 1);
             }
         });
     }
 
-    // ====================================
-    // FUNGSI EXPORT EXCEL
-    // ====================================
+    $(document).on('change', '.status-toggle', function() {
+        let $toggle = $(this);
+        let id = $toggle.data('id');
+        let newStatus = $toggle.is(':checked') ? 1 : 0;
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: `Ubah status menjadi ${newStatus == 1 ? 'OK' : 'NG'}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Ubah',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: newStatus == 1 ? '#28a745' : '#dc3545'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $toggle.data('status', newStatus);
+                $.ajax({
+                    url: 'UpdateDefectReportController.php?action=updateStatus',
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        status: newStatus
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            updateTableRow(id, 'status', newStatus);
+                            let $row = $toggle.closest('tr');
+                            let $badge = $row.find('.badge:not(.status-toggle)');
+                            let statusText = newStatus == 1 ? 'OK' : 'NG';
+                            let statusClass = newStatus == 1 ? 'success' : 'danger';
+                            $badge.removeClass('bg-success bg-danger bg-opacity-10 text-success text-danger').addClass(`bg-${statusClass} bg-opacity-10 text-${statusClass}`).text(statusText);
+                            showToast('Status Updated', `Status changed to ${statusText}`, 'success', 1500);
+                        } else {
+                            $toggle.prop('checked', newStatus != 1);
+                            Swal.fire('Error', response.message || 'Gagal update status', 'error');
+                        }
+                    },
+                    error: function() {
+                        $toggle.prop('checked', newStatus != 1);
+                        Swal.fire('Error', 'Gagal update status', 'error');
+                    }
+                });
+            } else $toggle.prop('checked', !$toggle.is(':checked'));
+        });
+    });
+
     $('#btnExportExcel').on('click', function() {
         exportExcel();
     });
 
     function exportExcel() {
         let params = [];
-
-        // Cek filter yang aktif
-        if (filters.tanggal.aktif) {
-            if (filters.tanggal.tanggalAwal) {
-                params.push('tanggal_awal=' + encodeURIComponent(filters.tanggal.tanggalAwal));
-            }
-            if (filters.tanggal.tanggalAkhir) {
-                params.push('tanggal_akhir=' + encodeURIComponent(filters.tanggal.tanggalAkhir));
-            }
-        } else if (filters.lot.aktif) {
-            if (filters.lot.lotNos.length > 0) {
-                params.push('lot_nos=' + encodeURIComponent(filters.lot.lotNos.join(',')));
-            }
-        } else if (filters.customer.aktif) {
-            if (filters.customer.customers.length > 0) {
-                params.push('customers=' + encodeURIComponent(filters.customer.customers.join(',')));
-            }
+        if (activeTab === 'tanggalPartNo' && filters.tanggalPartNo.aktif) {
+            if (filters.tanggalPartNo.tanggal) params.push('tanggal=' + encodeURIComponent(filters.tanggalPartNo.tanggal));
+            if (filters.tanggalPartNo.partnos.length > 0) params.push('partno=' + encodeURIComponent(filters.tanggalPartNo.partnos.join(',')));
+        } else if (activeTab === 'lot' && filters.lot.aktif) {
+            if (filters.lot.lotNos.length > 0) params.push('lot_nos=' + encodeURIComponent(filters.lot.lotNos.join(',')));
+        } else if (activeTab === 'customer' && filters.customer.aktif) {
+            if (filters.customer.customers.length > 0) params.push('customers=' + encodeURIComponent(filters.customer.customers.join(',')));
+            if (filters.customer.tanggalAwal) params.push('tanggal_awal=' + filters.customer.tanggalAwal);
+            if (filters.customer.tanggalAkhir) params.push('tanggal_akhir=' + filters.customer.tanggalAkhir);
+        } else if (activeTab === 'partNoRange' && filters.partNoRange.aktif) {
+            if (filters.partNoRange.partnos.length > 0) params.push('partnos=' + encodeURIComponent(filters.partNoRange.partnos.join(',')));
+            if (filters.partNoRange.tanggalAwal) params.push('tanggal_awal_part=' + filters.partNoRange.tanggalAwal);
+            if (filters.partNoRange.tanggalAkhir) params.push('tanggal_akhir_part=' + filters.partNoRange.tanggalAkhir);
         }
-
         if (params.length === 0) {
             Swal.fire({
                 icon: 'warning',
@@ -1920,9 +1915,7 @@ isLogin();
             });
             return;
         }
-
         let dataCount = reportTable.rows().count();
-
         if (dataCount === 0) {
             Swal.fire({
                 icon: 'error',
@@ -1931,24 +1924,14 @@ isLogin();
             });
             return;
         }
-
         Swal.fire({
             title: 'Menyiapkan Export',
-            html: `
-                <div class="mb-3">
-                    <i class="ti ti-file-spreadsheet" style="font-size: 3rem; color: #198754;"></i>
-                </div>
-                <p class="mb-1">Mohon tunggu sebentar...</p>
-                <p class="text-muted small">Mengexport ${dataCount} data laporan</p>
-            `,
+            html: `<div class="mb-3"><i class="ti ti-file-spreadsheet" style="font-size: 3rem; color: #198754;"></i></div><p class="mb-1">Mohon tunggu sebentar...</p><p class="text-muted small">Mengexport ${dataCount} data laporan</p>`,
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading(),
             showConfirmButton: false
         });
-
-        let url = 'ExportDefectReportController.php?' + params.join('&');
-        window.location.href = url;
-
+        window.location.href = 'ExportDefectReportController.php?' + params.join('&');
         setTimeout(() => {
             Swal.close();
             Swal.fire({
@@ -1961,224 +1944,48 @@ isLogin();
         }, 1500);
     }
 
-    // ====================================
-    // UTILITY FUNCTIONS
-    // ====================================
     function formatDate(dateStr) {
         if (!dateStr) return '-';
         let parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
         return dateStr;
     }
 
     function formatDateTime(dateTimeStr) {
         if (!dateTimeStr) return '-';
         let parts = dateTimeStr.split(' ');
-        if (parts.length >= 2) {
-            return formatDate(parts[0]) + ' ' + parts[1].substring(0, 5);
-        }
+        if (parts.length >= 2) return formatDate(parts[0]) + ' ' + parts[1].substring(0, 5);
         return dateTimeStr;
     }
 
     function escapeHtml(text) {
         if (!text) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // ====================================
-    // EVENT HANDLERS - PER CELL EDIT
-    // ====================================
-
-    // Double-click cell untuk edit
-    $(document).on('dblclick', '#reportTable tbody td', function(e) {
-        let table = $('#reportTable').DataTable();
-        let colIdx = $(this).index();
-        let field = EDITABLE_COLS[colIdx];
-
-        if (!field) return; // kolom tidak bisa diedit
-
-        let row = table.row($(this).closest('tr'));
-        let rowData = row.data();
-        if (!rowData) return;
-
-        // Init _editingCells jika belum ada
-        if (!rowData._editingCells) rowData._editingCells = {};
-
-        // Kalau sudah dalam mode edit, abaikan
-        if (rowData._editingCells[field]) return;
-
-        rowData._editingCells[field] = true;
-        row.data(rowData).draw(false);
-
-        // Focus ke input/select setelah render
-        setTimeout(function() {
-            $(`[data-field="${field}"][data-id="${rowData.id}"]`).focus();
-        }, 80);
-    });
-
-    $(document).on('keypress', '.inline-edit', function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            let id = $(this).data('id');
-            saveInlineEdit(id);
-        }
-    });
-
-    // Enter = Simpan, Escape = Batal (untuk input)
-    $(document).on('keydown', '.inline-edit', function(e) {
-        let field = $(this).data('field');
-        let id = $(this).data('id');
-
-        if (e.which === 13) {
-            e.preventDefault();
-            saveCellEdit(field, id, $(this).val());
-        }
-        if (e.which === 27) {
-            e.preventDefault();
-            cancelCellEdit(field, id);
-        }
-    });
-
-    // Blur = otomatis simpan
-    $(document).on('blur', '.inline-edit', function() {
-        let field = $(this).data('field');
-        let id = $(this).data('id');
-        let val = $(this).val();
-
-        // Delay kecil supaya Escape sempat dicegah duluan
-        setTimeout(function() {
-            let stillEditing = $(`[data-field="${field}"][data-id="${id}"]`).length > 0;
-            if (stillEditing) saveCellEdit(field, id, val);
-        }, 150);
-    });
-
-    // ====================================
-    // FUNGSI SAVE / CANCEL PER CELL
-    // ====================================
-
-    function saveCellEdit(field, id, value) {
-        let table = $('#reportTable').DataTable();
-        let rowRef = null;
-        let rowData = null;
-
-        table.rows().every(function() {
-            if (this.data().id == id) {
-                rowData = this.data();
-                rowRef = this;
-            }
-        });
-
-        if (!rowData || !rowRef) return;
-
-        // Susun semua nilai yang akan dikirim ke server
-        // Gunakan nilai terbaru untuk field yang diedit, sisanya pakai rowData
-        let payload = {
-            id: id,
-            lotno: field === 'lotno' ? value : (rowData.lotno || ''),
-            aksi_claim_defect: field === 'aksi_claim_defect' ? value : (rowData.aksi_claim_defect || ''),
-            nama_group: field === 'nama_group' ? value : (rowData.nama_group || ''),
-            qty: field === 'qty' ? value : (rowData.qty || ''),
-            nama_operator_pengambil: field === 'nama_operator_pengambil' ?
-                value : (rowData.nama_operator_pengambil || ''),
-            tanggal_pengambilan: field === 'tanggal_pengambilan' ?
-                value : (rowData.tanggal_pengambilan ?
-                    rowData.tanggal_pengambilan.split(' ')[0] :
-                    '')
-        };
-
-        $.ajax({
-            url: 'UpdateDefectReportController.php?action=update',
-            type: 'POST',
-            data: payload,
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Update nilai di rowData
-                    rowData[field] = value !== '' ? value : null;
-                    delete rowData._editingCells[field];
-                    rowRef.data(rowData).draw(false);
-
-                    // Toast kecil
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Tersimpan',
-                        text: `Kolom berhasil diperbarui`,
-                        toast: true,
-                        position: 'bottom-end',
-                        showConfirmButton: false,
-                        timer: 1500,
-                        timerProgressBar: true
-                    });
-                } else {
-                    Swal.fire('Gagal', response.message || 'Gagal menyimpan', 'error');
-                    cancelCellEdit(field, id);
-                }
-            },
-            error: function() {
-                Swal.fire('Error', 'Gagal menyimpan data', 'error');
-                cancelCellEdit(field, id);
-            }
-        });
-    }
-
-    function cancelCellEdit(field, id) {
-        let table = $('#reportTable').DataTable();
-
-        table.rows().every(function() {
-            let d = this.data();
-            if (d.id == id && d._editingCells && d._editingCells[field]) {
-                delete d._editingCells[field];
-                this.data(d).draw(false);
-            }
-        });
-    }
-
-    // ====================================
-    // IMPORT DATA FUNCTIONALITY
-    // ====================================
-
-    // Event handler untuk tombol import
+    // IMPORT MODAL
     $('#btnImportData').on('click', function() {
-        // Reset form
         $('#importForm')[0].reset();
         $('#importProgress').hide();
         $('#previewSection').hide();
         $('#btnImportSubmit').prop('disabled', true);
-
-        // Reset progress bar
         $('.progress-bar').css('width', '0%').text('0%');
-
-        // Clear preview
         $('#previewHeader').html('<tr><th>#</th><th>Preview</th></tr>');
         $('#previewBody').html('<tr><td colspan="2" class="text-center text-muted">Belum ada data</td></tr>');
-
-        // Show modal
         $('#importModal').modal('show');
     });
 
-    // Download template - hanya 1 template
     $('#btnDownloadTemplate').on('click', function() {
         window.location.href = 'ImportDataDefectReportController.php?action=downloadTemplate';
     });
 
-    // Handle file selection
     $('#importFile').on('change', function() {
         const file = this.files[0];
-
         if (!file) {
             $('#btnImportSubmit').prop('disabled', true);
             $('#previewSection').hide();
             return;
         }
-
-        // Validate file size (10 MB)
         if (file.size > 10 * 1024 * 1024) {
             Swal.fire({
                 icon: 'error',
@@ -2190,12 +1997,9 @@ isLogin();
             $('#previewSection').hide();
             return;
         }
-
-        // Validate file extension
         const validExtensions = ['.xlsx', '.xls', '.csv'];
         const fileName = file.name;
         const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-
         if (!validExtensions.includes(fileExt)) {
             Swal.fire({
                 icon: 'error',
@@ -2207,30 +2011,14 @@ isLogin();
             $('#previewSection').hide();
             return;
         }
-
-        // Enable import button
         $('#btnImportSubmit').prop('disabled', false);
-
-        // Show preview
         $('#previewSection').show();
         $('#previewHeader').html('<tr><th>#</th><th>Informasi File</th></tr>');
-        $('#previewBody').html(`
-        <tr>
-            <td>1</td>
-            <td>
-                <strong>Nama File:</strong> ${escapeHtml(fileName)}<br>
-                <strong>Ukuran:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
-                <strong>Status:</strong> <span class="text-success">Siap diimport</span><br>
-                <small class="text-muted">Baris pertama akan diabaikan (header)</small>
-            </td>
-        </tr>
-    `);
+        $('#previewBody').html(`<tr><td>1</td><td><strong>Nama File:</strong> ${escapeHtml(fileName)}<br><strong>Ukuran:</strong> ${(file.size / 1024).toFixed(2)} KB<br><strong>Status:</strong> <span class="text-success">Siap diimport</span><br><small class="text-muted">Baris pertama akan diabaikan (header)</small></td></tr>`);
     });
 
-    // Handle import submit
     $('#btnImportSubmit').on('click', function() {
         const file = $('#importFile')[0].files[0];
-
         if (!file) {
             Swal.fire({
                 icon: 'warning',
@@ -2239,19 +2027,13 @@ isLogin();
             });
             return;
         }
-
-        // Prepare form data - selalu skip baris pertama (header)
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('skip_first_row', '1'); // Selalu skip header
-
-        // Show progress bar
+        formData.append('skip_first_row', '1');
         $('#importProgress').show();
         $('#btnImportSubmit').prop('disabled', true);
         $('#importFile').prop('disabled', true);
         $('#btnDownloadTemplate').prop('disabled', true);
-
-        // Update progress status
         let progressInterval = setInterval(function() {
             let currentWidth = parseInt($('.progress-bar').css('width'));
             if (currentWidth < 90) {
@@ -2259,8 +2041,6 @@ isLogin();
                 $('.progress-bar').css('width', newWidth + '%').text(newWidth + '%');
             }
         }, 500);
-
-        // Send AJAX request
         $.ajax({
             url: 'ImportDataDefectReportController.php?action=import',
             type: 'POST',
@@ -2272,25 +2052,11 @@ isLogin();
             success: function(response) {
                 clearInterval(progressInterval);
                 $('.progress-bar').css('width', '100%').text('100%');
-
                 setTimeout(function() {
                     $('#importProgress').hide();
-
                     if (response.status === 'success') {
                         let message = response.message || 'Data berhasil diimport';
-
-                        if (response.data) {
-                            let details = `
-                        <div class="text-start mt-2">
-                            <strong>Detail Import:</strong><br>
-                            Total data: ${response.data.total || 0}<br>
-                            Berhasil: ${response.data.success || 0}<br>
-                            Gagal: ${response.data.failed || 0}
-                        </div>
-                    `;
-                            message += details;
-                        }
-
+                        if (response.data) message += `<div class="text-start mt-2"><strong>Detail Import:</strong><br>Total data: ${response.data.total || 0}<br>Berhasil: ${response.data.success || 0}<br>Gagal: ${response.data.failed || 0}</div>`;
                         Swal.fire({
                             icon: 'success',
                             title: 'Import Berhasil',
@@ -2299,28 +2065,20 @@ isLogin();
                             showConfirmButton: true
                         }).then(() => {
                             $('#importModal').modal('hide');
-
-                            // Reload data berdasarkan tab aktif
-                            if (activeTab === 'tanggal' && filters.tanggal.aktif) {
-                                loadReportsByTab('tanggal');
-                            } else if (activeTab === 'lot' && filters.lot.aktif) {
-                                loadReportsByTab('lot');
-                            } else if (activeTab === 'customer' && filters.customer.aktif) {
-                                loadReportsByTab('customer');
-                            } else {
-                                showEmptyInitialState();
-                            }
+                            if (activeTab === 'tanggalPartNo' && filters.tanggalPartNo.aktif) loadReportsByTab('tanggalPartNo');
+                            else if (activeTab === 'lot' && filters.lot.aktif) loadReportsByTab('lot');
+                            else if (activeTab === 'customer' && filters.customer.aktif) loadReportsByTab('customer');
+                            else if (activeTab === 'partNoRange' && filters.partNoRange.aktif) loadReportsByTab('partNoRange');
+                            else showEmptyInitialState();
                         });
                     } else {
                         let errorMsg = response.message || 'Gagal mengimport data';
-
                         if (response.errors && response.errors.length > 0) {
                             errorMsg += '<br><br><strong>Detail Error:</strong><br>';
                             response.errors.forEach(err => {
                                 errorMsg += `- ${escapeHtml(err)}<br>`;
                             });
                         }
-
                         Swal.fire({
                             icon: 'error',
                             title: 'Import Gagal',
@@ -2328,42 +2086,33 @@ isLogin();
                             confirmButtonText: 'Tutup'
                         });
                     }
-
                     resetImportForm();
                 }, 1000);
             },
             error: function(xhr, status, error) {
                 clearInterval(progressInterval);
                 $('#importProgress').hide();
-
                 let errorMsg = 'Gagal mengimport data';
-
-                if (status === 'timeout') {
-                    errorMsg = 'Import timeout. File terlalu besar atau koneksi lambat.';
-                } else if (xhr.responseText) {
+                if (status === 'timeout') errorMsg = 'Import timeout. File terlalu besar atau koneksi lambat.';
+                else if (xhr.responseText) {
                     try {
                         let response = JSON.parse(xhr.responseText);
-                        if (response.message) {
-                            errorMsg = response.message;
-                        }
+                        if (response.message) errorMsg = response.message;
                     } catch (e) {
                         errorMsg = xhr.responseText;
                     }
                 }
-
                 Swal.fire({
                     icon: 'error',
                     title: 'Import Gagal',
                     text: errorMsg,
                     confirmButtonText: 'Tutup'
                 });
-
                 resetImportForm();
             }
         });
     });
 
-    // Reset import form
     function resetImportForm() {
         $('#importForm')[0].reset();
         $('#importProgress').hide();
@@ -2372,26 +2121,201 @@ isLogin();
         $('#importFile').prop('disabled', false);
         $('#btnDownloadTemplate').prop('disabled', false);
         $('.progress-bar').css('width', '0%').text('0%');
-
-        // Clear preview
         $('#previewHeader').html('<tr><th>#</th><th>Preview</th></tr>');
         $('#previewBody').html('<tr><td colspan="2" class="text-center text-muted">Belum ada data</td></tr>');
     }
 
-    // Clear form when modal is closed
     $('#importModal').on('hidden.bs.modal', function() {
         resetImportForm();
     });
+
+    function showToast(title, message, type = 'success', duration = 3000) {
+        $('.toast-notification').remove();
+        const toastHtml = `<div class="toast-notification toast-${type}"><div class="toast-content"><div class="toast-icon"><i class="ti ti-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : type === 'warning' ? 'alert-circle' : 'circle-x'}"></i></div><div class="toast-message"><div class="toast-title">${title}</div><div class="toast-text">${message}</div></div><button class="toast-close" onclick="closeToast(this)"><i class="ti ti-x"></i></button></div></div>`;
+        $('body').append(toastHtml);
+        const $toast = $('.toast-notification');
+        setTimeout(function() {
+            closeToast($toast.find('.toast-close')[0]);
+        }, duration);
+    }
+
+    function closeToast(btn) {
+        const $toast = $(btn).closest('.toast-notification');
+        $toast.addClass('hiding');
+        setTimeout(function() {
+            $toast.remove();
+        }, 500);
+    }
+
+    function updateSummary(data) {}
 </script>
 
 <style>
-    /* Memastikan kolom button memiliki tinggi yang sama dengan kolom input */
+    .btn-primary.active-quick {
+        background-color: #002B4A !important;
+        border-color: #002B4A !important;
+        box-shadow: 0 2px 5px rgba(0, 43, 74, 0.3);
+        transform: scale(0.98);
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary.active-quick:hover {
+        background-color: #003B66 !important;
+        border-color: #003B66 !important;
+    }
+
+    .toast-notification {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999;
+        min-width: 320px;
+        max-width: 380px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+        animation: slideInRight 0.3s ease;
+        border-top: 4px solid;
+    }
+
+    .toast-notification.toast-success {
+        border-top-color: #28a745;
+    }
+
+    .toast-notification.toast-info {
+        border-top-color: #17a2b8;
+    }
+
+    .toast-notification.toast-warning {
+        border-top-color: #ffc107;
+    }
+
+    .toast-notification.toast-error {
+        border-top-color: #dc3545;
+    }
+
+    .toast-content {
+        padding: 16px 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: white;
+    }
+
+    .toast-icon {
+        font-size: 22px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .toast-success .toast-icon {
+        color: #28a745;
+        background: rgba(40, 167, 69, 0.1);
+    }
+
+    .toast-info .toast-icon {
+        color: #17a2b8;
+        background: rgba(23, 162, 184, 0.1);
+    }
+
+    .toast-warning .toast-icon {
+        color: #ffc107;
+        background: rgba(255, 193, 7, 0.1);
+    }
+
+    .toast-error .toast-icon {
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
+    }
+
+    .toast-message {
+        flex: 1;
+    }
+
+    .toast-title {
+        font-weight: 700;
+        margin-bottom: 4px;
+        font-size: 15px;
+        color: #1e293b;
+    }
+
+    .toast-text {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.4;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #94a3b8;
+        padding: 0;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+
+    .toast-close:hover {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(calc(100% + 20px));
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        to {
+            transform: translateX(calc(100% + 20px));
+            opacity: 0;
+        }
+    }
+
+    .toast-notification.hiding {
+        animation: slideOutRight 0.3s ease forwards;
+    }
+
+    @media (max-width: 576px) {
+        .toast-notification {
+            left: 16px;
+            right: 16px;
+            min-width: auto;
+            max-width: none;
+            bottom: 16px;
+        }
+    }
+
     .row.g-3>[class*="col-"] {
         display: flex;
         flex-direction: column;
     }
 
-    /* Container untuk button agar selalu rata bawah */
     .d-flex.flex-column.h-100 {
         height: 100% !important;
     }
@@ -2400,17 +2324,11 @@ isLogin();
         justify-content: flex-end !important;
     }
 
-    /* Memastikan label memiliki tinggi yang konsisten */
     .form-label {
         height: auto;
         min-height: 24px;
         margin-bottom: 0.5rem;
         line-height: 1.5;
-    }
-
-    /* Menyamakan tinggi button container dengan input */
-    .d-flex.flex-column.h-100 .d-flex.gap-2 {
-        margin-top: 0;
     }
 
     .table-responsive {
@@ -2437,10 +2355,6 @@ isLogin();
 
     #reportTable tbody tr:hover {
         background-color: #f1f5ff;
-    }
-
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        border-radius: 8px !important;
     }
 
     .card {
@@ -2470,17 +2384,6 @@ isLogin();
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
     }
 
-    .btn-outline-primary {
-        border-color: #e0e0e0;
-        color: #495057;
-    }
-
-    .btn-outline-primary:hover {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        color: white;
-    }
-
     .rounded-circle {
         width: 48px;
         height: 48px;
@@ -2504,6 +2407,47 @@ isLogin();
         background: rgba(255, 255, 255, 0.9);
         border-radius: 12px;
         min-height: 200px;
+    }
+
+    /* Sticky header */
+    #reportTable thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8fafc !important;
+        /* wajib ada background */
+    }
+
+    /* Frozen columns - kolom No, Tanggal, Part No, Lot No */
+    /* Sticky header - DataTables scrollY sudah handle ini otomatis */
+    .dataTables_scrollHead thead th {
+        background: #f8fafc !important;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    /* Style kolom frozen (FixedColumns plugin yang generate class ini) */
+    table.dataTable tbody td.dtfc-fixed-left,
+    table.dataTable thead th.dtfc-fixed-left {
+        background: #fff;
+    }
+
+    table.dataTable thead th.dtfc-fixed-left {
+        background: #f8fafc !important;
+    }
+
+    /* Shadow di batas kolom frozen */
+    table.dataTable tbody td.dtfc-fixed-left:last-child,
+    table.dataTable thead th.dtfc-fixed-left:last-child {
+        box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Hover tetap keliatan di kolom frozen */
+    #reportTable tbody tr:hover td.dtfc-fixed-left {
+        background: #f1f5ff !important;
     }
 
     @media (max-width: 768px) {
@@ -2543,14 +2487,6 @@ isLogin();
         }
     }
 
-    #summaryCards {
-        animation: fadeIn 0.3s ease;
-    }
-
-    .dataTables_empty td {
-        padding: 3rem !important;
-    }
-
     .border-top {
         border-top: 1px solid #e0e0e0 !important;
     }
@@ -2561,9 +2497,7 @@ isLogin();
         box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
         transition: all 0.2s ease;
         min-width: 90px;
-        /* ← tambahan: lebar minimum semua inline input */
         width: 100%;
-        /* ← tambahan: isi lebar cell */
     }
 
     .inline-edit:focus {
@@ -2572,35 +2506,6 @@ isLogin();
         outline: none;
     }
 
-    #reportTable tbody td:nth-child(12),
-    #reportTable tbody td:nth-child(13) {
-        cursor: pointer;
-        position: relative;
-    }
-
-    #reportTable tbody td:nth-child(12):hover::after,
-    #reportTable tbody td:nth-child(13):hover::after {
-        content: "Double-click untuk edit";
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #333;
-        color: white;
-        font-size: 11px;
-        padding: 4px 8px;
-        border-radius: 4px;
-        white-space: nowrap;
-        z-index: 1000;
-        pointer-events: none;
-        margin-bottom: 5px;
-    }
-
-    [data-dblclick="true"] {
-        cursor: pointer;
-    }
-
-    /* Style untuk field yang bisa diedit di modal */
     .detail-editable {
         cursor: pointer;
         position: relative;
@@ -2624,7 +2529,6 @@ isLogin();
         font-size: 14px;
     }
 
-    /* Style saat sedang menyimpan */
     .detail-editable.saving {
         opacity: 0.7;
         pointer-events: none;
@@ -2652,7 +2556,6 @@ isLogin();
         }
     }
 
-    /* Style saat sukses */
     .detail-editable.save-success {
         background-color: #d4edda;
         border: 1px solid #28a745;
@@ -2678,7 +2581,6 @@ isLogin();
         color: #6c757d;
     }
 
-    /* Style untuk input edit di modal */
     .detail-edit-input,
     .detail-edit-select {
         width: 100%;
@@ -2699,12 +2601,6 @@ isLogin();
         box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
     }
 
-    .detail-edit-input:hover,
-    .detail-edit-select:hover {
-        border-color: #0a58ca;
-    }
-
-    /* Import Modal Styles */
     #importProgress .progress {
         border-radius: 8px;
         background-color: #f0f0f0;

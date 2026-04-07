@@ -106,6 +106,10 @@ function handleClaimActions($connection, $action)
                 $lotno = $_GET['lotno'] ?? '';
                 getPartNoByLotNo($connection, $lotno);
                 break;
+            case 'getCustomerByPartNo':
+                $partno = $_GET['partno'] ?? '';
+                getCustomerByPartno($connection, $partno);
+                break;
             case 'getSections':
                 getDistinctSections($connection);
                 break;
@@ -143,6 +147,7 @@ function insertClaim($connection)
     $deskripsi_masalah = trim($_POST['deskripsi_masalah'] ?? '');
     $nama_customer = trim($_POST['nama_customer'] ?? '');
     $aksi_claim_defect = trim($_POST['aksi_claim_defect'] ?? '');
+    $shift = trim($_POST['shift'] ?? '');
 
     // Validasi data wajib
     $errors = [];
@@ -191,6 +196,10 @@ function insertClaim($connection)
         $errors[] = 'Aksi Claim Defect wajib diisi';
     }
 
+    if (empty($shift)) {
+        $errors[] = 'Shift wajib diisi';
+    }
+
     if (!empty($errors)) {
         http_response_code(400);
         echo json_encode([
@@ -225,8 +234,10 @@ function insertClaim($connection)
         deskripsi_masalah,
         nama_customer,
         aksi_claim_defect,
+        shift,
+        status,
         created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, GETDATE())";
 
     $params = [
         $nama_section,
@@ -239,7 +250,8 @@ function insertClaim($connection)
         $nama_operator,
         $deskripsi_masalah,
         $nama_customer,
-        $aksi_claim_defect
+        $aksi_claim_defect,
+        $shift
     ];
 
     $stmt = sqlsrv_prepare($connection, $sql, $params);
@@ -286,7 +298,8 @@ function insertClaim($connection)
             'nama_operator' => $nama_operator,
             'deskripsi_masalah' => $deskripsi_masalah,
             'nama_customer' => $nama_customer,
-            'aksi_claim_defect' => $aksi_claim_defect
+            'aksi_claim_defect' => $aksi_claim_defect,
+            'shift' => $shift
         ]
     ]);
     exit;
@@ -330,12 +343,12 @@ function getPartNoByLotNo($connection, $lotno)
         exit;
     }
 
-    // Gunakan ? sebagai placeholder parameter
+    // Gunakan LIKE supaya bisa match LotNo yang ada suffix .001, .002, dll
     $sql = "SELECT TOP 1 PartNameFG AS partno
             FROM dbo.TRRPHMESIN
-            WHERE LotNo = ?";
+            WHERE LotNo LIKE ?";
 
-    $params = [$lotno];
+    $params = [$lotno . '%'];
     $stmt = sqlsrv_prepare($connection, $sql, $params);
 
     if (!$stmt) {
@@ -352,16 +365,61 @@ function getPartNoByLotNo($connection, $lotno)
         exit;
     }
 
-    // Ambil satu row saja karena TOP 1
     $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 
     if ($row) {
-        $partno = $row['partno'];
         http_response_code(200);
-        echo json_encode(['status' => 'success', 'data' => $partno]);
+        echo json_encode(['status' => 'success', 'data' => $row['partno']]);
     } else {
         http_response_code(404);
         echo json_encode(['status' => 'error', 'message' => 'Lot No tidak ditemukan']);
+    }
+    exit;
+}
+
+function getCustomerByPartno($connection, $partno)
+{
+    if (empty($partno)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Part No wajib diisi']);
+        exit;
+    }
+
+    // Query Development
+    // Gunakan LEFT + CHARINDEX untuk mengambil prefix sebelum titik
+    $sql = "SELECT TOP 1 m.namacustomer
+FROM dbo.TRRPHMESIN t
+LEFT JOIN mapping_lot_customer m 
+    ON t.PartNameFG = m.partno
+WHERE t.PartNameFG LIKE ?";
+
+    // Query Production
+
+    $params = [$partno . '%'];
+    $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+    if (!$stmt) {
+        $errors = sqlsrv_errors();
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Gagal menyiapkan query', 'detail' => $errors]);
+        exit;
+    }
+
+    if (!sqlsrv_execute($stmt)) {
+        $errors = sqlsrv_errors();
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Gagal mengeksekusi query', 'detail' => $errors]);
+        exit;
+    }
+
+    $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+
+    if ($row && $row['namacustomer']) {
+        http_response_code(200);
+        echo json_encode(['status' => 'success', 'data' => $row['namacustomer']]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Customer tidak ditemukan']);
     }
     exit;
 }

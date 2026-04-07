@@ -30,13 +30,15 @@ isLogin();
     <!-- Action Buttons -->
     <div class="row mb-4">
         <div class="col-12 text-end">
+            <!-- Tombol Tambah -->
+            <button class="btn btn-primary" onclick="showAddCustomerModal()">
+                <i class="ti ti-plus"></i> Tambah Customer Baru
+            </button>
             <!-- Tombol Import -->
             <button class="btn btn-success me-2" onclick="showImportModal()">
                 <i class="ti ti-upload"></i> Import Customer
             </button>
-            <button class="btn btn-info" onclick="showAddCustomerModal()">
-                <i class="ti ti-plus"></i> Tambah Customer Baru
-            </button>
+            <!-- Tombol Refresh -->
             <button class="btn btn-outline-info ms-2" onclick="refreshData()">
                 <i class="ti ti-refresh"></i> Refresh
             </button>

@@ -43,12 +43,15 @@ isLogin();
             </div>
         </div>
         <div class="col-md-8 text-end">
-            <button class="btn btn-info" onclick="showAddDefectModal()">
+            <!-- Tombol Tambah -->
+            <button class="btn btn-primary" onclick="showAddDefectModal()">
                 <i class="ti ti-plus"></i> Tambah Defect Baru
             </button>
+            <!-- Tombol Edit Section -->
             <button class="btn btn-warning ms-2" onclick="showEditSectionModal()">
                 <i class="ti ti-edit"></i> Edit Nama Section
             </button>
+            <!-- Tombol Refresh -->
             <button class="btn btn-outline-info ms-2" onclick="refreshData()">
                 <i class="ti ti-refresh"></i> Refresh
             </button>

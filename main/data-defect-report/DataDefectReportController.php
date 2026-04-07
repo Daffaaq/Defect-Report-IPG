@@ -19,7 +19,7 @@ function handleShutdown()
         echo json_encode([
             'status' => 'error',
             'message' => 'Terjadi kesalahan internal server',
-            'debug' => $error['message'] // Hapus ini di production
+            'debug' => $error['message']
         ]);
         exit;
     }
@@ -90,6 +90,12 @@ function handleReportActions($connection, $action)
             case 'getCustomerOptions':
                 getCustomerOptions($connection);
                 break;
+            case 'getPartNoOptions':
+                getPartNoOptions($connection);
+                break;
+            case 'getPartNoByTanggal':
+                getPartNoByTanggal($connection);
+                break;
             default:
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Aksi tidak valid']);
@@ -102,23 +108,147 @@ function handleReportActions($connection, $action)
     }
 }
 
+// ====================================
+// GET REPORTS - UPDATED VERSION
+// ====================================
 function getReports($connection)
 {
     header('Content-Type: application/json');
 
     // Ambil parameter filter dari URL
+    // TAB 1: Tanggal (single) + Part No
+    $tanggal = $_GET['tanggal'] ?? '';
+    $partno = isset($_GET['partno']) ? explode(',', $_GET['partno']) : [];
+
+    // TAB 2: Lot No
+    $lot_nos = isset($_GET['lot_nos']) ? explode(',', $_GET['lot_nos']) : [];
+
+    // TAB 3: Customer + Range Tanggal
+    $customers = isset($_GET['customers']) ? explode(',', $_GET['customers']) : [];
     $tanggal_awal = $_GET['tanggal_awal'] ?? '';
     $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
-    $lot_nos = isset($_GET['lot_nos']) ? explode(',', $_GET['lot_nos']) : [];
-    $customers = isset($_GET['customers']) ? explode(',', $_GET['customers']) : [];
+
+    // TAB 4: Part No + Range Tanggal
+    $partnos = isset($_GET['partnos']) ? explode(',', $_GET['partnos']) : [];
+    $tanggal_awal_part = $_GET['tanggal_awal_part'] ?? '';
+    $tanggal_akhir_part = $_GET['tanggal_akhir_part'] ?? '';
+
+    $params = [];
+    $whereConditions = [];
 
     // Helper: validasi tanggal
     $validateDate = fn($date) => DateTime::createFromFormat('Y-m-d', $date) ?: false;
 
-    $params = [];
-    $whereConditions = [];
-    $filter_message = "";
-    $filter_type = "none";
+    // ====================================
+    // TAB 1: FILTER TANGGAL (SINGLE) + PART NO
+    // ====================================
+    if ($tanggal && !empty($partno) && $partno[0] !== '') {
+        if (!$validateDate($tanggal)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD']);
+            return;
+        }
+
+        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) = ?";
+        $params[] = $tanggal;
+
+        $partno_placeholders = implode(',', array_fill(0, count($partno), '?'));
+        $whereConditions[] = "partno IN ($partno_placeholders)";
+        foreach ($partno as $pn) {
+            $params[] = trim($pn);
+        }
+    }
+    // Hanya tanggal (single) tanpa partno - TAMPILKAN SEMUA DATA DI TANGGAL ITU
+    elseif ($tanggal && (empty($partno) || $partno[0] === '')) {
+        if (!$validateDate($tanggal)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD']);
+            return;
+        }
+        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) = ?";
+        $params[] = $tanggal;
+    }
+
+    // ====================================
+    // TAB 2: FILTER LOT NO
+    // ====================================
+    if (!empty($lot_nos) && $lot_nos[0] !== '') {
+        $lot_placeholders = implode(',', array_fill(0, count($lot_nos), '?'));
+        $whereConditions[] = "lotno IN ($lot_placeholders)";
+        foreach ($lot_nos as $lot) {
+            $params[] = trim($lot);
+        }
+    }
+
+    // ====================================
+    // TAB 3: FILTER CUSTOMER + RANGE TANGGAL
+    // ====================================
+    if (!empty($customers) && $customers[0] !== '') {
+        $customer_placeholders = implode(',', array_fill(0, count($customers), '?'));
+        $whereConditions[] = "nama_customer IN ($customer_placeholders)";
+        foreach ($customers as $customer) {
+            $params[] = trim($customer);
+        }
+
+        // Range tanggal untuk customer (opsional)
+        if ($tanggal_awal && $tanggal_akhir) {
+            $awal = $validateDate($tanggal_awal);
+            $akhir = $validateDate($tanggal_akhir);
+
+            if ($awal && $akhir) {
+                if ($awal <= $akhir) {
+                    $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) BETWEEN ? AND ?";
+                    $params[] = $tanggal_awal;
+                    $params[] = $tanggal_akhir;
+                }
+            }
+        } elseif ($tanggal_awal) {
+            if ($validateDate($tanggal_awal)) {
+                $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
+                $params[] = $tanggal_awal;
+            }
+        } elseif ($tanggal_akhir) {
+            if ($validateDate($tanggal_akhir)) {
+                $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
+                $params[] = $tanggal_akhir;
+            }
+        }
+    }
+
+    // ====================================
+    // TAB 4: FILTER PART NO + RANGE TANGGAL
+    // ====================================
+    if (!empty($partnos) && $partnos[0] !== '') {
+        $partnos_placeholders = implode(',', array_fill(0, count($partnos), '?'));
+        $whereConditions[] = "partno IN ($partnos_placeholders)";
+        foreach ($partnos as $pn) {
+            $params[] = trim($pn);
+        }
+
+        // Range tanggal untuk partno (opsional)
+        if ($tanggal_awal_part && $tanggal_akhir_part) {
+            $awal = $validateDate($tanggal_awal_part);
+            $akhir = $validateDate($tanggal_akhir_part);
+
+            if ($awal && $akhir) {
+                if ($awal <= $akhir) {
+                    $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) BETWEEN ? AND ?";
+                    $params[] = $tanggal_awal_part;
+                    $params[] = $tanggal_akhir_part;
+                }
+            }
+        } elseif ($tanggal_awal_part) {
+            if ($validateDate($tanggal_awal_part)) {
+                $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
+                $params[] = $tanggal_awal_part;
+            }
+        } elseif ($tanggal_akhir_part) {
+            if ($validateDate($tanggal_akhir_part)) {
+                $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
+                $params[] = $tanggal_akhir_part;
+            }
+        }
+    }
 
     // Base query
     $sql = "SELECT 
@@ -133,96 +263,11 @@ function getReports($connection)
                 nama_operator_pengambil,
                 CONVERT(varchar, tanggal_pengambilan, 120) as tanggal_pengambilan,
                 nama_group,
+                status,
                 qty,
                 aksi_claim_defect,
                 CONVERT(varchar, created_at, 120) as created_at
             FROM report_claim_defect";
-
-    // ====================================
-    // FILTER TANGGAL
-    // ====================================
-    if ($tanggal_awal && $tanggal_akhir) {
-        $awal = $validateDate($tanggal_awal);
-        $akhir = $validateDate($tanggal_akhir);
-
-        if (!$awal || !$akhir) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
-            ]);
-            return;
-        }
-
-        if ($awal > $akhir) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
-            ]);
-            return;
-        }
-
-        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) BETWEEN ? AND ?";
-        $params[] = $tanggal_awal;
-        $params[] = $tanggal_akhir;
-        $filter_message = "rentang $tanggal_awal sampai $tanggal_akhir";
-        $filter_type = "range";
-    } elseif ($tanggal_awal) {
-        if (!$validateDate($tanggal_awal)) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Format tanggal tidak valid'
-            ]);
-            return;
-        }
-
-        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) >= ?";
-        $params[] = $tanggal_awal;
-        $filter_message = "mulai $tanggal_awal sampai sekarang";
-        $filter_type = "from";
-    } elseif ($tanggal_akhir) {
-        if (!$validateDate($tanggal_akhir)) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Format tanggal tidak valid'
-            ]);
-            return;
-        }
-
-        $whereConditions[] = "CAST(tanggal_ditemukan AS DATE) <= ?";
-        $params[] = $tanggal_akhir;
-        $filter_message = "sampai $tanggal_akhir";
-        $filter_type = "until";
-    }
-
-    // ====================================
-    // FILTER LOT NO
-    // ====================================
-    if (!empty($lot_nos) && $lot_nos[0] !== '') {
-        $lot_placeholders = implode(',', array_fill(0, count($lot_nos), '?'));
-        $whereConditions[] = "lotno IN ($lot_placeholders)";
-        foreach ($lot_nos as $lot) {
-            $params[] = trim($lot);
-        }
-        $filter_message = count($lot_nos) . " lot dipilih";
-        $filter_type = "lot";
-    }
-
-    // ====================================
-    // FILTER CUSTOMER
-    // ====================================
-    if (!empty($customers) && $customers[0] !== '') {
-        $customer_placeholders = implode(',', array_fill(0, count($customers), '?'));
-        $whereConditions[] = "nama_customer IN ($customer_placeholders)";
-        foreach ($customers as $customer) {
-            $params[] = trim($customer);
-        }
-        $filter_message = count($customers) . " customer dipilih";
-        $filter_type = "customer";
-    }
 
     // Jika tidak ada filter sama sekali
     if (empty($whereConditions)) {
@@ -231,12 +276,14 @@ function getReports($connection)
             'message' => 'Silakan pilih filter untuk melihat laporan',
             'data' => [],
             'filter' => [
-                'tanggal_awal' => null,
-                'tanggal_akhir' => null,
+                'tanggal' => null,
+                'partno' => [],
                 'lot_nos' => [],
                 'customers' => [],
-                'total_data' => 0,
-                'filter_type' => 'none'
+                'partnos' => [],
+                'tanggal_awal' => null,
+                'tanggal_akhir' => null,
+                'total_data' => 0
             ]
         ]);
         return;
@@ -288,49 +335,138 @@ function getReports($connection)
     }
 
     $total = count($rows);
-
-    // Tentukan pesan berdasarkan hasil
-    if ($total > 0) {
-        $message = "Berhasil memuat $total laporan";
-        if ($filter_type == 'range') {
-            $message .= " untuk $filter_message";
-        } elseif ($filter_type == 'lot') {
-            $message .= " dengan $filter_message";
-        } elseif ($filter_type == 'customer') {
-            $message .= " dengan $filter_message";
-        }
-    } else {
-        if ($filter_type == 'range') {
-            $message = "Tidak ada laporan untuk $filter_message";
-        } elseif ($filter_type == 'lot') {
-            $message = "Tidak ada laporan untuk lot yang dipilih";
-        } elseif ($filter_type == 'customer') {
-            $message = "Tidak ada laporan untuk customer yang dipilih";
-        } else {
-            $message = "Tidak ada laporan";
-        }
-    }
+    $message = $total > 0 ? "Berhasil memuat $total laporan" : "Tidak ada laporan";
 
     echo json_encode([
         'status' => 'success',
         'message' => $message,
         'data' => $rows,
         'filter' => [
-            'tanggal_awal' => $tanggal_awal ?: null,
-            'tanggal_akhir' => $tanggal_akhir ?: null,
+            'tanggal' => $tanggal ?: null,
+            'partno' => $partno,
             'lot_nos' => $lot_nos,
             'customers' => $customers,
-            'total_data' => $total,
-            'filter_type' => $filter_type
+            'partnos' => $partnos,
+            'tanggal_awal' => $tanggal_awal ?: null,
+            'tanggal_akhir' => $tanggal_akhir ?: null,
+            'total_data' => $total
         ]
     ]);
 }
 
+// ====================================
+// GET PART NO BY TANGGAL (untuk Tab 1)
+// ====================================
+function getPartNoByTanggal($connection)
+{
+    header('Content-Type: application/json');
+
+    $tanggal = $_GET['tanggal'] ?? '';
+
+    if (empty($tanggal)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Tanggal tidak boleh kosong']);
+        return;
+    }
+
+    $validateDate = DateTime::createFromFormat('Y-m-d', $tanggal);
+    if (!$validateDate) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD']);
+        return;
+    }
+
+    $sql = "SELECT DISTINCT partno 
+            FROM report_claim_defect 
+            WHERE CAST(tanggal_ditemukan AS DATE) = ?
+            AND partno IS NOT NULL 
+            AND partno != ''
+            ORDER BY partno";
+
+    $params = [$tanggal];
+    $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+    if (!$stmt) {
+        $errors = sqlsrv_errors();
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Gagal menyiapkan query',
+            'detail' => $errors
+        ]);
+        return;
+    }
+
+    if (!sqlsrv_execute($stmt)) {
+        $errors = sqlsrv_errors();
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Gagal mengeksekusi query',
+            'detail' => $errors
+        ]);
+        return;
+    }
+
+    $partnos = [];
+    while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+        if (!empty($row['partno'])) {
+            $partnos[] = ['partno' => $row['partno']];
+        }
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $partnos,
+        'tanggal' => $tanggal,
+        'total' => count($partnos)
+    ]);
+}
+
+// ====================================
+// GET PART NO OPTIONS (untuk Tab 4)
+// ====================================
+function getPartNoOptions($connection)
+{
+    header('Content-Type: application/json');
+
+    $sql = "SELECT DISTINCT partno 
+            FROM report_claim_defect 
+            WHERE partno IS NOT NULL AND partno != ''
+            ORDER BY partno";
+
+    $stmt = sqlsrv_query($connection, $sql);
+
+    if (!$stmt) {
+        $errors = sqlsrv_errors();
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Gagal mengambil data part number',
+            'detail' => $errors
+        ]);
+        return;
+    }
+
+    $partnos = [];
+    while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+        $partnos[] = ['partno' => $row['partno']];
+    }
+
+    echo json_encode([
+        'status' => 'success',
+        'data' => $partnos,
+        'total' => count($partnos)
+    ]);
+}
+
+// ====================================
+// SHOW REPORT (detail)
+// ====================================
 function showReport($connection)
 {
     header('Content-Type: application/json');
 
-    // Ambil ID dari parameter
     $id = $_GET['id'] ?? '';
 
     if (empty($id)) {
@@ -339,7 +475,6 @@ function showReport($connection)
         return;
     }
 
-    // Validasi ID harus numeric
     if (!is_numeric($id)) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'ID harus berupa angka']);
@@ -357,9 +492,11 @@ function showReport($connection)
                 deskripsi_masalah,
                 nama_customer, 
                 nama_group,
-                    qty,
+                qty,
                 aksi_claim_defect,
                 nama_operator_pengambil,
+                shift,
+                status,
                 CONVERT(varchar, tanggal_pengambilan, 120) as tanggal_pengambilan,
                 CONVERT(varchar, created_at, 120) as created_at
             FROM report_claim_defect 
@@ -398,7 +535,6 @@ function showReport($connection)
         return;
     }
 
-    // Konversi nilai DateTime ke string
     $formattedRow = [];
     foreach ($row as $key => $value) {
         if ($value instanceof DateTime) {
@@ -416,7 +552,7 @@ function showReport($connection)
 }
 
 // ====================================
-// FUNGSI UNTUK GET OPTIONS CUSTOMER
+// GET CUSTOMER OPTIONS
 // ====================================
 function getCustomerOptions($connection)
 {

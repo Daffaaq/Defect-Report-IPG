@@ -49,6 +49,8 @@ try {
 
             if ($action === 'update') {
                 updateReport($connection);
+            } elseif ($action === 'updateStatus') {
+                updateStatus($connection);
             } else {
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Action tidak valid']);
@@ -208,6 +210,74 @@ function updateReport($connection)
                 'nama_operator_pengambil' => trim($nama_operator_pengambil),
                 'tanggal_pengambilan' => $tanggal_pengambilan
             ]
+        ]);
+    }
+}
+
+function updateStatus($connection)
+{
+    header('Content-Type: application/json');
+
+    try {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            throw new Exception('Method tidak diizinkan');
+        }
+
+        $id = $_POST['id'] ?? '';
+        $status = $_POST['status'] ?? '';
+
+        // Validasi ID
+        if (empty($id) || !is_numeric($id)) {
+            throw new Exception('ID tidak valid');
+        }
+
+        // Validasi status (0 atau 1)
+        if (!in_array($status, [0, 1, '0', '1'], true)) {
+            throw new Exception('Status tidak valid');
+        }
+
+        // PERBAIKAN: Gunakan tabel yang benar: report_claim_defect
+        $checkSql = "SELECT id FROM report_claim_defect WHERE id = ?";
+        $checkStmt = sqlsrv_prepare($connection, $checkSql, [$id]);
+
+        if (!$checkStmt || !sqlsrv_execute($checkStmt)) {
+            $errors = sqlsrv_errors();
+            throw new Exception('Gagal memeriksa data: ' . json_encode($errors));
+        }
+
+        if (!sqlsrv_fetch_array($checkStmt, SQLSRV_FETCH_ASSOC)) {
+            throw new Exception('Data tidak ditemukan');
+        }
+
+        // PERBAIKAN: Update tabel report_claim_defect
+        $sql = "UPDATE report_claim_defect SET status = ? WHERE id = ?";
+        $params = [$status, $id];
+
+        $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+        if (!$stmt) {
+            $errors = sqlsrv_errors();
+            throw new Exception('Gagal menyiapkan query: ' . json_encode($errors));
+        }
+
+        if (!sqlsrv_execute($stmt)) {
+            $errors = sqlsrv_errors();
+            throw new Exception('Gagal update status: ' . json_encode($errors));
+        }
+
+        $rowsAffected = sqlsrv_rows_affected($stmt);
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => $rowsAffected > 0
+                ? 'Status berhasil diupdate'
+                : 'Tidak ada perubahan data'
+        ]);
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $e->getMessage()
         ]);
     }
 }
