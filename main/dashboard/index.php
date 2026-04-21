@@ -127,6 +127,68 @@ include '../layout/head.php';
         </div>
     </div>
 
+    <!-- Additional Stats: NG & OK -->
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-0 d-flex align-items-center h-100">
+                    <div class="row g-0 w-100">
+                        <!-- Total NG -->
+                        <div class="col-6 border-end">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-danger rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-circle-x fs-6 text-danger"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total NG</p>
+                                <h4 class="mb-0 fw-bold" id="total-ng">0</h4>
+                            </div>
+                        </div>
+                        <!-- Total OK -->
+                        <div class="col-6">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-success rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-circle-check fs-6 text-success"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total OK</p>
+                                <h4 class="mb-0 fw-bold" id="total-ok">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Shift 1 & Shift 2 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-0 d-flex align-items-center h-100">
+                    <div class="row g-0 w-100">
+                        <!-- Total Shift 1 -->
+                        <div class="col-6 border-end">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-primary rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-clock fs-6 text-primary"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Shift 1</p>
+                                <h4 class="mb-0 fw-bold" id="total-shift1">0</h4>
+                            </div>
+                        </div>
+                        <!-- Total Shift 2 -->
+                        <div class="col-6">
+                            <div class="p-3 text-center">
+                                <div class="bg-light-warning rounded-2 p-2 d-inline-block mb-2">
+                                    <i class="ti ti-clock-2 fs-6 text-warning"></i>
+                                </div>
+                                <p class="text-dark mb-1 fw-semibold">Total Shift 2</p>
+                                <h4 class="mb-0 fw-bold" id="total-shift2">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Charts Section - 2 charts per row -->
     <div class="row mt-4">
         <!-- Chart 1: Repair vs Scrap per Section -->
@@ -288,6 +350,11 @@ include '../layout/head.php';
                     document.getElementById('total-scrap').textContent = result.data.total_scrap;
                     document.getElementById('total-section').textContent = result.data.total_section;
                     document.getElementById('total-problem').textContent = result.data.total_problem;
+                    // Di dalam loadDashboardStats() setelah mengisi total-problem
+                    document.getElementById('total-ng').textContent = result.data.total_ng || 0;
+                    document.getElementById('total-ok').textContent = result.data.total_ok || 0;
+                    document.getElementById('total-shift1').textContent = result.data.total_shift1 || 0;
+                    document.getElementById('total-shift2').textContent = result.data.total_shift2 || 0;
 
                     console.log('Data dashboard berhasil dimuat:', result.data);
                 } else {

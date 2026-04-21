@@ -665,10 +665,6 @@ isLogin();
         if (!rowData) return false;
 
         // Validasi
-        if (field === 'nama_operator_pengambil' && (!newValue || !newValue.trim())) {
-            showToast('Peringatan', 'Nama operator pengambil tidak boleh kosong', 'warning', 1500);
-            return false;
-        }
 
         if (field === 'qty') {
             let qty = parseInt(newValue);
@@ -1359,8 +1355,63 @@ isLogin();
                 tanggal = today.subtract(1, 'days').format('YYYY-MM-DD');
                 break;
         }
+
+        // 🔥 Panggil loadPartNoByTanggal dengan callback
+        loadPartNoByTanggalWithCallback(tanggal, function() {
+            // Setelah part no selesai load, langsung apply filter
+            applyTanggalPartNoFilter();
+        });
+
         $('#filterTanggal').val(tanggal).trigger('change');
         showToast('Quick Filter', `Tanggal: ${formatDate(tanggal)}`, 'info', 1500);
+    }
+
+    // 🔥 MODIFIKASI loadPartNoByTanggal dengan callback
+    function loadPartNoByTanggalWithCallback(tanggal, callback) {
+        $.ajax({
+            url: baseUrl + '?action=getPartNoByTanggal&tanggal=' + tanggal,
+            type: 'GET',
+            dataType: 'json',
+            beforeSend: function() {
+                $('#filterPartNoByTanggal').html('<option value="">Memuat data...</option>').prop('disabled', true);
+            },
+            success: function(response) {
+                if (response.status === 'success' && response.data && response.data.length > 0) {
+                    let options = '';
+                    response.data.forEach(item => {
+                        let partno = item.partno || '';
+                        if (partno && partno.trim() !== '') options += `<option value="${escapeHtml(partno)}">${escapeHtml(partno)}</option>`;
+                    });
+                    $('#filterPartNoByTanggal').html(options).prop('disabled', false);
+                    $('#filterPartNoByTanggal').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Pilih part number...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                    $('#btnApplyTanggalPartNo').prop('disabled', false);
+                } else {
+                    $('#filterPartNoByTanggal').html('<option value="">Tidak ada part number untuk tanggal ini</option>').prop('disabled', true);
+                    $('#filterPartNoByTanggal').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: 'Tidak ada data',
+                        disabled: true,
+                        width: '100%'
+                    });
+                    $('#btnApplyTanggalPartNo').prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                console.error('Gagal load part no by tanggal:', xhr);
+                $('#filterPartNoByTanggal').html('<option value="">Gagal memuat data</option>').prop('disabled', true);
+                $('#btnApplyTanggalPartNo').prop('disabled', false);
+            },
+            complete: function() {
+                if (callback && typeof callback === 'function') {
+                    callback();
+                }
+            }
+        });
     }
 
     function loadReportsByTab(tab) {
@@ -1632,22 +1683,19 @@ isLogin();
         }
     });
 
+    // ==================== PERBAIKAN DI FUNGSI saveDetailEdit ====================
     function saveDetailEdit(field, id, value, $element) {
         if (isSaving) return;
         isSaving = true;
+
         if (!$element || !$element.length) $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
-        if (field === 'nama_operator_pengambil' && (!value || !value.trim())) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Peringatan',
-                text: 'Nama operator pengambil tidak boleh kosong',
-                timer: 1500,
-                showConfirmButton: false
-            });
-            cancelDetailEdit(field, id, $element);
-            isSaving = false;
-            return;
+
+        // Validasi nama_operator_pengambil bisa null
+        if (field === 'nama_operator_pengambil') {
+            if (value === '') value = null; // ✅ Simpan sebagai NULL di database
         }
+
+        // Validasi qty
         if (field === 'qty') {
             if (value === '' || value === null || value === undefined) {
                 Swal.fire({
@@ -1676,8 +1724,14 @@ isLogin();
             }
             value = qty;
         }
+
+        // 🔥 PERBAIKAN UNTUK TANGGAL PENGAMBILAN
         if (field === 'tanggal_pengambilan') {
-            if (value && value.trim() !== '') {
+            // Jika value kosong/null/undefined, set ke null (artinya hapus tanggal)
+            if (!value || value.trim() === '') {
+                value = null; // ✅ Simpan sebagai NULL di database
+            } else {
+                // Validasi format YYYY-MM-DD
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
                     Swal.fire({
                         icon: 'warning',
@@ -1690,14 +1744,17 @@ isLogin();
                     isSaving = false;
                     return;
                 }
-            } else value = null;
+            }
         }
+
         $element.addClass('saving').append('<small class="saving-indicator">Menyimpan...</small>');
+
         let table = $('#reportTable').DataTable();
         let rowData = null;
         table.rows().every(function() {
             if (this.data().id == id) rowData = this.data();
         });
+
         if (!rowData) {
             $element.removeClass('saving').find('.saving-indicator').remove();
             Swal.fire('Error', 'Data tidak ditemukan', 'error');
@@ -1705,15 +1762,18 @@ isLogin();
             isSaving = false;
             return;
         }
+
+        // 🔥 PERBAIKAN: Kirim tanggal_pengambilan dengan nilai yang benar (bisa NULL)
         let payload = {
             id: id,
             lotno: field === 'lotno' ? value : (rowData.lotno || ''),
             aksi_claim_defect: field === 'aksi_claim_defect' ? value : (rowData.aksi_claim_defect || ''),
             nama_group: field === 'nama_group' ? value : (rowData.nama_group || ''),
             qty: field === 'qty' ? value : (rowData.qty || 0),
-            nama_operator_pengambil: field === 'nama_operator_pengambil' ? value : (rowData.nama_operator_pengambil || ''),
-            tanggal_pengambilan: field === 'tanggal_pengambilan' ? value : formatDateForServer(rowData.tanggal_pengambilan)
+            nama_operator_pengambil: field === 'nama_operator_pengambil' ? value : (rowData.nama_operator_pengambil || null),
+            tanggal_pengambilan: field === 'tanggal_pengambilan' ? value : (rowData.tanggal_pengambilan || null)
         };
+
         $.ajax({
             url: 'UpdateDefectReportController.php?action=update',
             type: 'POST',
@@ -1723,6 +1783,7 @@ isLogin();
             success: function(response) {
                 $element.removeClass('saving').find('.saving-indicator').remove();
                 if (response.status === 'success') {
+                    // 🔥 PERBAIKAN: Update display dengan nilai yang benar
                     updateDetailDisplay(field, value, $element);
                     updateTableRow(id, field, value);
                     $element.addClass('save-success');
@@ -1750,6 +1811,54 @@ isLogin();
                 isSaving = false;
             }
         });
+    }
+
+    // 🔥 PERBAIKAN DI FUNGSI updateDetailDisplay
+    function updateDetailDisplay(field, value, $element) {
+        if (field === 'aksi_claim_defect' && value) {
+            let badgeClass = value === 'Repair' ? 'bg-primary' : 'bg-danger';
+            let textClass = value === 'Repair' ? 'primary' : 'danger';
+            $element.html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(value)}</span>`);
+        } else if (field === 'tanggal_pengambilan') {
+            // 🔥 PERBAIKAN: Kalo value null/empty, tampilkan "-"
+            if (!value || value === '' || value === null) {
+                $element.text('-');
+            } else {
+                $element.text(formatDate(value) || '-');
+            }
+        } else {
+            $element.text(value || '-');
+        }
+        $element.removeClass('editing');
+    }
+
+    // 🔥 PERBAIKAN DI FUNGSI cancelDetailEdit
+    function cancelDetailEdit(field, id, $element) {
+        if (!$element || !$element.length) $element = $(`.detail-editable[data-field="${field}"][data-id="${id}"]`);
+
+        let table = $('#reportTable').DataTable();
+        let originalValue = null;
+        table.rows().every(function() {
+            if (this.data().id == id) originalValue = this.data()[field];
+        });
+
+        if (field === 'aksi_claim_defect' && originalValue) {
+            let badgeClass = originalValue === 'Repair' ? 'bg-primary' : 'bg-danger';
+            let textClass = originalValue === 'Repair' ? 'primary' : 'danger';
+            $element.html(`<span class="badge ${badgeClass} bg-opacity-10 text-${textClass} px-3 py-2 rounded-pill">${escapeHtml(originalValue)}</span>`);
+        } else if (field === 'tanggal_pengambilan') {
+            // 🔥 PERBAIKAN: Kalo originalValue null/empty, tampilkan "-"
+            if (!originalValue || originalValue === '' || originalValue === null) {
+                $element.text('-');
+            } else {
+                $element.text(formatDate(originalValue) || '-');
+            }
+        } else {
+            $element.text(originalValue || '-');
+        }
+
+        $element.removeClass('editing saving');
+        $element.find('.saving-indicator').remove();
     }
 
     function formatDateForServer(dateStr) {

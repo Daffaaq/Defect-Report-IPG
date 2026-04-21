@@ -114,30 +114,41 @@ function getSectionDefectChart($connection)
 
     try {
         $sql = "
-        WITH SectionStats AS (
-            SELECT 
-                nama_section,
-                aksi_claim_defect,
-                COUNT(*) AS jml
-            FROM report_claim_defect
-            WHERE aksi_claim_defect IN ('Repair', 'Scrap')
-            GROUP BY nama_section, aksi_claim_defect
-        ),
-        SectionPivot AS (
-            SELECT 
-                nama_section,
-                ISNULL(MAX(CASE WHEN aksi_claim_defect = 'Repair' THEN jml END), 0) AS repair,
-                ISNULL(MAX(CASE WHEN aksi_claim_defect = 'Scrap' THEN jml END), 0) AS scrap
-            FROM SectionStats
-            GROUP BY nama_section
-        )
-        SELECT
-            nama_section,
-            repair,
-            scrap,
-            (repair + scrap) AS total_defect
-        FROM SectionPivot
-        ORDER BY total_defect DESC;
+        WITH Splitted AS (
+    SELECT 
+        LTRIM(RTRIM(Split.a.value('.', 'VARCHAR(100)'))) AS nama_section,
+        aksi_claim_defect
+    FROM report_claim_defect
+    CROSS APPLY (
+        SELECT CAST('<M>' + REPLACE(nama_section, ',', '</M><M>') + '</M>' AS XML) AS Data
+    ) AS A
+    CROSS APPLY Data.nodes('/M') AS Split(a)
+    WHERE aksi_claim_defect IN ('Repair', 'Scrap')
+),
+SectionStats AS (
+    SELECT 
+        nama_section,
+        aksi_claim_defect,
+        COUNT(*) AS jml
+    FROM Splitted
+    WHERE nama_section IS NOT NULL AND nama_section != ''
+    GROUP BY nama_section, aksi_claim_defect
+),
+SectionPivot AS (
+    SELECT 
+        nama_section,
+        ISNULL(MAX(CASE WHEN aksi_claim_defect = 'Repair' THEN jml END), 0) AS repair,
+        ISNULL(MAX(CASE WHEN aksi_claim_defect = 'Scrap' THEN jml END), 0) AS scrap
+    FROM SectionStats
+    GROUP BY nama_section
+)
+SELECT
+    nama_section,
+    repair,
+    scrap,
+    (repair + scrap) AS total_defect
+FROM SectionPivot
+ORDER BY total_defect DESC;
         ";
 
         $stmt = sqlsrv_query($connection, $sql);
@@ -199,12 +210,22 @@ function getDefectBySectionChart($connection)
 
     try {
         $sql = "
-        SELECT 
-            nama_section,
-            COUNT(*) AS total_kasus
-        FROM report_claim_defect
-        GROUP BY nama_section
-        ORDER BY total_kasus DESC;
+       WITH Splitted AS (
+    SELECT 
+        LTRIM(RTRIM(Split.a.value('.', 'VARCHAR(100)'))) AS nama_section
+    FROM report_claim_defect
+    CROSS APPLY (
+        SELECT CAST('<M>' + REPLACE(nama_section, ',', '</M><M>') + '</M>' AS XML) AS Data
+    ) AS A
+    CROSS APPLY Data.nodes('/M') AS Split(a)
+)
+SELECT 
+    nama_section,
+    COUNT(*) AS total_kasus
+FROM Splitted
+WHERE nama_section IS NOT NULL AND nama_section != ''
+GROUP BY nama_section
+ORDER BY total_kasus DESC;
         ";
 
         $stmt = sqlsrv_query($connection, $sql);

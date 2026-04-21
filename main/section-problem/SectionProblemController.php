@@ -354,19 +354,178 @@ function getDefectDetail($connection)
     exit;
 }
 
+// function updateDefect($connection)
+// {
+//     $id = $_POST['id'] ?? '';
+//     $nama_section = trim($_POST['nama_section'] ?? '');
+//     $nama_defect = trim($_POST['nama_defect'] ?? '');
+
+//     if (empty($id) || empty($nama_section) || empty($nama_defect)) {
+//         http_response_code(400);
+//         echo json_encode(['status' => 'error', 'message' => 'Data tidak lengkap']);
+//         exit;
+//     }
+
+//     // CEK APAKAH SECTION SUDAH ADA (CASE INSENSITIVE) - KECUALI DIRINYA SENDIRI
+//     $checkSql = "SELECT nama_section FROM defect_table 
+//                  WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS 
+//                  AND id != ?";
+//     $checkParams = [$nama_section, $id];
+//     $checkStmt = sqlsrv_prepare($connection, $checkSql, $checkParams);
+
+//     $existingSection = null;
+
+//     if ($checkStmt && sqlsrv_execute($checkStmt)) {
+//         $row = sqlsrv_fetch_array($checkStmt, SQLSRV_FETCH_ASSOC);
+//         if ($row) {
+//             $existingSection = $row['nama_section'];
+//         }
+//     }
+
+//     // Jika ada duplikat dengan section lain, gunakan format yang sudah ada
+//     if ($existingSection) {
+//         $nama_section = $existingSection;
+//     }
+
+//     $sql = "UPDATE defect_table SET nama_section = ?, nama_defect = ? WHERE id = ?";
+//     $params = [$nama_section, $nama_defect, $id];
+//     $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+//     if (!$stmt) {
+//         $errors = sqlsrv_errors();
+//         http_response_code(500);
+//         echo json_encode(['status' => 'error', 'message' => 'Gagal menyiapkan query update', 'detail' => $errors]);
+//         exit;
+//     }
+
+//     if (!sqlsrv_execute($stmt)) {
+//         $errors = sqlsrv_errors();
+//         http_response_code(500);
+//         echo json_encode(['status' => 'error', 'message' => 'Gagal mengupdate defect', 'detail' => $errors]);
+//         exit;
+//     }
+
+//     $message = 'Defect berhasil diupdate';
+//     if ($existingSection && strcasecmp($existingSection, trim($_POST['nama_section'] ?? '')) !== 0) {
+//         $message .= " (Format section disesuaikan menjadi: $existingSection)";
+//     }
+
+//     http_response_code(200);
+//     echo json_encode(['status' => 'success', 'message' => $message]);
+//     exit;
+// }
+
+// function updateDefect($connection)
+// {
+//     $id = $_POST['id'] ?? '';
+
+//     // Handle potential array values for nama_section
+//     $nama_section_raw = $_POST['nama_section'] ?? '';
+//     if (is_array($nama_section_raw)) {
+//         $nama_section_raw = implode(', ', $nama_section_raw);
+//     }
+//     $nama_section = trim($nama_section_raw);
+
+//     // Handle potential array values for nama_defect
+//     $nama_defect_raw = $_POST['nama_defect'] ?? '';
+//     if (is_array($nama_defect_raw)) {
+//         $nama_defect_raw = implode(', ', $nama_defect_raw);
+//     }
+//     $nama_defect = trim($nama_defect_raw);
+
+//     if (empty($id) || empty($nama_section) || empty($nama_defect)) {
+//         http_response_code(400);
+//         echo json_encode(['status' => 'error', 'message' => 'Data tidak lengkap']);
+//         exit;
+//     }
+
+//     // CEK APAKAH SECTION SUDAH ADA (CASE INSENSITIVE) - KECUALI DIRINYA SENDIRI
+//     $checkSql = "SELECT nama_section FROM defect_table 
+//                  WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS 
+//                  AND id != ?";
+//     $checkParams = [$nama_section, $id];
+//     $checkStmt = sqlsrv_prepare($connection, $checkSql, $checkParams);
+
+//     $existingSection = null;
+
+//     if ($checkStmt && sqlsrv_execute($checkStmt)) {
+//         $row = sqlsrv_fetch_array($checkStmt, SQLSRV_FETCH_ASSOC);
+//         if ($row) {
+//             $existingSection = $row['nama_section'];
+//         }
+//     }
+
+//     // Jika ada duplikat dengan section lain, gunakan format yang sudah ada
+//     if ($existingSection) {
+//         $nama_section = $existingSection;
+//     }
+
+//     $sql = "UPDATE defect_table SET nama_section = ?, nama_defect = ? WHERE id = ?";
+//     $params = [$nama_section, $nama_defect, $id];
+//     $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+//     if (!$stmt) {
+//         $errors = sqlsrv_errors();
+//         http_response_code(500);
+//         echo json_encode(['status' => 'error', 'message' => 'Gagal menyiapkan query update', 'detail' => $errors]);
+//         exit;
+//     }
+
+//     if (!sqlsrv_execute($stmt)) {
+//         $errors = sqlsrv_errors();
+//         http_response_code(500);
+//         echo json_encode(['status' => 'error', 'message' => 'Gagal mengupdate defect', 'detail' => $errors]);
+//         exit;
+//     }
+
+//     $message = 'Defect berhasil diupdate';
+//     if ($existingSection && strcasecmp($existingSection, trim($nama_section_raw)) !== 0) {
+//         $message .= " (Format section disesuaikan menjadi: $existingSection)";
+//     }
+
+//     http_response_code(200);
+//     echo json_encode(['status' => 'success', 'message' => $message]);
+//     exit;
+// }
+
 function updateDefect($connection)
 {
     $id = $_POST['id'] ?? '';
-    $nama_section = trim($_POST['nama_section'] ?? '');
-    $nama_defect = trim($_POST['nama_defect'] ?? '');
 
-    if (empty($id) || empty($nama_section) || empty($nama_defect)) {
+    // Handle potential array values for nama_section
+    $nama_section_raw = $_POST['nama_section'] ?? '';
+    if (is_array($nama_section_raw)) {
+        $nama_section_raw = implode(', ', $nama_section_raw);
+    }
+    $nama_section = trim($nama_section_raw);
+
+    // Handle potential array values for nama_defect
+    $nama_defect_raw = $_POST['nama_defect'] ?? '';
+    if (is_array($nama_defect_raw)) {
+        $nama_defect_raw = implode(', ', $nama_defect_raw);
+    }
+    $nama_defect_baru = trim($nama_defect_raw);
+
+    if (empty($id) || empty($nama_section) || empty($nama_defect_baru)) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Data tidak lengkap']);
         exit;
     }
 
-    // CEK APAKAH SECTION SUDAH ADA (CASE INSENSITIVE) - KECUALI DIRINYA SENDIRI
+    // AMBIL NAMA_DEFECT LAMA SEBELUM UPDATE
+    $sql_old = "SELECT nama_defect FROM defect_table WHERE id = ?";
+    $stmt_old = sqlsrv_query($connection, $sql_old, [$id]);
+    $old_data = sqlsrv_fetch_array($stmt_old, SQLSRV_FETCH_ASSOC);
+
+    if (!$old_data) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Data master tidak ditemukan']);
+        exit;
+    }
+
+    $old_defect = trim($old_data['nama_defect']);
+
+    // CEK APAKAH SECTION SUDAH ADA
     $checkSql = "SELECT nama_section FROM defect_table 
                  WHERE nama_section COLLATE SQL_Latin1_General_CP1_CI_AS = ? COLLATE SQL_Latin1_General_CP1_CI_AS 
                  AND id != ?";
@@ -382,38 +541,193 @@ function updateDefect($connection)
         }
     }
 
-    // Jika ada duplikat dengan section lain, gunakan format yang sudah ada
     if ($existingSection) {
         $nama_section = $existingSection;
     }
 
-    $sql = "UPDATE defect_table SET nama_section = ?, nama_defect = ? WHERE id = ?";
-    $params = [$nama_section, $nama_defect, $id];
-    $stmt = sqlsrv_prepare($connection, $sql, $params);
+    // MULAI TRANSACTION
+    sqlsrv_begin_transaction($connection);
 
-    if (!$stmt) {
-        $errors = sqlsrv_errors();
+    try {
+        // STEP 1: UPDATE MASTER defect_table
+        $sql = "UPDATE defect_table SET nama_section = ?, nama_defect = ? WHERE id = ?";
+        $params = [$nama_section, $nama_defect_baru, $id];
+        $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+        if (!$stmt || !sqlsrv_execute($stmt)) {
+            throw new Exception('Gagal mengupdate master defect');
+        }
+
+        // 🔥 STEP 2: AMBIL SEMUA TRANSAKSI YANG MENGANDUNG OLD_DEFECT
+        $sql_get_claims = "SELECT id, nama_defect FROM report_claim_defect 
+                          WHERE nama_defect LIKE ?";
+        $pattern = '%' . $old_defect . '%';
+        $stmt_claims = sqlsrv_query($connection, $sql_get_claims, [$pattern]);
+
+        if (!$stmt_claims) {
+            throw new Exception('Gagal mengambil data transaksi claim');
+        }
+
+        $updated_count = 0;
+        $updated_ids = [];
+
+        // 🔥 STEP 3: LOOP SATU PER SATU DAN UPDATE
+        while ($row = sqlsrv_fetch_array($stmt_claims, SQLSRV_FETCH_ASSOC)) {
+            $claim_id = $row['id'];
+            $current_defects = explode(',', $row['nama_defect']);
+            $updated = false;
+
+            // Loop setiap defect dalam transaksi
+            foreach ($current_defects as $key => $defect) {
+                $defect_trim = trim($defect);
+                // Bandingkan persis (case-sensitive atau insensitive?)
+                if ($defect_trim === $old_defect) {
+                    $current_defects[$key] = $nama_defect_baru;
+                    $updated = true;
+                }
+            }
+
+            if ($updated) {
+                $new_defects = implode(',', $current_defects);
+                $sql_update_claim = "UPDATE report_claim_defect 
+                                    SET nama_defect = ? 
+                                    WHERE id = ?";
+                $stmt_update = sqlsrv_query($connection, $sql_update_claim, [$new_defects, $claim_id]);
+
+                if ($stmt_update) {
+                    $updated_count++;
+                    $updated_ids[] = $claim_id;
+                }
+            }
+        }
+
+        // STEP 4: COMMIT
+        sqlsrv_commit($connection);
+
+        $message = 'Defect berhasil diupdate';
+        if ($existingSection && strcasecmp($existingSection, trim($nama_section_raw)) !== 0) {
+            $message .= " (Format section disesuaikan menjadi: $existingSection)";
+        }
+        $message .= " | Transaksi claim terupdate: $updated_count baris";
+
+        http_response_code(200);
+        echo json_encode([
+            'status' => 'success',
+            'message' => $message,
+            'data' => [
+                'old_defect' => $old_defect,
+                'new_defect' => $nama_defect_baru,
+                'affected_claim_ids' => $updated_ids,
+                'affected_count' => $updated_count
+            ]
+        ]);
+    } catch (Exception $e) {
+        sqlsrv_rollback($connection);
         http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Gagal menyiapkan query update', 'detail' => $errors]);
-        exit;
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Gagal update: ' . $e->getMessage()
+        ]);
     }
-
-    if (!sqlsrv_execute($stmt)) {
-        $errors = sqlsrv_errors();
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Gagal mengupdate defect', 'detail' => $errors]);
-        exit;
-    }
-
-    $message = 'Defect berhasil diupdate';
-    if ($existingSection && strcasecmp($existingSection, trim($_POST['nama_section'] ?? '')) !== 0) {
-        $message .= " (Format section disesuaikan menjadi: $existingSection)";
-    }
-
-    http_response_code(200);
-    echo json_encode(['status' => 'success', 'message' => $message]);
     exit;
 }
+
+// function updateDefect($connection)
+// {
+//     $id = $_POST['id'] ?? '';
+
+//     // Handle potential array values for nama_section
+//     $nama_section_raw = $_POST['nama_section'] ?? '';
+//     if (is_array($nama_section_raw)) {
+//         $nama_section_raw = implode(', ', $nama_section_raw);
+//     }
+//     $nama_section = trim($nama_section_raw);
+
+//     // Handle potential array values for nama_defect
+//     $nama_defect_raw = $_POST['nama_defect'] ?? '';
+//     if (is_array($nama_defect_raw)) {
+//         $nama_defect_raw = implode(', ', $nama_defect_raw);
+//     }
+//     $nama_defect_baru = trim($nama_defect_raw);
+
+//     if (empty($id) || empty($nama_section) || empty($nama_defect_baru)) {
+//         http_response_code(400);
+//         echo json_encode(['status' => 'error', 'message' => 'Data tidak lengkap']);
+//         exit;
+//     }
+
+//     // 🔥 PANGGIL STORED PROCEDURE DENGAN PREPARE + EXECUTE
+//     $sql = "EXEC sp_sync_defect_to_claims ?, ?, ?";
+//     $params = [$id, $nama_section, $nama_defect_baru];
+
+//     $stmt = sqlsrv_prepare($connection, $sql, $params);
+
+//     if ($stmt === false) {
+//         http_response_code(500);
+//         echo json_encode([
+//             'status' => 'error',
+//             'message' => 'Gagal menyiapkan query',
+//             'detail' => sqlsrv_errors()
+//         ]);
+//         exit;
+//     }
+
+//     if (!sqlsrv_execute($stmt)) {
+//         http_response_code(500);
+//         echo json_encode([
+//             'status' => 'error',
+//             'message' => 'Gagal mengeksekusi stored procedure',
+//             'detail' => sqlsrv_errors()
+//         ]);
+//         exit;
+//     }
+
+//     // Ambil result dari SP
+//     $result = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+//     sqlsrv_free_stmt($stmt);
+
+//     // Cek apakah ada error dari SP
+//     if (!$result) {
+//         http_response_code(500);
+//         echo json_encode([
+//             'status' => 'error',
+//             'message' => 'Tidak ada response dari stored procedure'
+//         ]);
+//         exit;
+//     }
+
+//     // Cek apakah SP mengembalikan error (dari CATCH block)
+//     if (isset($result['error_number'])) {
+//         http_response_code(500);
+//         echo json_encode([
+//             'status' => 'error',
+//             'message' => $result['error_message'] ?? 'Gagal update defect'
+//         ]);
+//         exit;
+//     }
+
+//     if (isset($result['status']) && $result['status'] === 'GAGAL') {
+//         http_response_code(500);
+//         echo json_encode([
+//             'status' => 'error',
+//             'message' => $result['error_message'] ?? 'Gagal update defect'
+//         ]);
+//         exit;
+//     }
+
+//     // Kirim response sukses
+//     http_response_code(200);
+//     echo json_encode([
+//         'status' => 'success',
+//         'message' => $result['status_message'] ?? 'Defect berhasil diupdate',
+//         'data' => [
+//             'old_defect' => $result['old_defect'] ?? '',
+//             'new_defect' => $result['new_defect'] ?? $nama_defect_baru,
+//             'affected_count' => isset($result['affected_count']) ? (int)$result['affected_count'] : 0
+//         ]
+//     ]);
+//     exit;
+// }
 
 // Function baru untuk update section name secara massal
 function updateSectionName($connection)

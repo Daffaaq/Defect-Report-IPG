@@ -566,6 +566,26 @@
                 }
             });
 
+            // TAMBAHKAN: Auto submit untuk lot number 10 karakter
+            $('#lotno').on('input', function() {
+                let lotno = $(this).val().trim();
+
+                // Jika panjang karakter mencapai 10, proses otomatis
+                if (lotno.length === 10) {
+                    // Beri sedikit delay untuk memastikan input selesai
+                    setTimeout(function() {
+                        let currentLotno = $('#lotno').val().trim();
+                        if (currentLotno.length === 10 && currentLotno !== '') {
+                            if (currentLotno === '-') {
+                                enableManualMode();
+                            } else {
+                                processLotNo(currentLotno);
+                            }
+                        }
+                    }, 100);
+                }
+            });
+
             // Event untuk tombol tambah inline (plus icon)
             $(document).on('click', '.btn-add-row-inline', function() {
                 addNewRow();
@@ -1027,15 +1047,21 @@
                         $('#lotnoInfo').html('<span class="text-success"><i class="ti ti-check"></i> Lot No: ' + escapeHtml(lotno) + ' ditemukan</span>');
                         getCustomerByPartNo(partno);
                     } else {
+                        // LOT NO TIDAK DITEMUKAN - Beralih ke mode manual
                         $('#partno').val('');
-                        $('#partnoInfo').html('<span class="text-warning"><i class="ti ti-alert"></i> Lot No tidak ditemukan, silakan input Part No manual</span>');
-                        $('#lotnoInfo').html('<span class="text-warning"><i class="ti ti-alert"></i> Lot No: ' + escapeHtml(lotno) + ' tidak ditemukan, silahkan crosscheck ulang lotnonya</span>');
+                        $('#partnoInfo').html('<span class="text-warning"><i class="ti ti-alert"></i> Lot No tidak ditemukan, beralih ke mode manual</span>');
+                        $('#lotnoInfo').html('<span class="text-warning"><i class="ti ti-alert"></i> Lot No: ' + escapeHtml(lotno) + ' tidak ditemukan, silahkan input manual</span>');
+
+                        // Beralih ke mode manual
+                        enableManualMode();
                         isProcessing = false;
                     }
                 },
                 error: function() {
                     $('#partnoInfo').html('<span class="text-danger"><i class="ti ti-x"></i> Gagal mencari Lot No</span>');
                     $('#lotnoInfo').html('<span class="text-danger"><i class="ti ti-x"></i> Error saat memproses Lot No</span>');
+                    // Beralih ke mode manual jika error
+                    enableManualMode();
                     isProcessing = false;
                 }
             });
@@ -1176,25 +1202,42 @@
             $('#confirmSubmitModal').modal('show');
         }
 
+        // Di fungsi submitForm()
         function submitForm() {
             let partnoValue = partnoSelectInitialized ? $('#partnoSelect').val() : $('#partno').val();
-            let sectionsString = getSectionsAsString();
-            let defectsString = getDefectsAsString();
+
+            // 🔥 KUMPULKAN DATA SEBAGAI ARRAY
+            let sections = [];
+            let defects = [];
+
+            $('.section-select').each(function() {
+                let val = $(this).val();
+                if (val && val !== '') sections.push(val);
+            });
+
+            $('.defect-select').each(function() {
+                let val = $(this).val();
+                if (val && val !== '') defects.push(val);
+            });
 
             let formData = new FormData();
             formData.append('action', 'insert');
-            formData.append('nama_customer', $('#customer').val());
             formData.append('lotno', $('#lotno').val().trim());
             formData.append('partno', partnoValue);
             formData.append('tanggal_ditemukan', $('#tanggal_ditemukan').val());
             formData.append('nama_operator', $('#nama_operator').val().trim());
-            formData.append('nama_section', sectionsString);
-            formData.append('nama_defect', defectsString);
             formData.append('nama_group', $('#nama_group').val().trim());
             formData.append('qty', $('#qty').val());
-            formData.append('shift', $('#shift').val());
             formData.append('deskripsi_masalah', $('#deskripsi_masalah').val().trim());
+            formData.append('nama_customer', $('#customer').val());
             formData.append('aksi_claim_defect', $('input[name="aksi_claim_defect"]:checked').val());
+            formData.append('shift', $('#shift').val());
+
+            // 🔥 KIRIM SEBAGAI ARRAY (bukan string comma-separated!)
+            for (let i = 0; i < sections.length; i++) {
+                formData.append('sections[]', sections[i]);
+                formData.append('defects[]', defects[i]);
+            }
 
             $.ajax({
                 url: baseUrl,
@@ -1205,14 +1248,8 @@
                 dataType: 'json',
                 success: function(response) {
                     if (response.status === 'success') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: 'Data claim berhasil disimpan',
-                            showConfirmButton: true
-                        }).then(() => {
-                            resetForm();
-                        });
+                        Swal.fire('Berhasil!', 'Data claim berhasil disimpan', 'success')
+                            .then(() => resetForm());
                     } else {
                         let errorMsg = response.message;
                         if (response.errors) errorMsg = response.errors.join('<br>');
@@ -1224,6 +1261,7 @@
                     try {
                         let response = JSON.parse(xhr.responseText);
                         errorMsg = response.message || errorMsg;
+                        if (response.errors) errorMsg = response.errors.join('<br>');
                     } catch (e) {}
                     Swal.fire('Error', errorMsg, 'error');
                 }

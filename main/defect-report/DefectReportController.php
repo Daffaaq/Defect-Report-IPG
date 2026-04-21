@@ -135,69 +135,60 @@ function handleClaimActions($connection, $action)
 function insertClaim($connection)
 {
     // Ambil data dari POST
-    $nama_section = trim($_POST['nama_section'] ?? '');
-    $nama_defect = trim($_POST['nama_defect'] ?? '');
-    $nama_group = trim($_POST['nama_group'] ?? '');
-    $qty = $_POST['qty'] ?? '';
-
     $lotno = trim($_POST['lotno'] ?? '');
     $partno = trim($_POST['partno'] ?? '');
     $tanggal_ditemukan = $_POST['tanggal_ditemukan'] ?? '';
     $nama_operator = trim($_POST['nama_operator'] ?? '');
+    $nama_group = trim($_POST['nama_group'] ?? '');
+    $qty = $_POST['qty'] ?? '';
     $deskripsi_masalah = trim($_POST['deskripsi_masalah'] ?? '');
     $nama_customer = trim($_POST['nama_customer'] ?? '');
     $aksi_claim_defect = trim($_POST['aksi_claim_defect'] ?? '');
     $shift = trim($_POST['shift'] ?? '');
 
+    // 🔥 TERIMA SEBAGAI ARRAY dari FE
+    $sections = $_POST['sections'] ?? [];
+    $defects = $_POST['defects'] ?? [];
+
     // Validasi data wajib
     $errors = [];
 
-    if (empty($nama_section)) {
-        $errors[] = 'Nama Section wajib diisi';
+    if (empty($lotno)) $errors[] = 'Lot No wajib diisi';
+    if (empty($partno)) $errors[] = 'Part No wajib diisi';
+    if (empty($tanggal_ditemukan)) $errors[] = 'Tanggal Ditemukan wajib diisi';
+    if (empty($nama_operator)) $errors[] = 'Nama Operator wajib diisi';
+    if (empty($nama_group)) $errors[] = 'Nama Group wajib diisi';
+    if ($qty === '' || !is_numeric($qty) || $qty <= 0) $errors[] = 'Qty wajib diisi dan harus angka positif';
+    if (empty($deskripsi_masalah)) $errors[] = 'Deskripsi Masalah wajib diisi';
+    if (empty($nama_customer)) $errors[] = 'Nama Customer wajib diisi';
+    if (empty($aksi_claim_defect)) $errors[] = 'Aksi Claim Defect wajib diisi';
+    if (empty($shift)) $errors[] = 'Shift wajib diisi';
+
+    // 🔥 VALIDASI ARRAY sections & defects
+    if (empty($sections) || !is_array($sections)) {
+        $errors[] = 'Section wajib diisi minimal 1';
     }
 
-    if (empty($nama_defect)) {
-        $errors[] = 'Nama Defect wajib diisi';
+    if (empty($defects) || !is_array($defects)) {
+        $errors[] = 'Nama Defect wajib diisi minimal 1';
     }
 
-    if (empty($nama_group)) {
-        $errors[] = 'Nama Group wajib diisi';
+    // 🔥 VALIDASI jumlah harus SAMA
+    if (count($sections) !== count($defects)) {
+        $errors[] = 'Jumlah Section dan Defect harus sama';
     }
 
-    if ($qty === '' || !is_numeric($qty)) {
-        $errors[] = 'Qty wajib diisi dan harus berupa angka';
+    // 🔥 VALIDASI tidak boleh ada yang kosong
+    foreach ($sections as $idx => $section) {
+        if (empty(trim($section))) {
+            $errors[] = "Section baris ke-" . ($idx + 1) . " tidak boleh kosong";
+        }
     }
 
-    if (empty($lotno)) {
-        $errors[] = 'Lot No wajib diisi';
-    }
-
-    if (empty($partno)) {
-        $errors[] = 'Part No wajib diisi';
-    }
-
-    if (empty($tanggal_ditemukan)) {
-        $errors[] = 'Tanggal Ditemukan wajib diisi';
-    }
-
-    if (empty($nama_operator)) {
-        $errors[] = 'Nama Operator wajib diisi';
-    }
-
-    if (empty($deskripsi_masalah)) {
-        $errors[] = 'Deskripsi Masalah wajib diisi';
-    }
-
-    if (empty($nama_customer)) {
-        $errors[] = 'Nama Customer wajib diisi';
-    }
-
-    if (empty($aksi_claim_defect)) {
-        $errors[] = 'Aksi Claim Defect wajib diisi';
-    }
-
-    if (empty($shift)) {
-        $errors[] = 'Shift wajib diisi';
+    foreach ($defects as $idx => $defect) {
+        if (empty(trim($defect))) {
+            $errors[] = "Defect baris ke-" . ($idx + 1) . " tidak boleh kosong";
+        }
     }
 
     if (!empty($errors)) {
@@ -210,38 +201,35 @@ function insertClaim($connection)
         exit;
     }
 
+    // 🔥 KONVERSI ARRAY ke COMMA-SEPARATED STRING (baru dilakukan di backend!)
+    $nama_section = implode(',', $sections);
+    $nama_defect = implode(',', $defects);
+
+    // Optional: Bersihin spasi setelah koma biar rapi
+    $nama_section = preg_replace('/,\s*/', ',', $nama_section);
+    $nama_defect = preg_replace('/,\s*/', ',', $nama_defect);
+
     // Validasi format tanggal
     $tanggal_obj = DateTime::createFromFormat('Y-m-d', $tanggal_ditemukan);
     if (!$tanggal_obj || $tanggal_obj->format('Y-m-d') !== $tanggal_ditemukan) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Format tanggal ditemukan tidak valid. Gunakan YYYY-MM-DD'
+            'message' => 'Format tanggal tidak valid. Gunakan YYYY-MM-DD'
         ]);
         exit;
     }
 
-    // Query insert
+    // Query insert (sama seperti sebelumnya)
     $sql = "INSERT INTO report_claim_defect (
-        nama_section,
-        nama_defect,
-        nama_group,
-        qty,
-        lotno,
-        partno,
-        tanggal_ditemukan,
-        nama_operator,
-        deskripsi_masalah,
-        nama_customer,
-        aksi_claim_defect,
-        shift,
-        status,
-        created_at
+        nama_section, nama_defect, nama_group, qty, lotno, partno,
+        tanggal_ditemukan, nama_operator, deskripsi_masalah,
+        nama_customer, aksi_claim_defect, shift, status, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, GETDATE())";
 
     $params = [
-        $nama_section,
-        $nama_defect,
+        $nama_section,   // udah berupa string "Section1,Section2"
+        $nama_defect,    // udah berupa string "Defect1,Defect2"
         $nama_group,
         $qty,
         $lotno,
@@ -290,16 +278,8 @@ function insertClaim($connection)
             'id' => $new_id,
             'nama_section' => $nama_section,
             'nama_defect' => $nama_defect,
-            'nama_group' => $nama_group,
-            'qty' => $qty,
-            'lotno' => $lotno,
-            'partno' => $partno,
-            'tanggal_ditemukan' => $tanggal_ditemukan,
-            'nama_operator' => $nama_operator,
-            'deskripsi_masalah' => $deskripsi_masalah,
-            'nama_customer' => $nama_customer,
-            'aksi_claim_defect' => $aksi_claim_defect,
-            'shift' => $shift
+            'sections_count' => count($sections),
+            'defects_count' => count($defects)
         ]
     ]);
     exit;
