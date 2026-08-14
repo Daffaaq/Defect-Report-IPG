@@ -222,6 +222,153 @@ if ($action === 'save') {
     exit;
 }
 
+// 4. list Defect (GET) berdasarkan section
+if ($action === 'listDefect') {
+    header("Content-Type: application/json");
+
+    $section = isset($_GET['section']) ? trim($_GET['section']) : '';
+
+    if (empty($section)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Section tidak boleh kosong'
+        ]);
+        exit;
+    }
+
+    // Defect lists berdasarkan section
+    $defects = [];
+
+    switch ($section) {
+        case 'CNC':
+            $defects = [
+                "Cut Core",
+                "Mis Stripping",
+                "Wire Lecet",
+                "Dimensi Wire NG",
+                "Tembaga Merosot / Maju",
+                "Tembaga Tidak Rata",
+                "Terminal Bend Down / Up",
+                "Terminal Deformasi",
+                "Terminal Tidak Tercrimping",
+                "Terminal Twist",
+                "Tabs NG",
+                "Barel NG",
+                "Bellmouth NG",
+                "CH NG",
+                "IH NG",
+                "Fraying Core",
+                "Mis Wire Seal",
+                "Wire Seal NG",
+                "Posisi Seal NG",
+                "Celup NG",
+                "NG Sambungan Wire"
+            ];
+            break;
+
+        case 'CRIMPING_R2':
+        case 'CRIMPING_R4':
+            $defects = [
+                "Double acc",
+                "Missing cover",
+                "Missing sleave",
+                "Missing wire seal",
+                "Missing VT",
+                "Salah VT",
+                "Sleave terbalik",
+                "Salah wire seal",
+                "Salah sleave",
+                "Kurang skema",
+                "wire lecet",
+                "Wire seal sobek",
+                "Vinyl terjepit",
+                "Cut Core",
+                "Mis Stripping",
+                "Wire Lecet",
+                "Dimensi Wire NG",
+                "Tembaga Merosot / Maju",
+                "Tembaga Tidak Rata",
+                "Terminal Bend Down / Up",
+                "Terminal Deformasi",
+                "Terminal Tidak Tercrimping",
+                "Terminal Twist",
+                "Tabs NG",
+                "Barel NG",
+                "Bellmouth NG",
+                "CH NG",
+                "IH NG",
+                "Fraying Core",
+                "Mis Wire Seal",
+                "Wire Seal NG",
+                "Posisi Seal NG",
+                "Celup NG",
+                "NG Sambungan Wire"
+            ];
+            break;
+
+        case 'JOINT_R2':
+        case 'JOINT_R4':
+            $defects = [
+                "Kurang skema",
+                "Missing terminal",
+                "Wire lecet",
+                "Fraying core",
+                "Core wire mundur",
+                "Vinyl terjepit",
+                "Raychem tembus",
+                "Termofit mundur",
+                "Termofit kurang matang",
+                "Missing termofit"
+            ];
+            break;
+
+        case 'ASSY':
+            // Query dari database untuk ASSY
+            $query = "SELECT DISTINCT nama_defect 
+                      FROM defect_table 
+                      ORDER BY nama_defect ASC";
+
+            $stmt = sqlsrv_query($connection, $query);
+
+            if ($stmt === false) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error: ' . print_r(sqlsrv_errors(), true)
+                ]);
+                exit;
+            }
+
+            $defects = [];
+            while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+                $defects[] = $row['nama_defect'];
+            }
+            break;
+
+        default:
+            echo json_encode([
+                'success' => false,
+                'message' => 'Section tidak valid'
+            ]);
+            exit;
+    }
+
+    // Jika tidak ada defect yang ditemukan
+    if (empty($defects)) {
+        echo json_encode([
+            'success' => true,
+            'data' => [],
+            'message' => 'Tidak ada defect untuk section ini'
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'data' => $defects
+    ]);
+    exit;
+}
+
 // Jika tidak ada action, redirect ke index
 header('Location: index.php');
 exit;

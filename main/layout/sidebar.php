@@ -105,6 +105,14 @@
                         <span class="hide-menu"> Internal Defect</span>
                     </a>
                 </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="../my-internal-defect/index.php">
+                        <span>
+                            <i class="ti ti-tool"></i>
+                        </span>
+                        <span class="hide-menu"> My Internal Defect</span>
+                    </a>
+                </li>
 
                 <li class="sidebar-item">
                     <a class="sidebar-link" href="../defect-qc-input/index.php">
@@ -115,7 +123,7 @@
                     </a>
                 </li>
 
-                   <li class="sidebar-item">
+                <li class="sidebar-item">
                     <a class="sidebar-link" href="../defect-production-input/index.php">
                         <span>
                             <i class="ti ti-edit"></i>
