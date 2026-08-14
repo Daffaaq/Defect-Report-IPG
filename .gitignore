@@ -1,0 +1,39 @@
+# =========================
+# Helper folder
+# =========================
+# Jangan push file PHP di folder helper
+helper/*.php
+# Tapi tetap ada foldernya
+!helper/.gitkeep
+
+# =========================
+# Assets folder
+# =========================
+# Jangan push seluruh isi folder assets
+assets/*
+# Tapi biarkan folder tetap ada dengan .gitkeep
+!assets/.gitkeep
+
+# =========================
+# Composer (PhpSpreadsheet dll)
+# =========================
+# Folder dependency composer
+/vendor/
+
+# Tetap push file dependency list
+!composer.json
+!composer.lock
+
+auto_push.py
+
+# =========================
+# System / Env
+# =========================
+*.log
+*.cache
+*.env
+
+# =========================
+# IDE/editor configs
+.vscode/
+.idea/
